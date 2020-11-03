@@ -2,7 +2,6 @@ import pyvista as pv
 import pandas as pd
 import numpy as np
 import meshio
-
 import calculate_alf
 
 from glob import glob
@@ -26,9 +25,8 @@ center = np.array([0,0,0])
 center_point = pv.PolyData(center)
 
 # C1 bond 1
-bond1 = all_atom_features[0,:,[0]]
+bond1 = all_atom_features[5,:,[0]].T
 print(bond1)
-bond1 = bond1.T
 # min_bond1 = min(bond1[:,0])
 # max_bond1 = max(bond1[:,0])
 # bond1 = np.divide(np.subtract(bond1, min_bond1),(max_bond1 - min_bond1))
@@ -56,6 +54,28 @@ print(xx)
 r3 = np.concatenate((xx,yy,zz), axis=1)
 r3_cloud = pv.PolyData(r3)
 
+r_data = all_atom_features[0,:,[6]].T
+theta_data = all_atom_features[0,:,[7]].T
+phi_data = all_atom_features[0,:,[8]].T
+xx = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.cos(phi_data))
+yy = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.sin(phi_data))
+zz = np.multiply(r_data, np.cos(theta_data))
+print(xx)
+
+r4 = np.concatenate((xx,yy,zz), axis=1)
+r4_cloud = pv.PolyData(r4)
+
+r_data = all_atom_features[0,:,[9]].T
+theta_data = all_atom_features[0,:,[10]].T
+phi_data = all_atom_features[0,:,[11]].T
+xx = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.cos(phi_data))
+yy = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.sin(phi_data))
+zz = np.multiply(r_data, np.cos(theta_data))
+print(xx)
+
+r5 = np.concatenate((xx,yy,zz), axis=1)
+r5_cloud = pv.PolyData(r5)
+
 
 # for r_col, theta_col, phi_col in zip(r_cols,theta_cols,phi_cols):
 
@@ -78,7 +98,11 @@ plotter.add_mesh(bond1_cloud, color='maroon', point_size=10.,
                  render_points_as_spheres=True)
 plotter.add_mesh(bond2_cloud, color='blue', point_size=10.,
                  render_points_as_spheres=True)
-plotter.add_mesh(r3_cloud, color='green', point_size=10.,
+plotter.add_mesh(r3_cloud, color='#b14730', point_size=10.,
+                 render_points_as_spheres=True)
+plotter.add_mesh(r4_cloud, color='#FFFFFF', point_size=10.,
+                 render_points_as_spheres=True)
+plotter.add_mesh(r5_cloud, color='grey', point_size=10.,
                  render_points_as_spheres=True)
 plotter.show_grid()
 plotter.show()

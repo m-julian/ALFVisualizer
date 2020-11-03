@@ -462,32 +462,6 @@ class Atoms:
     def nfeatures(self):
         return len(self.features[0])
 
-
-
-def get_headings(nfeatures):
-    "writes headings for columns"
-
-    headings = [
-        # "Training Set Point", 
-        # "Atom Label", 
-        "bond1", 
-        "bond2", 
-        "angle"
-        ]
-
-    nfeatures = len(trajectory.features[0][0])-3 # Removes bond1, bond 2, angle
-    reduced_nfeatures = int(nfeatures/3) # each feature has r, theta, phi component
-
-    for nfeature in range(1,(reduced_nfeatures+1)): #range goes to i-1
-        feature_distance = f"r{nfeature+2}"  # starts at r3
-        feature_theta = f"theta{nfeature+2}"   #starts at theta3
-        feature_phi = f"phi{nfeature+2}"   #starts at phi3
-        headings.append(feature_distance)
-        headings.append(feature_theta)
-        headings.append(feature_phi)
-
-    return headings
-
 def features_and_atom_names(xyz_file):
     """ Returns features as 3D array, [atom][point][feature]
     Example: 10 points water xyz file would have shape (3, 10, 3) where 3 is the number of atoms,
