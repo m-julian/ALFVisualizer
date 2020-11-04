@@ -49,18 +49,44 @@ class ALFAtom:
         self.all_atom_features = all_atom_features
         self.atom_names = atom_names
         self.n_atoms, self.n_points, self.n_features = all_atom_features.shape
+        self.all_atom_4D_array = self.stack_one_atom_xyz_3D_arrays()
 
-        self.get_xyz_matrices()
+    def stack_one_atom_xyz_3D_arrays(self):
 
+        """Iterates over all the atoms in the molecule. Every atom can be used as center for ALF. 
+        Stacks together 3D array for xy plane atoms, as well as 3D array that defines rest of atoms 
+        in xyz coordinates.
 
-    def get_xyz_matrices(self):
+        Returns all_atom_4D_array , a 4D array of shape (N_atoms, N_atoms-1, N_points, 3)
+        If an atom is the ALF center, all other atoms have to be represented as xyz coordinates (thus the N_atoms-1)
+        Every point for all other atoms has x, y, and z coordinates (so this is there the 3 comes in)
+
+        Example: Methanol has 6 atoms, when an atom is used as the ALF center only 5 atoms remain to be expressed
+        as xyz coordinates. These atoms have n number of points (number of timesteps in trajectory .xyz file), with
+        each point having x,y,z coordinates."""
+
+        all_other_atom_3D_arrays = []
 
         for one_atom_features in all_atom_features:
 
-            self.get_xy_plane_atoms(one_atom_features)
-            self.get_polar_atoms(one_atom_features)
+            # these are two 3D atom matrices (xy_atom_matrix is 2xN_pointsx3, and polar atom matrix
+            # is of shape N_remaining_atomsxN_pointsx3)
+            xy_atom_3d_array = self.get_xy_plane_atom_3d_array(one_atom_features)
+            polar_atoms_3d_array = self.get_polar_atom_3d_array(one_atom_features)
+            # so now we stack these matrices into one 3D array that is the xyz coordinates 
+            # for all atoms OTHER than the atom on which the ALF is centered,
+            # shape ((2+N_remaining_atoms),N_points,3)
+            one_atom_total_array = np.concatenate((xy_atom_3d_array, polar_atoms_3d_array), axis=0)
+            all_other_atom_3D_arrays.append(one_atom_total_array)
 
-    def get_xy_plane_atoms(self, one_atom):
+        # finally we can stack these 3D arrays into one 4D array, which will contain all the info needed
+        # for plotting every atom as the ALF center. This 4D array will be stored and then if can be used
+        # to quickly remove/add atoms in the visualization
+        all_atom_4D_array = np.stack([i for i in all_other_atom_3D_arrays])
+
+        return all_atom_4D_array
+
+    def get_xy_plane_atom_3d_array(self, one_atom):
 
         """ Input: Takes in one atom feature matrix.
         Takes first three features for one atom and gives xyz coordinates of the two atoms used to define the x-axis, and the
@@ -70,68 +96,54 @@ class ALFAtom:
         # y and z dimension are always 0s 
         tmp_bond1 = one_atom[:,[0]]
         z = np.zeros((tmp_bond1.shape[0], 2), dtype=tmp_bond1.dtype)
-        self.bond1 = np.concatenate((tmp_bond1,z), axis=1)
-        print(self.bond1)
-        print()
+        bond1 = np.concatenate((tmp_bond1,z), axis=1)
 
         tmp_bond2 = one_atom[:,[1]] # bond 2 length from features (n_pointsx1)
         angle12 = one_atom[:,[2]] # angle between bond1 and bond2 (n_pontsx1)
         x_bond2 = np.multiply(np.cos(angle12), tmp_bond2)
         y_bond2 = np.multiply(np.sin(angle12), tmp_bond2)
         z_bond2 = np.zeros((tmp_bond2.shape[0], 1), dtype=tmp_bond2.dtype)
-        self.bond2 = np.concatenate((x_bond2,y_bond2,z_bond2), axis=1)
-        print(self.bond2)
+        bond2 = np.concatenate((x_bond2,y_bond2,z_bond2), axis=1)
 
-    def get_polar_atoms(self, one_atom):
+        bond1_bond2_matrix = np.stack((bond1, bond2), axis=0)
+
+        return bond1_bond2_matrix
+
+    def get_polar_atom_3d_array(self, one_atom):
 
         """ Input: Takes in one atom feature matrix. 
         Every three features (after the first three features that define the xy plane) have a radius, theta, and
-        phi component that defines where an atom is in xyz coordinates"""
+        phi component that defines where an atom is in xyz coordinates
+        This will return a 3D array of shape n_remaining_atoms, n_points, 3, wher 3 is because x,y,z coordinate
+        """
 
         # firist three features account for 3 atoms (central atom, atom that defines x axis, and atom that defines 
         # xy plane. Therefore do not have to iterate over them)
         n_remaining_atoms = self.n_atoms - 3
         i,j,k = 3, 3, 3
+        xyz_atoms_list = []
 
         for _ in range(n_remaining_atoms):
 
-            r_data = one_atom[:,[i]] # vector of r distances
-            theta_data = one_atom[:,[j]] # vector of thetas
-            phi_data = one_atom[:,[k]] # vector of phis
+            r_data = one_atom[:,[i]] # vector of r distances (n_pointsx1)
+            theta_data = one_atom[:,[j]] # vector of thetas (n_pointsx1)
+            phi_data = one_atom[:,[k]] # vector of phis (n_pointsx1)
             xx = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.cos(phi_data))
             yy = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.sin(phi_data))
             zz = np.multiply(r_data, np.cos(theta_data))
-            polar_atom = np.concatenate((xx,yy,zz), axis=1)
-            print(polar_atom)
-            exit()
+            xyz_atom = np.concatenate((xx,yy,zz), axis=1) # an N_pointsx3 matrix (storing xyz info for one atom)
+            # polar_atoms_xyz = np.dstack((polar_atoms_xyz, xyz_atom), axis=2)
+            xyz_atoms_list.append(xyz_atom)
 
             i += 3
             j += 3
             k += 3
 
+        polar_atoms_xyz_matrix = np.stack([i for i in xyz_atoms_list])
+
+        return polar_atoms_xyz_matrix
+
 
 atom = ALFAtom(all_atom_features, atom_names)
 
-
-
-
-
-# # iterates over N_atom matrices (of dimension N_pointsxN_features)
-# for atom_matrix in all_atom_matrices:
-
-#     # test = ALFAtom(atom_matrix)
-#     exit()
-
-
-
-
-
-
-
-
-    # bond1 = atom_matrix[:,[0]]
-    # print(bond1)
-    # exit()
-
-
-
+print(atom.all_atom_4D_array[0])
