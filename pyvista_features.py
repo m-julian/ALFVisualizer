@@ -39,7 +39,7 @@ all_atom_features, atom_names = calculate_alf.features_and_atom_names(xyz_file)
 
 atom_colors = dict(zip(atom_names, cycle(colors)))
 
-class ALFAtom:
+class XYZArrays:
     """ Creates a 3D array for each atom (so 1 4D array) on which the ALF is centered. Each 2D array in the 3D array
     consists of N_pointsx3 (because each point has x,y,z coords in 3D space) matrices, where each matrix contains
     the xyz coordinates of every atom that is NOT the atom on which the ALF is centered."""
@@ -52,7 +52,6 @@ class ALFAtom:
         self.all_atom_4D_array = self.stack_one_atom_xyz_3D_arrays()
 
     def stack_one_atom_xyz_3D_arrays(self):
-
         """Iterates over all the atoms in the molecule. Every atom can be used as center for ALF. 
         Stacks together 3D array for xy plane atoms, as well as 3D array that defines rest of atoms 
         in xyz coordinates.
@@ -69,10 +68,13 @@ class ALFAtom:
 
         for one_atom_features in all_atom_features:
 
-            # these are two 3D atom matrices (xy_atom_matrix is 2xN_pointsx3, and polar atom matrix
-            # is of shape N_remaining_atomsxN_pointsx3)
+            # xy_atom_3d_array, and polar_atoms_3d_array are both 3D atom arrays
+            # (xy_atom_matrix is 2xN_pointsx3, and polar atom matrix
+            # is of shape N_remaining_atomsxN_pointsx3 where N remaining atoms is N_atoms-3)
+
             xy_atom_3d_array = self.get_xy_plane_atom_3d_array(one_atom_features)
             polar_atoms_3d_array = self.get_polar_atom_3d_array(one_atom_features)
+
             # so now we stack these matrices into one 3D array that is the xyz coordinates 
             # for all atoms OTHER than the atom on which the ALF is centered,
             # shape ((2+N_remaining_atoms),N_points,3)
@@ -90,7 +92,8 @@ class ALFAtom:
 
         """ Input: Takes in one atom feature matrix.
         Takes first three features for one atom and gives xyz coordinates of the two atoms used to define the x-axis, and the
-        xy plane respectively"""
+        xy plane respectively
+        """
 
         # gives an n_pointx1 vector of bond 1 lengths, need to convert to matrix with xyz coordinates (n_pointsx3)
         # y and z dimension are always 0s 
@@ -102,6 +105,7 @@ class ALFAtom:
         angle12 = one_atom[:,[2]] # angle between bond1 and bond2 (n_pontsx1)
         x_bond2 = np.multiply(np.cos(angle12), tmp_bond2)
         y_bond2 = np.multiply(np.sin(angle12), tmp_bond2)
+        # z direction is always 0
         z_bond2 = np.zeros((tmp_bond2.shape[0], 1), dtype=tmp_bond2.dtype)
         bond2 = np.concatenate((x_bond2,y_bond2,z_bond2), axis=1)
 
@@ -114,7 +118,7 @@ class ALFAtom:
         """ Input: Takes in one atom feature matrix. 
         Every three features (after the first three features that define the xy plane) have a radius, theta, and
         phi component that defines where an atom is in xyz coordinates
-        This will return a 3D array of shape n_remaining_atoms, n_points, 3, wher 3 is because x,y,z coordinate
+        This method will return a 3D array of shape n_remaining_atoms, n_points, 3, wher 3 is because x,y,z coordinate
         """
 
         # firist three features account for 3 atoms (central atom, atom that defines x axis, and atom that defines 
@@ -144,6 +148,14 @@ class ALFAtom:
         return polar_atoms_xyz_matrix
 
 
-atom = ALFAtom(all_atom_features, atom_names)
+class PlottingTool:
 
-print(atom.all_atom_4D_array[0])
+    def __init__(self, )
+
+
+
+
+
+alf_system_as_xyz = XYZArrays(all_atom_features, atom_names)
+
+print(alf_system_as_xyz.all_atom_4D_array[0])
