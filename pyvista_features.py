@@ -35,52 +35,92 @@ else:
     xyz_file = xyz_files[int(input())-1]
 
 # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
-all_atom_matrices, atom_names = calculate_alf.features_and_atom_names(xyz_file)
+all_atom_features, atom_names = calculate_alf.features_and_atom_names(xyz_file)
 
 atom_colors = dict(zip(atom_names, cycle(colors)))
 
 class ALFAtom:
-    """ Creates a 3D array for each atom on which the ALF is centered. Each 2D array in the 3D array
+    """ Creates a 3D array for each atom (so 1 4D array) on which the ALF is centered. Each 2D array in the 3D array
     consists of N_pointsx3 (because each point has x,y,z coords in 3D space) matrices, where each matrix contains
-    the xyz coordinates of every atom that is NOT the atom on which the ALF is centered.
+    the xyz coordinates of every atom that is NOT the atom on which the ALF is centered."""
 
-    def __init__(self, atom_matrix):
+    def __init__(self, all_atom_features, atom_names):
 
-        self.atom_matrix = atom_matrix
-        self.n_points, self.n_features = atom_matrix.shape
-        self.get_xy_plane_atoms()
+        self.all_atom_features = all_atom_features
+        self.atom_names = atom_names
+        self.n_atoms, self.n_points, self.n_features = all_atom_features.shape
 
-    def get_xy_plane_atoms(self):
+        self.get_xyz_matrices()
+
+
+    def get_xyz_matrices(self):
+
+        for one_atom_features in all_atom_features:
+
+            self.get_xy_plane_atoms(one_atom_features)
+            self.get_polar_atoms(one_atom_features)
+
+    def get_xy_plane_atoms(self, one_atom):
+
+        """ Input: Takes in one atom feature matrix.
+        Takes first three features for one atom and gives xyz coordinates of the two atoms used to define the x-axis, and the
+        xy plane respectively"""
 
         # gives an n_pointx1 vector of bond 1 lengths, need to convert to matrix with xyz coordinates (n_pointsx3)
         # y and z dimension are always 0s 
-        tmp_bond1 = self.atom_matrix[:,[0]]
+        tmp_bond1 = one_atom[:,[0]]
         z = np.zeros((tmp_bond1.shape[0], 2), dtype=tmp_bond1.dtype)
         self.bond1 = np.concatenate((tmp_bond1,z), axis=1)
         print(self.bond1)
         print()
 
-        tmp_bond2 = self.atom_matrix[:,[1]] # bond 2 length from features (n_pointsx1)
-        angle12 = self.atom_matrix[:,[2]] # angle between bond1 and bond2 (n_pontsx1)
+        tmp_bond2 = one_atom[:,[1]] # bond 2 length from features (n_pointsx1)
+        angle12 = one_atom[:,[2]] # angle between bond1 and bond2 (n_pontsx1)
         x_bond2 = np.multiply(np.cos(angle12), tmp_bond2)
         y_bond2 = np.multiply(np.sin(angle12), tmp_bond2)
         z_bond2 = np.zeros((tmp_bond2.shape[0], 1), dtype=tmp_bond2.dtype)
         self.bond2 = np.concatenate((x_bond2,y_bond2,z_bond2), axis=1)
         print(self.bond2)
 
-    def get_polar_atoms(self):
+    def get_polar_atoms(self, one_atom):
+
+        """ Input: Takes in one atom feature matrix. 
+        Every three features (after the first three features that define the xy plane) have a radius, theta, and
+        phi component that defines where an atom is in xyz coordinates"""
+
+        # firist three features account for 3 atoms (central atom, atom that defines x axis, and atom that defines 
+        # xy plane. Therefore do not have to iterate over them)
+        n_remaining_atoms = self.n_atoms - 3
+        i,j,k = 3, 3, 3
+
+        for _ in range(n_remaining_atoms):
+
+            r_data = one_atom[:,[i]] # vector of r distances
+            theta_data = one_atom[:,[j]] # vector of thetas
+            phi_data = one_atom[:,[k]] # vector of phis
+            xx = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.cos(phi_data))
+            yy = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.sin(phi_data))
+            zz = np.multiply(r_data, np.cos(theta_data))
+            polar_atom = np.concatenate((xx,yy,zz), axis=1)
+            print(polar_atom)
+            exit()
+
+            i += 3
+            j += 3
+            k += 3
+
+
+atom = ALFAtom(all_atom_features, atom_names)
 
 
 
 
 
+# # iterates over N_atom matrices (of dimension N_pointsxN_features)
+# for atom_matrix in all_atom_matrices:
 
-
-# iterates over N_atom matrices (of dimension N_pointsxN_features)
-for atom_matrix in all_atom_matrices:
-
-    # test = ALFAtom(atom_matrix)
-    exit()
+#     # test = ALFAtom(atom_matrix)
+#     exit()
 
 
 
