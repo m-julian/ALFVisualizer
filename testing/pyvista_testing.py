@@ -102,11 +102,19 @@ plotter.add_mesh(r3_cloud, color='#b14730', point_size=10.,
                  render_points_as_spheres=True)
 plotter.add_mesh(r4_cloud, color='#FFFFFF', point_size=10.,
                  render_points_as_spheres=True)
-plotter.add_mesh(r5_cloud, color='grey', point_size=10.,
+test1 = plotter.add_mesh(r5_cloud, color='grey', point_size=10.,
                  render_points_as_spheres=True)
 plotter.show_grid()
-plotter.show()
 
+# renderer = pv.Renderer(test1)
+# renderer.set_background("white")
+# # renderer.remove_actor(test1)
+# renderer.add_axes_at_origin()
+# # renderer.clear()
+
+# plotter.render()
+
+plotter.show()
 
 # # x = np.array([[0,0,0],[1,0,0], [1,1,0]])
 # # print(x.shape)
