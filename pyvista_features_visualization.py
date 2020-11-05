@@ -6,26 +6,17 @@ from functools import lru_cache
 import string
 import pandas as pd
 from glob import glob
-
-import calculate_alf
-from glob import glob
-import pyvista as pv
 from itertools import cycle
-import numpy as np
-
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 #os.environ["QT_API"] = "pyside2"
 # http://qtdocs.pyvista.org/usage.html
 import os
 import sys
 os.environ["QT_API"] = "pyqt5"
-
 from qtpy import QtWidgets
 from qtpy.QtWidgets import QMainWindow
 import pyvista as pv
 from pyvistaqt import QtInteractor
-
-import numpy as np
 
 ###############################################################################
 #                                XYZ FILE PARSING
@@ -605,12 +596,14 @@ class XYZArrays:
         # firist three features account for 3 atoms (central atom, atom that defines x axis, and atom that defines 
         # xy plane. Therefore do not have to iterate over them)
         n_remaining_atoms = self.n_atoms - 3
-        i,j,k = 3, 3, 3
+        i,j,k = 3, 4, 5
         xyz_atoms_list = []
 
         for _ in range(n_remaining_atoms):
 
             r_data = one_atom[:,[i]] # vector of r distances (n_pointsx1)
+            print(r_data)
+            exit()
             theta_data = one_atom[:,[j]] # vector of thetas (n_pointsx1)
             phi_data = one_atom[:,[k]] # vector of phis (n_pointsx1)
             xx = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.cos(phi_data))
@@ -633,14 +626,43 @@ class XYZArrays:
 #                       PYVISTA/ QT PLOTTING TOOL
 #########################################################################
 
+class PyvistaVisual:
 
+    def __init__(self, all_atoms__4d_array, atom_names, parent=None, show=True):
 
+        QtWidgets.QMainWindow.__init__(self, parent)
 
+        self.setWindowTitle("ALF Visualization Tool")
 
+        self.all_atoms_4d_array = all_atoms__4d_array
+        self.atom_to_plot = 0
+        self.atom_names = atom_names
 
+        # create the Qt frame for pyvista meshes
+        self.frame = QtWidgets.QFrame()
+        self.vlayout = QtWidgets.QVBoxLayout()
+        self.frame.setLayout(self.vlayout) 
+        # add the pyvista Qt interactor object, gives same functionality as pyvista Plotter() class
+        # but when using Qt interface
+        self.plotter = QtInteractor(self.frame)
+        self.vlayout.addWidget(self.plotter.interactor)
+        # QMainWindow.setCentralWidget(widget), sets given widges as the window's central widget
+        self.setCentralWidget(self.frame)
 
+        # simple menu to demo functions
+        mainMenu = self.menuBar()
+        fileMenu = mainMenu.addMenu('File')
+        exitButton = QtWidgets.QAction('Exit', self)
+        exitButton.setShortcut('Ctrl+Q')
+        exitButton.triggered.connect(self.close)
+        fileMenu.addAction(exitButton)
 
+    def add_atom_data(self, atom):
+        """ add a sphere to the pyqt frame """
 
+        self.plotter.add_mesh(self.data, show_edges=True)
+        self.plotter.reset_camera()
+        
 
 if __name__ == "__main__":
 
@@ -660,11 +682,24 @@ if __name__ == "__main__":
 
     system_as_xyz = XYZArrays(all_atom_features, atom_names)
 
-    print(system_as_xyz.all_atom_4d_array)
+    # print(system_as_xyz.all_atom_4d_array)
 
+data = system_as_xyz.all_atom_4d_array[0,1]
+center = np.array((0,0,0))
 
+print(data)
 
+cloud = pv.PolyData(data)
+center = pv.PolyData(center)
 
+plotter = pv.Plotter()
+plotter.add_mesh(cloud, color="blue", point_size=10.,
+                 render_points_as_spheres=True)
+plotter.add_mesh(center, color="red", point_size=20.,
+                 render_points_as_spheres=True)
+
+plotter.show_grid()
+plotter.show()
 
 
 
