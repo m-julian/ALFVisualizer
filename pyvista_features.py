@@ -1,5 +1,4 @@
 import calculate_alf
-import dearpygui.core, dearpygui.simple
 from glob import glob
 import pyvista as pv
 from itertools import cycle
@@ -36,11 +35,11 @@ else:
 
 # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
 all_atom_features, atom_names = calculate_alf.features_and_atom_names(xyz_file)
-
-atom_colors = dict(zip(atom_names, cycle(colors)))
+atom_colors = dict(zip(atom_names, cycle(colors))) # initialize atom colors
 
 class XYZArrays:
-    """ Creates a 3D array for each atom (so 1 4D array) on which the ALF is centered. Each 2D array in the 3D array
+    """ Class for converting to Cartesian space. 
+    Creates a 3D array for each atom on which the ALF is centered (1 4D array total). Each 2D array in the 3D array
     consists of N_pointsx3 (because each point has x,y,z coords in 3D space) matrices, where each matrix contains
     the xyz coordinates of every atom that is NOT the atom on which the ALF is centered."""
 
@@ -49,7 +48,7 @@ class XYZArrays:
         self.all_atom_features = all_atom_features
         self.atom_names = atom_names
         self.n_atoms, self.n_points, self.n_features = all_atom_features.shape
-        self.all_atom_4D_array = self.stack_one_atom_xyz_3D_arrays()
+        self.all_atom_4d_array = self.stack_one_atom_xyz_3D_arrays()
 
     def stack_one_atom_xyz_3D_arrays(self):
         """Iterates over all the atoms in the molecule. Every atom can be used as center for ALF. 
@@ -84,9 +83,9 @@ class XYZArrays:
         # finally we can stack these 3D arrays into one 4D array, which will contain all the info needed
         # for plotting every atom as the ALF center. This 4D array will be stored and then if can be used
         # to quickly remove/add atoms in the visualization
-        all_atom_4D_array = np.stack([i for i in all_other_atom_3D_arrays])
+        all_atom_4d_array = np.stack([i for i in all_other_atom_3D_arrays])
 
-        return all_atom_4D_array
+        return all_atom_4d_array
 
     def get_xy_plane_atom_3d_array(self, one_atom):
 
@@ -148,14 +147,38 @@ class XYZArrays:
         return polar_atoms_xyz_matrix
 
 
+class GuiTool:
+    """ Class handling dearpygui user interface"""
+
+    def __init__(self, atom_names, current_central_atom):
+        """ atom_names: list of atom names in molecule"""
+
+        self.atom_names = atom_names
+        self.n_atoms = len(atom_names)
+        self.current_central_atom = atom_names[0] # inialize to first atom in molecule
+        self.atoms_to_show = atom_names.remove(self.current_central_atom)
+
+    def switch_central_atom(self, new_central_atom):
+
+        self.current_central_atom = new_central_atom
+
+    def remove_unwanted_atoms(self, atoms_to_remove):
+
+        pass
+
 class PlottingTool:
+    """ Class for pyvista visualizaton of ALF"""
 
-    def __init__(self, )
+    def __init__(self, center_atom, atoms_to_plot, all_atom_4d_array):
+        """ center_atom: atom on which ALF is centered
+        atoms_to_plot: atoms to plot in pyvista visualization
+        all_atom_4d_array: the 4d array created in XYZArrays class"""
 
+        self.center_atom = center_atom
+        self.atoms_to_plot = atoms_to_plot
 
+if __name__ == "__main__":
 
+    system_as_xyz = XYZArrays(all_atom_features, atom_names)
 
-
-alf_system_as_xyz = XYZArrays(all_atom_features, atom_names)
-
-print(alf_system_as_xyz.all_atom_4D_array[0])
+    print(system_as_xyz.all_atom_4d_array)
