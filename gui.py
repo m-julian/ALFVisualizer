@@ -7,6 +7,7 @@ os.environ["QT_API"] = "pyqt5"
 
 from qtpy import QtWidgets
 from qtpy.QtWidgets import QMainWindow
+import qtpy.QtCore as QtCore
 import pyvista as pv
 from pyvistaqt import QtInteractor
 
@@ -20,16 +21,21 @@ class MainWindow(QMainWindow):
 
         self.data = data
 
-        # create the frame
-        self.frame = QtWidgets.QFrame()
-        vlayout = QtWidgets.QVBoxLayout()
+        splitter1 = QtWidgets.QSplitter(self)
+        splitter1.setOrientation(QtCore.Qt.Vertical)
+
+        self.leftframe = QtWidgets.QFrame(splitter1)
+        self.rightframe = QtWidgets.QFrame(splitter1)
+
+        vlayout = QtWidgets.QHBoxLayout()
 
         # add the pyvista interactor object
-        self.plotter = QtInteractor(self.frame)
+        self.plotter = QtInteractor(self.rightframe)
         vlayout.addWidget(self.plotter.interactor)
 
-        self.frame.setLayout(vlayout)
-        self.setCentralWidget(self.frame)
+        self.rightframe.setLayout(vlayout)
+
+        # self.setCentralWidget(self.frame)
 
         # simple menu to demo functions
         mainMenu = self.menuBar()
