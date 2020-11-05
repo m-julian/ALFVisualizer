@@ -7,7 +7,21 @@
 # WARNING! All changes made in this file will be lost!
 
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+# from PyQt5 import QtCore, QtGui, QtWidgets
+# import pyvista
+# import sys
+
+# Setting the Qt bindings for QtPy
+import os
+os.environ["QT_API"] = "pyqt5"
+
+from qtpy import QtWidgets, QtGui, QtCore
+from qtpy.QtWidgets import QMainWindow
+
+import numpy as np
+
+import pyvista as pv
+from pyvistaqt import QtInteractor
 
 
 class Ui_MainWindow(object):
@@ -90,7 +104,7 @@ class Ui_MainWindow(object):
         self.checkBox_4 = QtWidgets.QCheckBox(self.scrollAreaWidgetContents)
         self.checkBox_4.setObjectName("checkBox_4")
         self.gridLayout.addWidget(self.checkBox_4, 0, 1, 1, 1)
-        self.checkBox_5 = QtWidgets.QCheckBox(self.scrollAreaWidgetContents)
+        self.checkBox_5 = QtWidgets.QCheckBox(self.scrollAreaWidgetContents)    
         self.checkBox_5.setObjectName("checkBox_5")
         self.gridLayout.addWidget(self.checkBox_5, 1, 1, 1, 1)
         self.checkBox_6 = QtWidgets.QCheckBox(self.scrollAreaWidgetContents)
