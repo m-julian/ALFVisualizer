@@ -602,8 +602,6 @@ class XYZArrays:
         for _ in range(n_remaining_atoms):
 
             r_data = one_atom[:,[i]] # vector of r distances (n_pointsx1)
-            print(r_data)
-            exit()
             theta_data = one_atom[:,[j]] # vector of thetas (n_pointsx1)
             phi_data = one_atom[:,[k]] # vector of phis (n_pointsx1)
             xx = np.multiply(np.multiply(r_data,np.sin(theta_data)),np.cos(phi_data))
@@ -684,7 +682,7 @@ if __name__ == "__main__":
 
     # print(system_as_xyz.all_atom_4d_array)
 
-data = system_as_xyz.all_atom_4d_array[0,1]
+data = system_as_xyz.all_atom_4d_array[0]
 center = np.array((0,0,0))
 
 print(data)
