@@ -2,19 +2,13 @@
 
 # Form implementation generated from reading ui file 'better_ui.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.1
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
-import sys
 
-# Setting the Qt bindings for QtPy
-import os
-os.environ["QT_API"] = "pyqt5"
-from qtpy.QtWidgets import QMainWindow
-import numpy as np
-import pyvista as pv
-from pyvistaqt import QtInteractor
-from qtpy import QtCore, QtGui, QtWidgets
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -187,14 +181,6 @@ class Ui_MainWindow(object):
         self.frame.setObjectName("frame")
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.frame)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-
-        self.plotter = QtInteractor(self.frame)
-        self.horizontalLayout_3.addWidget(self.plotter.interactor)
-
-
-
-
-
         self.horizontalLayout_2.addWidget(self.frame)
         self.horizontalLayout.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -240,64 +226,12 @@ class Ui_MainWindow(object):
         self.menuOpen.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
 
-    def add_sphere(self):
-        sphere = pv.Sphere()
-        self.plotter.add_mesh(sphere, show_edges=True)
-        self.plotter.reset_camera()
-
 
 if __name__ == "__main__":
-
+    import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
-    ui.add_sphere()
     MainWindow.show()
     sys.exit(app.exec_())
-
-
-class MainWindow(QMainWindow):
-
-    def __init__(self, parent=None, show=True):
-        QtWidgets.QMainWindow.__init__(self, parent)
-
-        # create the frame
-        self.frame = QtWidgets.QFrame()
-        vlayout = QtWidgets.QVBoxLayout()
-
-        # add the pyvista interactor object
-        self.plotter = QtInteractor(self.frame)
-        vlayout.addWidget(self.plotter.interactor)
-
-        self.frame.setLayout(vlayout)
-        self.setCentralWidget(self.frame)
-
-        # simple menu to demo functions
-        mainMenu = self.menuBar()
-        fileMenu = mainMenu.addMenu('File')
-        exitButton = QtWidgets.QAction('Exit', self)
-        exitButton.setShortcut('Ctrl+Q')
-        exitButton.triggered.connect(self.close)
-        fileMenu.addAction(exitButton)
-
-        # allow adding a sphere
-        meshMenu = mainMenu.addMenu('Mesh')
-        self.add_sphere_action = QtWidgets.QAction('Add Sphere', self)
-        self.add_sphere_action.triggered.connect(self.add_sphere)
-        meshMenu.addAction(self.add_sphere_action)
-
-        if show:
-            self.show()
-
-    def add_sphere(self):
-        """ add a sphere to the pyqt frame """
-        sphere = pv.Sphere()
-        self.plotter.add_mesh(sphere, show_edges=True)
-        self.plotter.reset_camera()
-
-
-# if __name__ == '__main__':
-#     app = QtWidgets.QApplication(sys.argv)
-#     window = MainWindow()
-#     sys.exit(app.exec_())

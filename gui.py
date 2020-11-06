@@ -16,26 +16,20 @@ import numpy as np
 class MainWindow(QMainWindow):
 
     def __init__(self, data, parent=None, show=True):
-
         QtWidgets.QMainWindow.__init__(self, parent)
 
         self.data = data
 
-        splitter1 = QtWidgets.QSplitter(self)
-        splitter1.setOrientation(QtCore.Qt.Vertical)
-
-        self.leftframe = QtWidgets.QFrame(splitter1)
-        self.rightframe = QtWidgets.QFrame(splitter1)
-
-        vlayout = QtWidgets.QHBoxLayout()
+        # create the frame
+        self.frame = QtWidgets.QFrame()
+        vlayout = QtWidgets.QVBoxLayout()
 
         # add the pyvista interactor object
-        self.plotter = QtInteractor(self.rightframe)
+        self.plotter = QtInteractor(self.frame)
         vlayout.addWidget(self.plotter.interactor)
 
-        self.rightframe.setLayout(vlayout)
-
-        # self.setCentralWidget(self.frame)
+        self.frame.setLayout(vlayout)
+        self.setCentralWidget(self.frame)
 
         # simple menu to demo functions
         mainMenu = self.menuBar()
@@ -47,15 +41,18 @@ class MainWindow(QMainWindow):
 
         # allow adding a sphere
         meshMenu = mainMenu.addMenu('Mesh')
-        self.add_points_action = QtWidgets.QAction('Add Sphere', self)
-        self.add_ponts_action2 = QtWidgets.QAction('Remove Sphere', self)
-        self.add_points_action.triggered.connect(self.add_data)
-        self.add_ponts_action2.triggered.connect(self.remove_data)
-        meshMenu.addAction(self.add_points_action)
-        meshMenu.addAction(self.add_ponts_action2)
+        self.add_sphere_action = QtWidgets.QAction('Add Sphere', self)
+        self.add_sphere_action.triggered.connect(self.add_sphere)
+        meshMenu.addAction(self.add_sphere_action)
 
         if show:
             self.show()
+
+    def add_sphere(self):
+        """ add a sphere to the pyqt frame """
+        # sphere = pv.Sphere()
+        self.plotter.add_mesh(self.data, show_edges=True)
+        self.plotter.reset_camera()
 
     def add_data(self):
         """ add a sphere to the pyqt frame """
