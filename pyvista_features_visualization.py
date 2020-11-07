@@ -670,7 +670,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.start_alf_vis_ui()
-        self.ui.atom_names_combo.currentIndexChanged.connect(self.update_data_to_plot)
+        self.ui.atom_names_combo.currentIndexChanged.connect(self.update_data_and_plot)
 
     def start_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
@@ -710,7 +710,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.plotter.reset_camera()
 
     @clear_plot_add_grid
-    def update_data_to_plot(self):
+    def update_data_and_plot(self):
         """ Updates central atom (always at 0,0,0 but can update color if different atom) as 
         well as updates non central atom data"""
 
@@ -742,9 +742,13 @@ class VisualizationWindow(Ui_BaseClass):
 
         data = np.array([0,0,0])
         data = pv.PolyData(data)
-        self.plotter.add_mesh(data, color=self.current_central_atom_color, point_size=20, render_points_as_spheres=True)
-        self.plotter.add_mesh(self.datablock, multiple_colors=True, render_points_as_spheres=True)
-
+        self.plotter.add_mesh(data, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
+        noncentral_atom_colors = []
+        for noncentral_atom_name in self.current_non_central_atom_names:
+            noncentral_atom_color = self.atom_colors.get(noncentral_atom_name)
+            noncentral_atom_colors.append(noncentral_atom_color)
+        print(noncentral_atom_colors)
+        self.plotter.add_mesh(self.datablock, cmap=noncentral_atom_colors, point_size=10, render_points_as_spheres=True)
 
 if __name__ == "__main__":
 
