@@ -13,16 +13,17 @@ from itertools import cycle
 import os
 import sys
 os.environ["QT_API"] = "pyqt5"
-from qtpy import QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtWidgets import QMainWindow
 import pyvista as pv
 from pyvistaqt import QtInteractor
+from qtpy import uic
+# import matplotlib
 
 ###############################################################################
 #                                XYZ FILE PARSING
 # TAKES .XYZ TRAJECTORY FILE AND CALCULATES FEATURES OF EACH ATOM IN EACH POINT 
 ###############################################################################
-
 
 type2mass = {'H': 1.007825, 'He': 4.002603, 'Li': 7.016005, 'Be': 9.012182, 'B': 11.009305, 'C': 12.0,
              'N': 14.003074, 'O': 15.994915, 'F': 18.998403, 'Ne': 19.99244, 'Na': 22.989769, 'Mg': 23.985042,
@@ -509,6 +510,7 @@ colors = ['#F0F8FF', '#FAEBD7', '#00FFFF', '#7FFFD4', '#F0FFFF', '#F5F5DC',
     '#2E8B57', '#FFF5EE', '#A0522D', '#C0C0C0', '#87CEEB', '#6A5ACD', '#708090', '#708090', '#FFFAFA', '#00FF7F',
     '#4682B4', '#D2B48C', '#008080', '#D8BFD8', '#FF6347', '#40E0D0', '#EE82EE', '#F5DEB3', '#FFFFFF', '#F5F5F5',
     '#FFFF00', '#9ACD32']
+# colors = iter(colors)
 
 class XYZArrays:
     """ Class for converting to Cartesian space. 
@@ -623,44 +625,76 @@ class XYZArrays:
 #########################################################################
 #                       PYVISTA/ QT PLOTTING TOOL
 #########################################################################
+Ui_MainWindow, Ui_BaseClass = uic.loadUiType("less_complex.ui")
 
-class PyvistaVisual:
+class VisualizationWindow(Ui_BaseClass):
 
-    def __init__(self, all_atoms__4d_array, atom_names, parent=None, show=True):
+    def __init__(self, all_atom_4d_array, atom_names):
 
-        QtWidgets.QMainWindow.__init__(self, parent)
+        super().__init__()
 
-        self.setWindowTitle("ALF Visualization Tool")
-
-        self.all_atoms_4d_array = all_atoms__4d_array
-        self.atom_to_plot = 0
+        self.all_atom_4d_array = all_atom_4d_array
         self.atom_names = atom_names
+        self.current_central_atom = 0
 
-        # create the Qt frame for pyvista meshes
-        self.frame = QtWidgets.QFrame()
-        self.vlayout = QtWidgets.QVBoxLayout()
-        self.frame.setLayout(self.vlayout) 
-        # add the pyvista Qt interactor object, gives same functionality as pyvista Plotter() class
-        # but when using Qt interface
-        self.plotter = QtInteractor(self.frame)
-        self.vlayout.addWidget(self.plotter.interactor)
-        # QMainWindow.setCentralWidget(widget), sets given widges as the window's central widget
-        self.setCentralWidget(self.frame)
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
 
-        # simple menu to demo functions
-        mainMenu = self.menuBar()
-        fileMenu = mainMenu.addMenu('File')
-        exitButton = QtWidgets.QAction('Exit', self)
-        exitButton.setShortcut('Ctrl+Q')
-        exitButton.triggered.connect(self.close)
-        fileMenu.addAction(exitButton)
+        self.start_alf_vis_ui()
+        self.plot_alf_center_atom_data()
 
-    def add_atom_data(self, atom):
-        """ add a sphere to the pyqt frame """
+        self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom)
 
-        self.plotter.add_mesh(self.data, show_edges=True)
+    def start_alf_vis_ui(self):
+
+        self._start_pyvista_plotter()
+        self._start_combo_atom_names()
+        self.plot_alf_center_atom()
+
+    def _start_pyvista_plotter(self):
+
+        self.plotter = QtInteractor(self.ui.pyvista_frame)
+        self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
+        self.plotter.show_grid()
+
+    def _start_combo_atom_names(self):
+
+        self.ui.atom_names_combo.addItems(self.atom_names)
+
+    def update_central_atom(self):
+
+        # print(self.ui.atom_names_combo.currentIndex())
+        self.plotter.clear()
+
+        self.current_central_atom = self.ui.atom_names_combo.currentIndex()
+        self.plot_alf_center_atom()
+        data = self.all_atom_4d_array[self.current_central_atom]
+        data = pv.PolyData(data)
+        self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
+        self.plotter.show_grid()
+        # self.plotter.reset_camera()
+
+    def plot_alf_center_atom(self):
+
+        data = np.array([0,0,0])
+        data = pv.PolyData(data)
+        self.plotter.add_mesh(data, color="red", point_size=20, render_points_as_spheres=True)
+
+    def plot_alf_center_atom_data(self):
+
+        data = self.all_atom_4d_array[0]
+        data = pv.PolyData(data)
+        self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
         self.plotter.reset_camera()
-        
+
+        # data = pv.PolyData(data)
+        # sphere = pv.Sphere()
+        # for atom_data in data:
+        #     atom_data = pv.PolyData(atom_data)
+        #     color = next(colors)
+        #     print(color)
+        #     self.plotter.add_mesh(atom_data, show_edges=True, color=color, render_points_as_spheres=True)
+        # self.plotter.reset_camera()
 
 if __name__ == "__main__":
 
@@ -682,22 +716,30 @@ if __name__ == "__main__":
 
     # print(system_as_xyz.all_atom_4d_array)
 
-data = system_as_xyz.all_atom_4d_array[0]
-center = np.array((0,0,0))
+    app = QtWidgets.QApplication(sys.argv)
+    main_window = VisualizationWindow(system_as_xyz.all_atom_4d_array, atom_names)
+    main_window.show()
 
-print(data)
+    app.exec_()
 
-cloud = pv.PolyData(data)
-center = pv.PolyData(center)
 
-plotter = pv.Plotter()
-plotter.add_mesh(cloud, color="blue", point_size=10.,
-                 render_points_as_spheres=True)
-plotter.add_mesh(center, color="red", point_size=20.,
-                 render_points_as_spheres=True)
 
-plotter.show_grid()
-plotter.show()
+# data = system_as_xyz.all_atom_4d_array[0]
+# center = np.array((0,0,0))
+
+# print(data)
+
+# cloud = pv.PolyData(data)
+# center = pv.PolyData(center)
+
+# plotter = pv.Plotter()
+# plotter.add_mesh(cloud, color="blue", point_size=10.,
+#                  render_points_as_spheres=True)
+# plotter.add_mesh(center, color="red", point_size=20.,
+#                  render_points_as_spheres=True)
+
+# plotter.show_grid()
+# plotter.show()
 
 
 
