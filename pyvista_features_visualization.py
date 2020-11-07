@@ -658,13 +658,30 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.all_atom_4d_array = all_atom_4d_array
         self.atom_names = atom_names
-        self.current_central_atom = 0
+
+        # used to initialize UI to plot first central alf atom (based on index, ex. C1, O1, etc.)
+        self.current_central_atom_index = 0
+        self.current_central_atom_name = atom_names[0]
+        self.removed_central_atom_name = atom_names.pop(0)
+        self.current_non_central_atom_names = [i for i in self.atom_names if i != self.removed_central_atom_name]
+
+        # initialize pyvista MultiBlock so that individual atom arrays can be labeled based on their names
+        self.data_block = pv.MultiBlock()
+
+        # test = dict(zip(self.current_non_central_atoms, self.all_atom_4d_array[0]))
+        # self.data_block.append
+        data = {}
+        for idx, non_central_atom_coords in enumerate(self.all_atom_4d_array[0]):
+
+            data[self.current_non_central_atom_names[idx]] =  pv.PolyData(non_central_atom_coords)
+
+        print(data)
+
+        datablock = pv.MultiBlock(data)
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
         self.start_alf_vis_ui()
-
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom)
 
     def start_alf_vis_ui(self):
@@ -707,25 +724,13 @@ class VisualizationWindow(Ui_BaseClass):
     @clear_plot_add_grid
     def update_central_atom(self):
         """ method used to update the central ALF atom, depending on selected atom in combo box"""
-        # self.plotter.clear()
 
         self.current_central_atom = self.ui.atom_names_combo.currentIndex() # Index starts at 0, can use index to plot one atom 3D array from the all_atom_4d_array
         self._plot_alf_center_atom()
         data = self.all_atom_4d_array[self.current_central_atom]
         data = pv.PolyData(data)
         self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
-        # self.plotter.show_grid()
         # self.plotter.reset_camera()
-
-        # data = pv.PolyData(data)
-        # sphere = pv.Sphere()
-        # for atom_data in data:
-        #     atom_data = pv.PolyData(atom_data)
-        #     color = next(colors)
-        #     print(color)
-        #     self.plotter.add_mesh(atom_data, show_edges=True, color=color, render_points_as_spheres=True)
-        # self.plotter.reset_camera()
-
 
 if __name__ == "__main__":
 
@@ -745,85 +750,8 @@ if __name__ == "__main__":
 
     system_as_xyz = XYZArrays(all_atom_features, atom_names)
 
-    # print(system_as_xyz.all_atom_4d_array)
-
     app = QtWidgets.QApplication(sys.argv)
     main_window = VisualizationWindow(system_as_xyz.all_atom_4d_array, atom_names)
     main_window.show()
 
     app.exec_()
-
-
-
-# data = system_as_xyz.all_atom_4d_array[0]
-# center = np.array((0,0,0))
-
-# print(data)
-
-# cloud = pv.PolyData(data)
-# center = pv.PolyData(center)
-
-# plotter = pv.Plotter()
-# plotter.add_mesh(cloud, color="blue", point_size=10.,
-#                  render_points_as_spheres=True)
-# plotter.add_mesh(center, color="red", point_size=20.,
-#                  render_points_as_spheres=True)
-
-# plotter.show_grid()
-# plotter.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# class GuiTool:
-#     """ Class handling dearpygui user interface"""
-
-#     def __init__(self, atom_names, current_central_atom):
-#         """ atom_names: list of atom names in molecule"""
-
-#         self.atom_names = atom_names
-#         self.n_atoms = len(atom_names)
-#         self.current_central_atom = atom_names[0] # inialize to first atom in molecule
-#         self.atoms_to_show = atom_names.remove(self.current_central_atom)
-
-#     def switch_central_atom(self, new_central_atom):
-
-#         self.current_central_atom = new_central_atom
-
-#     def remove_unwanted_atoms(self, atoms_to_remove):
-
-#         pass
-
-# class PlottingTool:
-#     """ Class for pyvista visualizaton of ALF"""
-
-#     def __init__(self, center_atom, atoms_to_plot, all_atom_4d_array):
-#         """ center_atom: atom on which ALF is centered
-#         atoms_to_plot: atoms to plot in pyvista visualization
-#         all_atom_4d_array: the 4d array created in XYZArrays class"""
-
-#         self.center_atom = center_atom
-#         self.atoms_to_plot = atoms_to_plot
-
-# if __name__ == "__main__":
-
-#     system_as_xyz = XYZArrays(all_atom_features, atom_names)
-
-#     print(system_as_xyz.all_atom_4d_array)
