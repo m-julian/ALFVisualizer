@@ -652,37 +652,25 @@ class VisualizationWindow(Ui_BaseClass):
     #         self.plotter.show_grid()
 
 
-    def __init__(self, all_atom_4d_array, atom_names):
+    def __init__(self, all_atom_4d_array, atom_names, atom_colors):
 
         super().__init__()
 
         self.all_atom_4d_array = all_atom_4d_array
         self.atom_names = atom_names
+        self.atom_colors = atom_colors
 
         # used to initialize UI to plot first central alf atom (based on index, ex. C1, O1, etc.)
         self.current_central_atom_index = 0
         self.current_central_atom_name = atom_names[0]
-        self.removed_central_atom_name = atom_names.pop(0)
-        self.current_non_central_atom_names = [i for i in self.atom_names if i != self.removed_central_atom_name]
+        self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
 
-        # initialize pyvista MultiBlock so that individual atom arrays can be labeled based on their names
-        self.data_block = pv.MultiBlock()
-
-        # test = dict(zip(self.current_non_central_atoms, self.all_atom_4d_array[0]))
-        # self.data_block.append
-        data = {}
-        for idx, non_central_atom_coords in enumerate(self.all_atom_4d_array[0]):
-
-            data[self.current_non_central_atom_names[idx]] =  pv.PolyData(non_central_atom_coords)
-
-        print(data)
-
-        datablock = pv.MultiBlock(data)
+        self.current_non_central_atom_names = [i for i in self.atom_names if i != self.current_central_atom_name]
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.start_alf_vis_ui()
-        self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom)
+        self.ui.atom_names_combo.currentIndexChanged.connect(self.update_data_to_plot)
 
     def start_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
@@ -691,8 +679,8 @@ class VisualizationWindow(Ui_BaseClass):
         self._start_pyvista_plotter()
         self._start_combo_atom_names()
         # plot first atom in molecule initially
-        self._plot_alf_center_atom()
-        self._plot_alf_center_atom_data()
+        self.plot_alf_center_atom()
+        self.plot_alf_noncentral_atom_data()
 
     def _start_combo_atom_names(self):
         """ method initializing atom names combo box from list of atom names"""
@@ -706,14 +694,14 @@ class VisualizationWindow(Ui_BaseClass):
         self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
         self.plotter.show_grid()
 
-    def _plot_alf_center_atom(self):
+    def plot_alf_center_atom(self):
         """ method initializing the first central ALF atom (always at 0,0,0)"""
 
         data = np.array([0,0,0])
         data = pv.PolyData(data)
-        self.plotter.add_mesh(data, color="red", point_size=20, render_points_as_spheres=True)
+        self.plotter.add_mesh(data, color=self.current_central_atom_color, point_size=20, render_points_as_spheres=True)
 
-    def _plot_alf_center_atom_data(self):
+    def plot_alf_noncentral_atom_data(self):
         """ method plotting data for first atom """
 
         data = self.all_atom_4d_array[0]
@@ -722,15 +710,41 @@ class VisualizationWindow(Ui_BaseClass):
         self.plotter.reset_camera()
 
     @clear_plot_add_grid
-    def update_central_atom(self):
+    def update_data_to_plot(self):
+        """ Updates central atom (always at 0,0,0 but can update color if different atom) as 
+        well as updates non central atom data"""
+
+        self.update_central_atom_data()
+        self.update_noncentral_atoms_data()
+        self.plot_updated_data()
+
+    def update_central_atom_data(self):
         """ method used to update the central ALF atom, depending on selected atom in combo box"""
 
-        self.current_central_atom = self.ui.atom_names_combo.currentIndex() # Index starts at 0, can use index to plot one atom 3D array from the all_atom_4d_array
-        self._plot_alf_center_atom()
-        data = self.all_atom_4d_array[self.current_central_atom]
+        self.current_central_atom_index = self.ui.atom_names_combo.currentIndex() # Index starts at 0, can use index to plot one atom 3D array from the all_atom_4d_array
+        self.current_central_atom_name = self.ui.atom_names_combo.currentText()
+        self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
+
+    def update_noncentral_atoms_data(self):
+
+        self.current_non_central_atom_names = [i for i in self.atom_names if i != self.current_central_atom_name]
+
+        data = {}
+        noncentral_data_to_plot = self.all_atom_4d_array[self.current_central_atom_index]
+        for idx, non_central_atom_coords in enumerate(noncentral_data_to_plot):
+
+            data[self.current_non_central_atom_names[idx]] =  pv.PolyData(non_central_atom_coords)
+
+        self.datablock = pv.MultiBlock(data)
+        print(self.datablock)
+
+    def plot_updated_data(self):
+
+        data = np.array([0,0,0])
         data = pv.PolyData(data)
-        self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
-        # self.plotter.reset_camera()
+        self.plotter.add_mesh(data, color=self.current_central_atom_color, point_size=20, render_points_as_spheres=True)
+        self.plotter.add_mesh(self.datablock, multiple_colors=True, render_points_as_spheres=True)
+
 
 if __name__ == "__main__":
 
@@ -751,7 +765,7 @@ if __name__ == "__main__":
     system_as_xyz = XYZArrays(all_atom_features, atom_names)
 
     app = QtWidgets.QApplication(sys.argv)
-    main_window = VisualizationWindow(system_as_xyz.all_atom_4d_array, atom_names)
+    main_window = VisualizationWindow(system_as_xyz.all_atom_4d_array, atom_names, atom_colors)
     main_window.show()
 
     app.exec_()
