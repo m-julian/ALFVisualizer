@@ -627,7 +627,30 @@ class XYZArrays:
 #########################################################################
 Ui_MainWindow, Ui_BaseClass = uic.loadUiType("less_complex.ui")
 
+def clear_plot_add_grid(original_method):
+
+    def wrapper(instance_reference):
+
+        instance_reference.plotter.clear()
+        original_method(instance_reference)
+        instance_reference.plotter.show_grid()
+
+    return wrapper
+
 class VisualizationWindow(Ui_BaseClass):
+
+    # class clear_plot_add_grid():
+
+    #     def __init__(self, original_method):
+
+    #         self.original_method = original_method
+
+    #     def __call__(self):
+
+    #         self.plotter.clear()
+    #         self.original_method()
+    #         self.plotter.show_grid()
+
 
     def __init__(self, all_atom_4d_array, atom_names):
 
@@ -641,51 +664,58 @@ class VisualizationWindow(Ui_BaseClass):
         self.ui.setupUi(self)
 
         self.start_alf_vis_ui()
-        self.plot_alf_center_atom_data()
 
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom)
 
     def start_alf_vis_ui(self):
+        """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
 
+        # initialize ui values and plotter
         self._start_pyvista_plotter()
         self._start_combo_atom_names()
-        self.plot_alf_center_atom()
+        # plot first atom in molecule initially
+        self._plot_alf_center_atom()
+        self._plot_alf_center_atom_data()
+
+    def _start_combo_atom_names(self):
+        """ method initializing atom names combo box from list of atom names"""
+
+        self.ui.atom_names_combo.addItems(self.atom_names)
 
     def _start_pyvista_plotter(self):
+        """ method to initialize pyvista plot"""
 
         self.plotter = QtInteractor(self.ui.pyvista_frame)
         self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
         self.plotter.show_grid()
 
-    def _start_combo_atom_names(self):
-
-        self.ui.atom_names_combo.addItems(self.atom_names)
-
-    def update_central_atom(self):
-
-        # print(self.ui.atom_names_combo.currentIndex())
-        self.plotter.clear()
-
-        self.current_central_atom = self.ui.atom_names_combo.currentIndex()
-        self.plot_alf_center_atom()
-        data = self.all_atom_4d_array[self.current_central_atom]
-        data = pv.PolyData(data)
-        self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
-        self.plotter.show_grid()
-        # self.plotter.reset_camera()
-
-    def plot_alf_center_atom(self):
+    def _plot_alf_center_atom(self):
+        """ method initializing the first central ALF atom (always at 0,0,0)"""
 
         data = np.array([0,0,0])
         data = pv.PolyData(data)
         self.plotter.add_mesh(data, color="red", point_size=20, render_points_as_spheres=True)
 
-    def plot_alf_center_atom_data(self):
+    def _plot_alf_center_atom_data(self):
+        """ method plotting data for first atom """
 
         data = self.all_atom_4d_array[0]
         data = pv.PolyData(data)
         self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
         self.plotter.reset_camera()
+
+    @clear_plot_add_grid
+    def update_central_atom(self):
+        """ method used to update the central ALF atom, depending on selected atom in combo box"""
+        # self.plotter.clear()
+
+        self.current_central_atom = self.ui.atom_names_combo.currentIndex() # Index starts at 0, can use index to plot one atom 3D array from the all_atom_4d_array
+        self._plot_alf_center_atom()
+        data = self.all_atom_4d_array[self.current_central_atom]
+        data = pv.PolyData(data)
+        self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
+        # self.plotter.show_grid()
+        # self.plotter.reset_camera()
 
         # data = pv.PolyData(data)
         # sphere = pv.Sphere()
@@ -695,6 +725,7 @@ class VisualizationWindow(Ui_BaseClass):
         #     print(color)
         #     self.plotter.add_mesh(atom_data, show_edges=True, color=color, render_points_as_spheres=True)
         # self.plotter.reset_camera()
+
 
 if __name__ == "__main__":
 
