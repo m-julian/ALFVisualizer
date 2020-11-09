@@ -48,6 +48,8 @@ dlpoly_weights =  {"H": 1.007975, "He": 4.002602, "Li": 6.9675, "Be": 9.0121831,
 
 
 class Trajectory:
+    """ Reads trajectory file"""
+
     def __init__(self, fname, read=False):
         self.fname = fname
         self._trajectory = []
@@ -56,6 +58,7 @@ class Trajectory:
             self.read()
     
     def read(self):
+        """ read in trajectory file (typically .xyz)"""
         with open(self.fname, "r") as f:
             atoms = Atoms()
             for line in f: # reads through lines in .xyz file
@@ -64,18 +67,17 @@ class Trajectory:
                 elif re.match(r"^\s+\d+$", line): # finds number of atoms in xyz file
                     natoms = int(line)
                     while len(atoms) < natoms:
+                        # add all atoms in a timestep to an instance of Atoms
                         line = next(f)
                         if re.match(r"\s*\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line): # if re finds atom type and x, y,z coordinates it will add to list
-                            atoms.add(line)
+                            atoms.add(line) # see class Atoms add method, line is a coordinate line
                     self.add(atoms)
                     atoms = Atoms()
-
-
-    def append(self, atoms):
-        self._trajectory.append(atoms)
     
     def add(self, atoms):
-        self.append(atoms)
+        """ each item in self._trajectory is of Atoms class,
+        printing self._trajectory prints out based on Atoms __str__ method"""
+        self._trajectory.append(atoms)
 
     @property
     def features(self):
@@ -89,13 +91,173 @@ class Trajectory:
     def nfeatures(self):
         return self[0].nfeatures
 
+    @property
+    def priorities(self):
+        return(Atoms.PRIORITIES)
+
     def __len__(self):
         return len(self._trajectory)
     
     def __getitem__(self, i):
         return self._trajectory[i]
 
+
+class Atoms:
+    """ Deals with 1 trajectory timestep / all atoms in a timestep"""
+    ALF = []
+    PRIORITIES = [] # simmilar to ALF variable but will also store info about atoms that are NOT used as x
+    # and xy plane. This will then be used to create a dictionary containing atoms and what needs to be plotted in
+    # the GUI
+
+    def __init__(self, atoms=None):
+        Atom.counter = it.count(1)
+        self._atoms = []
+
+        if not atoms is None:
+            self.add(atoms)
+
+    def add(self, atom):
+        """ adds an instance of Atom to _atoms"""
+        if isinstance(atom, str):
+            self._atoms.append(Atom(atom))
+        elif isinstance(atom, Atom):
+            self._atoms.append(atom)
+        elif isinstance(atom, (list, Atoms)):
+            for a in atom:
+                self.add(a)
+
+    @property
+    def priority(self):
+        return sum(self.masses)
+
+    @property
+    def max_priority(self):
+        prev_priorities = []
+        while True:
+            priorities = [atom.priority for atom in self]
+            if priorities.count(max(priorities)) == 1 or prev_priorities == priorities:
+                break
+            else:
+                prev_priorities = priorities
+        for atom in self:
+            atom.reset_level()
+        return self[priorities.index(max(priorities))]
+
+    @property
+    def masses(self):
+        return [atom.mass for atom in self]
+
+    @property
+    def atoms(self):
+        return [atom.atom_num for atom in self]
+
+    @property
+    def empty(self):
+        return len(self) == 0
+
+    def connect(self, iatom, jatom):
+        iatom.set_bond(jatom)
+        jatom.set_bond(iatom)
+
+    @property
+    @lru_cache()
+    def connectivity(self):
+        connectivity = np.zeros((len(self), len(self)))
+        for i, iatom in enumerate(self):
+            for j, jatom in enumerate(self):
+                if not iatom == jatom:
+                    max_dist = 1.2 * (iatom.radius + jatom.radius)
+
+                    if iatom.dist(jatom) < max_dist:
+                        connectivity[i][j] = 1
+                        self.connect(iatom, jatom)
+        return connectivity
+
+    def to_angstroms(self):
+        for atom in self:
+            atom.to_angstroms()
+
+    def to_bohr(self):
+        for atom in self:
+            atom.to_bohr()
+    
+    @property
+    def alf(self):
+        return [[iatom.num for iatom in atom.alf] for atom in self]
+
+    def calculate_alf(self):
+        self.connectivity
+        for iatom in self:
+            for alf_axis in range(2):
+                queue = iatom.bonds - iatom.alf
+                if queue.empty:
+                    for atom in iatom.bonds:
+                        queue.add(atom.bonds)
+                    queue -= iatom.alf
+                iatom.add_alf_atom(queue.max_priority)
+        Atoms.ALF = self.alf
+        Atoms.PRIORITIES = self.alf
+        for alf_atom in Atoms.PRIORITIES:
+            for n_atom in range(1,len(self)+1):
+                if n_atom in alf_atom:
+                    continue
+                else:
+                    alf_atom.append(n_atom)
+
+        self.set_alf()
+
+    def set_alf(self):
+        for atom, atom_alf in zip(self, Atoms.ALF):
+            atom.x_axis = self[atom_alf[1]-1]
+            atom.xy_plane = self[atom_alf[2]-1]
+
+    def calculate_features(self):
+        """ calculates features for atoms in one timestep"""
+        if not Atoms.ALF:
+            self.calculate_alf()
+        self.set_alf()
+        for atom in self:
+            atom.calculate_features(self)
+    
+    @property
+    def features(self):
+        try:
+            return self._features
+        except AttributeError:
+            self.calculate_features()
+            self._features = [atom.features for atom in self]
+            return self._features
+
+    @property
+    def nfeatures(self):
+        return len(self.features[0])
+    
+    def __len__(self):
+        return len(self._atoms)
+
+    def __delitem__(self, i):
+        del self._atoms[i]
+
+    def __getitem__(self, i):
+        return self._atoms[i]
+
+    def __str__(self):
+        return "\n".join([str(atom) for atom in self])
+
+    def __repr__(self):
+        return str(self)
+    
+    def __sub__(self, other):
+        for i, atom in enumerate(self):
+            for jatom in other:
+                if jatom == atom:
+                    del self[i]
+        return self
+
+
 class Atom:
+    """ Deals with 1 Atom / 1 Coordinate Line, self._atoms containts items of class Atom,
+    they are printed nicely because of the __str__ method of Atom class"""
     ang2bohr = 1.88971616463
     counter = it.count(1)
     def __init__(self, coordinate_line):
@@ -149,6 +311,11 @@ class Atom:
     def set_bond(self, jatom):
         if not jatom in self._bonds:
             self._bonds.append(jatom)
+
+    @property
+    def priority(self):
+        level = next(self.__level)
+        return self.get_priorty(level)
 
     def get_priorty(self, level):
         atoms = Atoms(self)
@@ -253,11 +420,6 @@ class Atom:
         self.z *= Atom.ang2bohr
 
     @property
-    def priority(self):
-        level = next(self.__level)
-        return self.get_priorty(level)
-
-    @property
     def bonds(self):
         return Atoms(self._bonds)
 
@@ -322,7 +484,7 @@ class Atom:
 
     def __str__(self):
         return f"{self.atom_type:<3s}{self.coordinates_string}"
-    
+
     def __repr__(self):
         return str(self)
     
@@ -333,147 +495,6 @@ class Atom:
         return hash(str(self.num) + str(self.coordinates_string))
 
 
-class Atoms:
-    ALF = []
-
-    def __init__(self, atoms=None):
-        Atom.counter = it.count(1)
-        self._atoms = []
-        self._connectivity = None
-
-        if not atoms is None:
-            self.add(atoms)
-
-    def add(self, atom):
-        if isinstance(atom, str):
-            self._atoms.append(Atom(atom))
-        elif isinstance(atom, Atom):
-            self._atoms.append(atom)
-        elif isinstance(atom, (list, Atoms)):
-            for a in atom:
-                self.add(a)
-
-    @property
-    def priority(self):
-        return sum(self.masses)
-
-    @property
-    def max_priority(self):
-        prev_priorities = []
-        while True:
-            priorities = [atom.priority for atom in self]
-            if priorities.count(max(priorities)) == 1 or prev_priorities == priorities:
-                break
-            else:
-                prev_priorities = priorities
-        for atom in self:
-            atom.reset_level()
-        return self[priorities.index(max(priorities))]
-
-    def __len__(self):
-        return len(self._atoms)
-
-    def __delitem__(self, i):
-        del self._atoms[i]
-
-    def __getitem__(self, i):
-        return self._atoms[i]
-    
-    @property
-    def masses(self):
-        return [atom.mass for atom in self]
-
-    @property
-    def atoms(self):
-        return [atom.atom_num for atom in self]
-
-    @property
-    def empty(self):
-        return len(self) == 0
-
-    def connect(self, iatom, jatom):
-        iatom.set_bond(jatom)
-        jatom.set_bond(iatom)
-
-    @property
-    @lru_cache()
-    def connectivity(self):
-        connectivity = np.zeros((len(self), len(self)))
-        for i, iatom in enumerate(self):
-            for j, jatom in enumerate(self):
-                if not iatom == jatom:
-                    max_dist = 1.2 * (iatom.radius + jatom.radius)
-
-                    if iatom.dist(jatom) < max_dist:
-                        connectivity[i][j] = 1
-                        self.connect(iatom, jatom)
-
-        return connectivity
-
-    def to_angstroms(self):
-        for atom in self:
-            atom.to_angstroms()
-
-    def to_bohr(self):
-        for atom in self:
-            atom.to_bohr()
-
-    def __str__(self):
-        return "\n".join([str(atom) for atom in self])
-
-    def __repr__(self):
-        return str(self)
-    
-    def __sub__(self, other):
-        # other = sorted(Atoms(other), key=lambda x: x.num, reverse=False)
-        for i, atom in enumerate(self):
-            for jatom in other:
-                if jatom == atom:
-                    del self[i]
-        return self
-    
-    @property
-    def alf(self):
-        return [[iatom.num for iatom in atom.alf] for atom in self]
-
-    def calculate_alf(self):
-        self.connectivity
-        for iatom in self:
-            for alf_axis in range(2):
-                queue = iatom.bonds - iatom.alf
-                if queue.empty:
-                    for atom in iatom.bonds:
-                        queue.add(atom.bonds)
-                    queue -= iatom.alf
-                iatom.add_alf_atom(queue.max_priority)
-        Atoms.ALF = self.alf
-        self.set_alf()
-
-    def set_alf(self):
-        # self._atoms = sorted(self._atoms, key=lambda x: x.num)
-        for atom, atom_alf in zip(self, Atoms.ALF):
-            atom.x_axis = self[atom_alf[1]-1]
-            atom.xy_plane = self[atom_alf[2]-1]
-
-    def calculate_features(self):
-        if not Atoms.ALF:
-            self.calculate_alf()
-        self.set_alf()
-        for atom in self:
-            atom.calculate_features(self)
-    
-    @property
-    def features(self):
-        try:
-            return self._features
-        except AttributeError:
-            self.calculate_features()
-            self._features = [atom.features for atom in self]
-            return self._features
-
-    @property
-    def nfeatures(self):
-        return len(self.features[0])
 
 def features_and_atom_names(xyz_file):
     """ Returns features as 3D array, [atom][point][feature]
@@ -483,9 +504,15 @@ def features_and_atom_names(xyz_file):
     trajectory = Trajectory(xyz_file, read=True)
     features = trajectory.features # features[point][atom][feature]
     features = np.swapaxes(features, 0, 1) # features[atom][point][feature]
-    atom_names = trajectory.atom_names
 
-    return features, atom_names
+    atom_names = trajectory.atom_names
+    numbered_priorities = trajectory.priorities
+    # map the numbered priorities to actual names of atoms
+    atom_name_priorities = [list(map(lambda i: atom_names[i-1], prio)) for prio in numbered_priorities]
+    for atom_names in atom_name_priorities:
+        del atom_names[0]
+
+    return features, atom_names, atom_name_priorities
 
 ########################################################################
 #                     CREATING 4D ARRAY TO PLOT
@@ -628,50 +655,51 @@ class XYZArrays:
 #########################################################################
 Ui_MainWindow, Ui_BaseClass = uic.loadUiType("less_complex.ui")
 
-def clear_plot_add_grid(original_method):
+class VisualizationWindowDecorators:
 
-    def wrapper(instance_reference):
+    @staticmethod
+    def clear_plot_add_grid(original_method):
 
-        instance_reference.plotter.clear()
-        original_method(instance_reference)
-        instance_reference.plotter.show_grid()
+        def wrapper(instance_reference):
 
-    return wrapper
+            instance_reference.plotter.clear()
+            original_method(instance_reference)
+            instance_reference.plotter.show_grid()
+
+        return wrapper
+
 
 class VisualizationWindow(Ui_BaseClass):
-
-    # class clear_plot_add_grid():
-
-    #     def __init__(self, original_method):
-
-    #         self.original_method = original_method
-
-    #     def __call__(self):
-
-    #         self.plotter.clear()
-    #         self.original_method()
-    #         self.plotter.show_grid()
-
 
     def __init__(self, all_atom_4d_array, atom_names, atom_colors):
 
         super().__init__()
 
         self.all_atom_4d_array = all_atom_4d_array
-        self.atom_names = atom_names
-        self.atom_colors = atom_colors
+        self.atom_names = atom_names # list of atom names
+        self.atom_colors = atom_colors #dict of atom:color
+        print(self.atom_colors)
 
         # used to initialize UI to plot first central alf atom (based on index, ex. C1, O1, etc.)
         self.current_central_atom_index = 0
         self.current_central_atom_name = atom_names[0]
         self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
-
         self.current_non_central_atom_names = [i for i in self.atom_names if i != self.current_central_atom_name]
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.start_alf_vis_ui()
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_data_and_plot)
+
+    # def clear_plot_add_grid(original_method):
+
+    #     def wrapper(self):
+
+    #         self.plotter.clear()
+    #         original_method(self)
+    #         self.plotter.show_grid()
+
+    #     return wrapper
 
     def start_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
@@ -710,7 +738,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.plotter.add_mesh(data, show_edges=True, render_points_as_spheres=True)
         self.plotter.reset_camera()
 
-    @clear_plot_add_grid
+    @VisualizationWindowDecorators.clear_plot_add_grid
     def update_data_and_plot(self):
         """ Updates central atom (always at 0,0,0 but can update color if different atom) as 
         well as updates non central atom data"""
@@ -770,7 +798,7 @@ if __name__ == "__main__":
         xyz_file = xyz_files[int(input())-1]
 
     # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
-    all_atom_features, atom_names = features_and_atom_names(xyz_file)
+    all_atom_features, atom_names, atom_name_priorities = features_and_atom_names(xyz_file)
     atom_colors = dict(zip(atom_names, cycle(colors))) # initialize atom colors
 
     system_as_xyz = XYZArrays(all_atom_features, atom_names)
