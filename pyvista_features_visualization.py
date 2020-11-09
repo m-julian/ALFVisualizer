@@ -673,7 +673,6 @@ class VisualizationWindowDecorators:
 
         return wrapper
 
-
 class VisualizationWindow(Ui_BaseClass):
 
     def __init__(self, all_atom_dict, atom_names, atom_colors):
@@ -694,16 +693,15 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.start_alf_vis_ui()
+        self._start_alf_vis_ui()
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_data_and_plot)
 
-    def start_alf_vis_ui(self):
+    def _start_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
 
         # initialize ui values and plotter
         self._start_combo_central_atom_names()
         self._start_pyvista_plotter()
-        
         # plot first atom in molecule initially
         self._plot_initial_data()
 
@@ -725,10 +723,12 @@ class VisualizationWindow(Ui_BaseClass):
         center = pv.PolyData(self.center)
         self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=25, render_points_as_spheres=True)
 
+
+        print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
+
         for block in self.current_datablock.keys():
             color = self.atom_colors.get(block)
-            
-            print(block, color)
+            print(f"Noncentral atom:{block}, color:{color}")
             self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
 
     @VisualizationWindowDecorators.clear_plot_add_grid
@@ -754,10 +754,10 @@ class VisualizationWindow(Ui_BaseClass):
     def plot_updated_data(self):
         """ plots data after an update to central ALF atom"""
 
-        data = np.array([0,0,0])
-        data = pv.PolyData(data)
-        self.plotter.add_mesh(data, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
+        center = pv.PolyData(self.center)
+        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
 
+        print()
         print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
         for block in self.current_datablock.keys():
             color = self.atom_colors.get(block)
