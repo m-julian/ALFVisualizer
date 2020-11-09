@@ -509,8 +509,12 @@ def features_and_atom_names(xyz_file):
     numbered_priorities = trajectory.priorities
     # map the numbered priorities to actual names of atoms
     atom_name_priorities = [list(map(lambda i: atom_names[i-1], prio)) for prio in numbered_priorities]
-    for atom_names in atom_name_priorities:
-        del atom_names[0]
+    for atom_name_prio in atom_name_priorities:
+        del atom_name_prio[0]
+    
+    numbered_priorities =  [list(map(lambda i: i-1, prio)) for prio in numbered_priorities]
+    for numbered_prio in numbered_priorities:
+        del numbered_prio[0]
 
     return features, atom_names, atom_name_priorities
 
@@ -798,10 +802,38 @@ if __name__ == "__main__":
         xyz_file = xyz_files[int(input())-1]
 
     # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
-    all_atom_features, atom_names, atom_name_priorities = features_and_atom_names(xyz_file)
+    all_atom_features, atom_names, atoms_names_priorities = features_and_atom_names(xyz_file)
     atom_colors = dict(zip(atom_names, cycle(colors))) # initialize atom colors
 
-    system_as_xyz = XYZArrays(all_atom_features, atom_names)
+    print(atom_names)
+    print(atoms_numbered_priorities)
+    print(atoms_names_priorities)
+
+    system_as_xyz = XYZArrays(all_atom_features, atom_names) # gives 4D numpy array
+
+    total_dict = {} # dictionary of dictionaries, ordered as {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}, 
+    # "H2": {"C1":xyz_array, "O3":xyz_array.......}........,"H6":{"O3":xyz_array, "C1":xyz_array}
+    # the ordering is {central_atom1: {x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array ..... },
+    #  central_atom2:{x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array, ..... }....}
+    # this was done to keep track of colors (which cannot really be done using np arrays)
+
+    xyz_dict = {} # this dict keeps inner dictionaries from the total_array such as {"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
+    # it gets reset after every iteration of the loop to move onto the next atom center
+
+
+    # iterate over central atoms, their respective 3D array of other atoms as xyz coords, as well as the priorities of these xyz atoms (i.e which is
+    # x axis, which is xy plane etc.)
+    for center_atom, center_atom_xyzs, atom_numbers_prio, atom_names_prio in zip(atom_names, system_as_xyz.all_atom_4d_array, atoms_numbered_priorities, atoms_names_priorities):
+        # C1  #C1 non central atom 3D array # O3, H2, H4, H5, H6 # 2, 1, 3, 4, 5
+        print(center_atom_xyzs.shape)
+        for idx, atom_name_prio in enumerate(atom_names_prio):
+            #  0 O3, 1 H2, etc. used to get out the individual 2d arrays which are ordered as 
+            # x axis, xy plane, and then all atoms in polar coords
+            print(idx, atom_name_prio)
+            xyz_dict[atom_name_prio] = center_atom_xyzs[idx]
+        
+        total_dict[center_atom] = xyz_dict
+        xyz_dict = {}
 
     app = QtWidgets.QApplication(sys.argv)
     main_window = VisualizationWindow(system_as_xyz.all_atom_4d_array, atom_names, atom_colors)
