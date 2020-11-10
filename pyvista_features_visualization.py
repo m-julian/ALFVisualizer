@@ -525,25 +525,25 @@ def features_and_atom_names(xyz_file):
 ########################################################################
 
 # could not install matplotlib due to package conflicts, this list consists of colors from matplitlib
-colors = ['#F0F8FF', '#FAEBD7', '#00FFFF', '#7FFFD4', '#F0FFFF', '#F5F5DC',
-    '#FFE4C4', '#000000', '#FFEBCD', '#0000FF', '#8A2BE2', '#A52A2A', '#DEB887',
-    '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED', '#FFF8DC', '#DC143C', '#00FFFF',
-    '#00008B', '#008B8B', '#B8860B', '#A9A9A9', '#006400', '#A9A9A9', '#BDB76B', '#8B008B',
-    '#556B2F', '#FF8C00', '#9932CC', '#8B0000', '#E9967A', '#8FBC8F', '#483D8B', '#2F4F4F',
-    '#2F4F4F', '#00CED1', '#9400D3', '#FF1493', '#00BFFF', '#696969', '#696969', '#1E90FF', '#B22222',
-    '#FFFAF0', '#228B22', '#FF00FF', '#DCDCDC', '#F8F8FF', '#FFD700', '#DAA520', '#808080', '#008000', '#ADFF2F',
-    '#808080', '#F0FFF0', '#FF69B4', '#CD5C5C', '#4B0082', '#FFFFF0', '#F0E68C', '#E6E6FA', '#FFF0F5', '#7CFC00',
-    '#FFFACD', '#ADD8E6', '#F08080', '#E0FFFF', '#FAFAD2', '#D3D3D3', '#90EE90', '#D3D3D3', '#FFB6C1', '#FFA07A',
-    '#20B2AA', '#87CEFA', '#778899', '#778899', '#B0C4DE', '#FFFFE0', '#00FF00', '#32CD32', '#FAF0E6', '#FF00FF',
-    '#800000', '#66CDAA', '#0000CD', '#BA55D3', '#9370DB', '#3CB371', '#7B68EE', '#00FA9A', '#48D1CC', '#C71585',
-    '#191970', '#F5FFFA', '#FFE4E1', '#FFE4B5', '#FFDEAD', '#000080', '#FDF5E6', '#808000', '#6B8E23', '#FFA500',
-    '#FF4500', '#DA70D6', '#EEE8AA', '#98FB98', '#AFEEEE', '#DB7093', '#FFEFD5', '#FFDAB9', '#CD853F', '#FFC0CB',
-    '#DDA0DD', '#B0E0E6', '#800080', '#663399', '#FF0000', '#BC8F8F', '#4169E1', '#8B4513', '#FA8072', '#F4A460',
-    '#2E8B57', '#FFF5EE', '#A0522D', '#C0C0C0', '#87CEEB', '#6A5ACD', '#708090', '#708090', '#FFFAFA', '#00FF7F',
-    '#4682B4', '#D2B48C', '#008080', '#D8BFD8', '#FF6347', '#40E0D0', '#EE82EE', '#F5DEB3', '#FFFFFF', '#F5F5F5',
-    '#FFFF00', '#9ACD32']
+# colors = ['#F0F8FF', '#FAEBD7', '#00FFFF', '#7FFFD4', '#F0FFFF', '#F5F5DC',
+#     '#FFE4C4', '#000000', '#FFEBCD', '#0000FF', '#8A2BE2', '#A52A2A', '#DEB887',
+#     '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED', '#FFF8DC', '#DC143C', '#00FFFF',
+#     '#00008B', '#008B8B', '#B8860B', '#A9A9A9', '#006400', '#A9A9A9', '#BDB76B', '#8B008B',
+#     '#556B2F', '#FF8C00', '#9932CC', '#8B0000', '#E9967A', '#8FBC8F', '#483D8B', '#2F4F4F',
+#     '#2F4F4F', '#00CED1', '#9400D3', '#FF1493', '#00BFFF', '#696969', '#696969', '#1E90FF', '#B22222',
+#     '#FFFAF0', '#228B22', '#FF00FF', '#DCDCDC', '#F8F8FF', '#FFD700', '#DAA520', '#808080', '#008000', '#ADFF2F',
+#     '#808080', '#F0FFF0', '#FF69B4', '#CD5C5C', '#4B0082', '#FFFFF0', '#F0E68C', '#E6E6FA', '#FFF0F5', '#7CFC00',
+#     '#FFFACD', '#ADD8E6', '#F08080', '#E0FFFF', '#FAFAD2', '#D3D3D3', '#90EE90', '#D3D3D3', '#FFB6C1', '#FFA07A',
+#     '#20B2AA', '#87CEFA', '#778899', '#778899', '#B0C4DE', '#FFFFE0', '#00FF00', '#32CD32', '#FAF0E6', '#FF00FF',
+#     '#800000', '#66CDAA', '#0000CD', '#BA55D3', '#9370DB', '#3CB371', '#7B68EE', '#00FA9A', '#48D1CC', '#C71585',
+#     '#191970', '#F5FFFA', '#FFE4E1', '#FFE4B5', '#FFDEAD', '#000080', '#FDF5E6', '#808000', '#6B8E23', '#FFA500',
+#     '#FF4500', '#DA70D6', '#EEE8AA', '#98FB98', '#AFEEEE', '#DB7093', '#FFEFD5', '#FFDAB9', '#CD853F', '#FFC0CB',
+#     '#DDA0DD', '#B0E0E6', '#800080', '#663399', '#FF0000', '#BC8F8F', '#4169E1', '#8B4513', '#FA8072', '#F4A460',
+#     '#2E8B57', '#FFF5EE', '#A0522D', '#C0C0C0', '#87CEEB', '#6A5ACD', '#708090', '#708090', '#FFFAFA', '#00FF7F',
+#     '#4682B4', '#D2B48C', '#008080', '#D8BFD8', '#FF6347', '#40E0D0', '#EE82EE', '#F5DEB3', '#FFFFFF', '#F5F5F5',
+#     '#FFFF00', '#9ACD32']
 
-# colors = ["red", "green", "blue", "orange", "purple", "pink"]
+colors = ["red", "green", "blue", "orange", "purple", "pink"]
 
 class XYZArrays:
     """ Class for converting to Cartesian space. 
@@ -674,6 +674,7 @@ class VisualizationWindowDecorators:
         return wrapper
 
 class VisualizationWindow(Ui_BaseClass):
+    """ handles GUI and connects user commands with what to plot on pyvista plot"""
 
     def __init__(self, all_atom_dict, atom_names, atom_colors):
 
@@ -688,56 +689,39 @@ class VisualizationWindow(Ui_BaseClass):
         self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
         self.center = np.array([0, 0, 0])
 
+        # keeps total noncentral data that can be plotted
         self.current_noncentral_data = all_atom_dict[self.current_central_atom_name]
         self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
+
+        # used in initializing values for slider, atom selecter, and atom color parts
+        self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
+        self.checkboxes = []
+        self.current_not_checked_atoms = []
+        self.slider_position = 0
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._start_alf_vis_ui()
-        self.ui.atom_names_combo.currentIndexChanged.connect(self.update_data_and_plot)
 
     def _start_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
 
         # initialize ui values and plotter
         self._start_combo_central_atom_names()
+        self._start_atom_selecter_part()
         self._start_pyvista_plotter()
+        self.check_atom_selecter()
         # plot first atom in molecule initially
         self._plot_initial_data()
 
-    def _start_combo_central_atom_names(self):
-        """ method initializing atom names combo box from list of atom names"""
-
-        self.ui.atom_names_combo.addItems(self.atom_names)
-
-    def _start_pyvista_plotter(self):
-        """ method to initialize pyvista plot"""
-
-        self.plotter = QtInteractor(self.ui.pyvista_frame)
-        self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
-        self.plotter.show_grid()
-
-    def _plot_initial_data(self):
-        """ plots data for first atom in self.atom_names list"""
-
-        center = pv.PolyData(self.center)
-        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=25, render_points_as_spheres=True)
-
-
-        print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
-
-        for block in self.current_datablock.keys():
-            color = self.atom_colors.get(block)
-            print(f"Noncentral atom:{block}, color:{color}")
-            self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
-
     @VisualizationWindowDecorators.clear_plot_add_grid
-    def update_data_and_plot(self):
+    def update_central_atom_and_plot(self):
         """ Updates central atom (always at 0,0,0 but can update color if different atom) as 
         well as updates non central atom data"""
 
         self.update_central_atom_data()
         self.update_noncentral_atoms_data()
+        self.update_checked_atoms()
         self.plot_updated_data()
 
     def update_central_atom_data(self):
@@ -745,6 +729,21 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.current_central_atom_name = self.ui.atom_names_combo.currentText()
         self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
+    
+    def check_atom_selecter(self):
+
+        for check in self.checkboxes:
+            check.stateChanged.connect(self.update_checked_atoms)
+
+    def update_checked_atoms(self):
+
+        for check in self.checkboxes:
+            if check.isChecked() == False:
+                print (check.text())
+                if check.text() not in self.current_not_checked_atoms:
+                    self.current_not_checked_atoms.append(check.text())
+
+        print(self.current_not_checked_atoms)
 
     def update_noncentral_atoms_data(self):
 
@@ -752,6 +751,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
 
     def plot_updated_data(self):
+
         """ plots data after an update to central ALF atom"""
 
         center = pv.PolyData(self.center)
@@ -760,9 +760,68 @@ class VisualizationWindow(Ui_BaseClass):
         print()
         print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
         for block in self.current_datablock.keys():
-            color = self.atom_colors.get(block)
-            print(f"Noncentral atom:{block}, color:{color}")
-            self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
+            if block not in self.current_not_checked_atoms:
+                color = self.atom_colors.get(block)
+                print(f"Noncentral atom:{block}, color:{color}")
+                self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
+
+    def update_atom_color(self):
+        pass
+
+
+    # def _start_alf_vis_ui(self):
+    #     """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
+
+    #     # initialize ui values and plotter
+    #     self._start_combo_central_atom_names()
+    #     self._start_atom_selecter_part()
+    #     self._start_pyvista_plotter()
+    #     self.check_atom_selecter()
+    #     # plot first atom in molecule initially
+    #     self._plot_initial_data()
+
+    # def _start_combo_central_atom_names(self):
+    #     """ method initializing atom names combo box from list of atom names"""
+
+    #     self.ui.atom_names_combo.addItems(self.atom_names)
+    #     self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
+
+    # def _start_atom_selecter_part(self):
+
+    #     row = 0
+    #     col = 0
+    #     for atom_name in self.current_noncentral_atom_names:
+    #         check = QtWidgets.QCheckBox(f"{atom_name}")
+    #         self.checkboxes.append(check)
+    #         check.setCheckState(QtCore.Qt.CheckState.Checked)
+    #         self.ui.gridLayout.addWidget(check, row, col)
+    #         col += 1
+    #         if col %3 == 0:
+    #             row += 1
+    #             col = 0
+
+    # def _start_pyvista_plotter(self):
+    #     """ method to initialize pyvista plot"""
+
+    #     self.plotter = QtInteractor(self.ui.pyvista_frame)
+    #     self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
+    #     self.plotter.show_grid()
+
+    # def _plot_initial_data(self):
+    #     """ plots data for first atom in self.atom_names list"""
+
+    #     center = pv.PolyData(self.center)
+    #     self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=25, render_points_as_spheres=True)
+
+    #     print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
+
+    #     for block in self.current_datablock.keys():
+    #         color = self.atom_colors[block]
+    #         print(f"Noncentral atom:{block}, color:{color}")
+    #         self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
+
+
+
 
 if __name__ == "__main__":
 
