@@ -704,19 +704,13 @@ class VisualizationWindow(Ui_BaseClass):
         self._start_alf_vis_ui()
 
     def _start_alf_vis_ui(self):
-        """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
+        """ Initializes pyvista plot and user ui, with first atom ALF displayed
+        Methods starting with _ only called here"""
 
         # initialize ui values and plotter
         self._start_combo_central_atom_names()
         self._start_pyvista_plotter()
         self.update_central_atom_and_plot()
-
-    def _start_pyvista_plotter(self):
-        """ method to initialize pyvista plot"""
-
-        self.plotter = QtInteractor(self.ui.pyvista_frame)
-        self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
-        self.plotter.show_grid()
     
     def _start_combo_central_atom_names(self):
         """ method initializing atom names combo box from list of atom names"""
@@ -724,26 +718,67 @@ class VisualizationWindow(Ui_BaseClass):
         self.ui.atom_names_combo.addItems(self.atom_names)
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
 
+    def _start_pyvista_plotter(self):
+        """ method to initialize pyvista plot"""
+
+        self.plotter = QtInteractor(self.ui.pyvista_frame)
+        self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
+        self.plotter.show_grid()
+
     @VisualizationWindowDecorators.clear_plot_add_grid
     def update_central_atom_and_plot(self):
+        """ main method if a different central atom is chosen
+        method runs ONLY when the central atom is changed in the GUI"""
         """ Updates central atom (always at 0,0,0 but can update color if different atom) as 
         well as updates non central atom data"""
 
         self.update_central_atom_data()
         self.update_noncentral_atoms_data()
-        self.update_checked_atoms()
+        self.update_checkboxes_widget()
+        # self.update_checked_atoms()
         self.plot_updated_data()
+
+    @VisualizationWindowDecorators.clear_plot_add_grid
+    def update_atom_data_and_plot(self):
+        """main method for updating data/colors for the current central atom being shown
+        method runs ONLY when there are changes in atoms to be plotted (based on GUI checkboxes changes), or
+        when there are changes in atom colors as selected in the GUI"""
+        pass
 
     def update_central_atom_data(self):
         """ method used to update the central ALF atom, depending on selected atom in combo box"""
 
         self.current_central_atom_name = self.ui.atom_names_combo.currentText()
         self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
-    
-    def check_atom_selecter(self):
 
-        for check in self.checkboxes:
-            check.stateChanged.connect(self.update_checked_atoms)
+    def update_noncentral_atoms_data(self):
+
+        self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
+        self.current_noncentral_data = self.all_atom_dict[self.current_central_atom_name]
+        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
+
+    def update_checkboxes_widget(self):
+
+        if self.checkboxes != []:
+            for check in self.checkboxes:
+                self.ui.gridLayout.removeWidget(check)
+                check.deleteLater()
+                check = None
+            self.checkboxes = []
+
+        row = 0
+        column = 0
+        for atom in self.current_noncentral_atom_names:
+            checkbox = QtWidgets.QCheckBox(f"{atom}")
+            checkbox.setCheckState(QtCore.Qt.Checked)
+            self.checkboxes.append(checkbox)
+            self.ui.gridLayout.addWidget(checkbox, row, column)
+            column += 1
+            if column % 3 == 0:
+                row += 1
+                column = 0
+        # for check in self.checkboxes:
+        #     check.stateChanged.connect(self.update_checked_atoms)
 
     def update_checked_atoms(self):
 
@@ -753,15 +788,7 @@ class VisualizationWindow(Ui_BaseClass):
                 if check.text() not in self.current_not_checked_atoms:
                     self.current_not_checked_atoms.append(check.text())
 
-        print(self.current_not_checked_atoms)
-
-    def update_noncentral_atoms_data(self):
-
-        self.current_noncentral_data = self.all_atom_dict[self.current_central_atom_name]
-        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
-
     def plot_updated_data(self):
-
         """ plots data after an update to central ALF atom"""
 
         center = pv.PolyData(self.center)
@@ -777,60 +804,6 @@ class VisualizationWindow(Ui_BaseClass):
 
     def update_atom_color(self):
         pass
-
-
-    # def _start_alf_vis_ui(self):
-    #     """ Initializes pyvista plot and user ui, with first atom ALF displayed"""
-
-    #     # initialize ui values and plotter
-    #     self._start_combo_central_atom_names()
-    #     self._start_atom_selecter_part()
-    #     self._start_pyvista_plotter()
-    #     self.check_atom_selecter()
-    #     # plot first atom in molecule initially
-    #     self._plot_initial_data()
-
-    # def _start_combo_central_atom_names(self):
-    #     """ method initializing atom names combo box from list of atom names"""
-
-    #     self.ui.atom_names_combo.addItems(self.atom_names)
-    #     self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
-
-    # def _start_atom_selecter_part(self):
-
-    #     row = 0
-    #     col = 0
-    #     for atom_name in self.current_noncentral_atom_names:
-    #         check = QtWidgets.QCheckBox(f"{atom_name}")
-    #         self.checkboxes.append(check)
-    #         check.setCheckState(QtCore.Qt.CheckState.Checked)
-    #         self.ui.gridLayout.addWidget(check, row, col)
-    #         col += 1
-    #         if col %3 == 0:
-    #             row += 1
-    #             col = 0
-
-    # def _start_pyvista_plotter(self):
-    #     """ method to initialize pyvista plot"""
-
-    #     self.plotter = QtInteractor(self.ui.pyvista_frame)
-    #     self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
-    #     self.plotter.show_grid()
-
-    # def _plot_initial_data(self):
-    #     """ plots data for first atom in self.atom_names list"""
-
-    #     center = pv.PolyData(self.center)
-    #     self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=25, render_points_as_spheres=True)
-
-    #     print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
-
-    #     for block in self.current_datablock.keys():
-    #         color = self.atom_colors[block]
-    #         print(f"Noncentral atom:{block}, color:{color}")
-    #         self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
-
-
 
 
 if __name__ == "__main__":
