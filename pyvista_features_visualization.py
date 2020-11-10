@@ -696,7 +696,7 @@ class VisualizationWindow(Ui_BaseClass):
         # used in initializing values for slider, atom selecter, and atom color parts
         self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
         self.checkboxes = []
-        self.current_not_checked_atoms = []
+        self.current_checked_atoms = []
         self.slider_position = 0
 
         self.ui = Ui_MainWindow()
@@ -735,7 +735,6 @@ class VisualizationWindow(Ui_BaseClass):
         self.update_central_atom_data()
         self.update_noncentral_atoms_data()
         self.update_checkboxes_widget()
-        # self.update_checked_atoms()
         self.plot_updated_data()
 
     @VisualizationWindowDecorators.clear_plot_add_grid
@@ -743,7 +742,10 @@ class VisualizationWindow(Ui_BaseClass):
         """main method for updating data/colors for the current central atom being shown
         method runs ONLY when there are changes in atoms to be plotted (based on GUI checkboxes changes), or
         when there are changes in atom colors as selected in the GUI"""
-        pass
+
+        self.update_checked_atoms()
+        # self.update_atom_color()
+        self.plot_updated_data()
 
     def update_central_atom_data(self):
         """ method used to update the central ALF atom, depending on selected atom in combo box"""
@@ -766,27 +768,29 @@ class VisualizationWindow(Ui_BaseClass):
                 check = None
             self.checkboxes = []
 
+        self.current_checked_atoms = []
         row = 0
         column = 0
         for atom in self.current_noncentral_atom_names:
             checkbox = QtWidgets.QCheckBox(f"{atom}")
             checkbox.setCheckState(QtCore.Qt.Checked)
+            checkbox.stateChanged.connect(self.update_atom_data_and_plot)
             self.checkboxes.append(checkbox)
+            self.current_checked_atoms.append(checkbox.text())
             self.ui.gridLayout.addWidget(checkbox, row, column)
             column += 1
             if column % 3 == 0:
                 row += 1
                 column = 0
-        # for check in self.checkboxes:
-        #     check.stateChanged.connect(self.update_checked_atoms)
 
     def update_checked_atoms(self):
 
-        for check in self.checkboxes:
-            if check.isChecked() == False:
-                print (check.text())
-                if check.text() not in self.current_not_checked_atoms:
-                    self.current_not_checked_atoms.append(check.text())
+        for checkbox in self.checkboxes:
+            print(self.current_checked_atoms)
+            if checkbox.isChecked() == False and checkbox.text() in self.current_checked_atoms:
+                self.current_checked_atoms.remove(checkbox.text())
+            elif checkbox.isChecked() == True and checkbox.text() not in self.current_checked_atoms:
+                self.current_checked_atoms.append(checkbox.text())
 
     def plot_updated_data(self):
         """ plots data after an update to central ALF atom"""
@@ -797,7 +801,7 @@ class VisualizationWindow(Ui_BaseClass):
         print()
         print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
         for block in self.current_datablock.keys():
-            if block not in self.current_not_checked_atoms:
+            if block in self.current_checked_atoms:
                 color = self.atom_colors.get(block)
                 print(f"Noncentral atom:{block}, color:{color}")
                 self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
