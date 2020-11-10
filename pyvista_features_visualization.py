@@ -708,11 +708,21 @@ class VisualizationWindow(Ui_BaseClass):
 
         # initialize ui values and plotter
         self._start_combo_central_atom_names()
-        self._start_atom_selecter_part()
         self._start_pyvista_plotter()
-        self.check_atom_selecter()
-        # plot first atom in molecule initially
-        self._plot_initial_data()
+        self.update_central_atom_and_plot()
+
+    def _start_pyvista_plotter(self):
+        """ method to initialize pyvista plot"""
+
+        self.plotter = QtInteractor(self.ui.pyvista_frame)
+        self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
+        self.plotter.show_grid()
+    
+    def _start_combo_central_atom_names(self):
+        """ method initializing atom names combo box from list of atom names"""
+
+        self.ui.atom_names_combo.addItems(self.atom_names)
+        self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
 
     @VisualizationWindowDecorators.clear_plot_add_grid
     def update_central_atom_and_plot(self):
