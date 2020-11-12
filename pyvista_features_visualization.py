@@ -798,10 +798,6 @@ class VisualizationWindow(Ui_BaseClass):
         """ updates atoms that are in the color box, depending on which central atom is chosen and also which
         checkboxes are ticked in the checkbox box."""
 
-        row = 0
-        column_button = 0
-        column_label = 1
-
         # clear color buttons and labels if checkboxes are changed
         if self.color_buttons != []:
             for button, button_label in zip(self.color_buttons, self.color_button_labels):
@@ -813,6 +809,23 @@ class VisualizationWindow(Ui_BaseClass):
                 button_label = None
             self.color_buttons = []
             self.color_button_labels = []
+
+
+        row = 0
+        column_button = 0
+        column_label = 1
+
+        # add color button for central atom as well
+        push_button = QtWidgets.QPushButton(self.current_central_atom_name)
+        push_button.setStyleSheet(f"background-color : {self.atom_colors[self.current_central_atom_name]}; color: {self.atom_colors[self.current_central_atom_name]};")
+        push_button.clicked.connect(self.change_atom_color)
+        push_button_label = QtWidgets.QLabel(self.current_central_atom_name)
+        self.color_buttons.append(push_button)
+        self.ui.gridLayout_2.addWidget(push_button, row, column_button)
+        self.ui.gridLayout_2.addWidget(push_button_label, row, column_label)
+
+        column_button += 2
+        column_label += 2
 
         for checkbox in self.checkboxes:
             if checkbox.isChecked() == True:
@@ -845,9 +858,18 @@ class VisualizationWindow(Ui_BaseClass):
         # find which button called this method and change its color as needed
         for push_button in self.color_buttons:
             if push_button == QtCore.QObject.sender(self):
-                push_button.setStyleSheet("")
-                push_button.setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
-                self.atom_colors[f"{push_button.text()}"] = color.name()
+
+                if push_button.text() == self.current_central_atom_name:
+
+                    self.current_central_atom_color = color.name()
+                    push_button.setStyleSheet("")
+                    push_button.setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
+                    self.atom_colors[f"{push_button.text()}"] = color.name()
+                else:
+
+                    push_button.setStyleSheet("")
+                    push_button.setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
+                    self.atom_colors[f"{push_button.text()}"] = color.name()
 
         self.plot_updated_data()
 
