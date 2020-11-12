@@ -58,7 +58,7 @@
             <widget class="QComboBox" name="atom_names_combo"/>
            </item>
            <item row="1" column="1">
-            <widget class="QSlider" name="horizontalSlider">
+            <widget class="QSlider" name="how_many_points_to_plot">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
@@ -90,16 +90,22 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_2">
+            <widget class="QCheckBox" name="plot_all_atoms_checkbox">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
              <property name="text">
-              <string>CheckBox</string>
+              <string>Plot All Atoms</string>
+             </property>
+             <property name="tristate">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_7">
+            <widget class="QCheckBox" name="remove_all_atoms_checkbox">
              <property name="text">
-              <string>CheckBox</string>
+              <string>Remove All Atoms</string>
              </property>
             </widget>
            </item>
@@ -114,7 +120,7 @@
              <property name="widgetResizable">
               <bool>true</bool>
              </property>
-             <widget class="QWidget" name="scrollAreaWidgetContents">
+             <widget class="QWidget" name="atoms_to_plot_grid">
               <property name="geometry">
                <rect>
                 <x>0</x>
@@ -123,43 +129,7 @@
                 <height>140</height>
                </rect>
               </property>
-              <layout class="QGridLayout" name="gridLayout">
-               <item row="1" column="0">
-                <widget class="QCheckBox" name="checkBox_4">
-                 <property name="text">
-                  <string>CheckBox</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QCheckBox" name="checkBox_3">
-                 <property name="text">
-                  <string>CheckBox</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0">
-                <widget class="QCheckBox" name="checkBox">
-                 <property name="text">
-                  <string>CheckBox</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QCheckBox" name="checkBox_5">
-                 <property name="text">
-                  <string>CheckBox</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="2">
-                <widget class="QCheckBox" name="checkBox_6">
-                 <property name="text">
-                  <string>CheckBox</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <layout class="QGridLayout" name="gridLayout"/>
              </widget>
             </widget>
            </item>
@@ -183,7 +153,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QScrollArea" name="atom_colorscroll_area">
+            <widget class="QScrollArea" name="atom_color_scroll_area">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -193,7 +163,7 @@
              <property name="widgetResizable">
               <bool>true</bool>
              </property>
-             <widget class="QWidget" name="scrollAreaWidgetContents_3">
+             <widget class="QWidget" name="atom_color_scroll_area_grid">
               <property name="geometry">
                <rect>
                 <x>0</x>
@@ -202,50 +172,7 @@
                 <height>194</height>
                </rect>
               </property>
-              <layout class="QGridLayout" name="gridLayout_2">
-               <item row="0" column="0">
-                <widget class="QPushButton" name="pushButton">
-                 <property name="text">
-                  <string>PushButton</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QLabel" name="label">
-                 <property name="text">
-                  <string>TextLabel</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="3">
-                <widget class="QLabel" name="label_2">
-                 <property name="text">
-                  <string>TextLabel</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="2">
-                <widget class="QPushButton" name="pushButton_2">
-                 <property name="text">
-                  <string>PushButton</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QPushButton" name="pushButton_3">
-                 <property name="text">
-                  <string>PushButton</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QLabel" name="label_3">
-                 <property name="text">
-                  <string>TextLabel</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <layout class="QGridLayout" name="gridLayout_2"/>
              </widget>
             </widget>
            </item>

@@ -658,7 +658,7 @@ class XYZArrays:
 #########################################################################
 #                       PYVISTA/ QT PLOTTING TOOL
 #########################################################################
-Ui_MainWindow, Ui_BaseClass = uic.loadUiType("less_complex.ui")
+Ui_MainWindow, Ui_BaseClass = uic.loadUiType("testing.ui")
 
 class VisualizationWindowDecorators:
 
@@ -694,10 +694,13 @@ class VisualizationWindow(Ui_BaseClass):
         self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
 
         # used in initializing values for slider, atom selecter, and atom color parts
+        self.slider_position = 0
         self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
         self.checkboxes = []
         self.current_checked_atoms = []
-        self.slider_position = 0
+
+        self.color_buttons = []
+        self.color_button_labels = []
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -735,6 +738,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.update_central_atom_data()
         self.update_noncentral_atoms_data()
         self.update_checkboxes_widget()
+        self.update_atom_color_box()
         self.plot_updated_data()
 
     @VisualizationWindowDecorators.clear_plot_add_grid
@@ -744,7 +748,7 @@ class VisualizationWindow(Ui_BaseClass):
         when there are changes in atom colors as selected in the GUI"""
 
         self.update_checked_atoms()
-        # self.update_atom_color()
+        self.update_atom_color_box()
         self.plot_updated_data()
 
     def update_central_atom_data(self):
@@ -786,11 +790,64 @@ class VisualizationWindow(Ui_BaseClass):
     def update_checked_atoms(self):
 
         for checkbox in self.checkboxes:
-            print(self.current_checked_atoms)
             if checkbox.isChecked() == False and checkbox.text() in self.current_checked_atoms:
                 self.current_checked_atoms.remove(checkbox.text())
             elif checkbox.isChecked() == True and checkbox.text() not in self.current_checked_atoms:
                 self.current_checked_atoms.append(checkbox.text())
+
+    def update_atom_color_box(self):
+        """ updates atoms that are in the color box, depending on which central atom is chosen and also which
+        checkboxes are ticked in the checkbox box."""
+
+        row = 0
+        column_button = 0
+        column_label = 1
+
+        # clear color buttons and labels if checkboxes are changed
+        if self.color_buttons != []:
+            for button, button_label in zip(self.color_buttons, self.color_button_labels):
+                self.ui.gridLayout.removeWidget(button)
+                self.ui.gridLayout.removeWidget(button_label)
+                button.deleteLater()
+                button_label.deleteLater()
+                button = None
+                button_label = None
+            self.color_buttons = []
+            self.color_button_labels = []
+
+        for checkbox in self.checkboxes:
+            if checkbox.isChecked() == True:
+
+                push_button = QtWidgets.QPushButton()
+                push_button.setStyleSheet(f"background-color : {self.atom_colors[checkbox.text()]}") 
+
+                push_button_label = QtWidgets.QLabel(f"{checkbox.text()}")
+
+                self.color_buttons.append(push_button)
+                self.color_button_labels.append(push_button_label)
+
+                self.ui.gridLayout_2.addWidget(push_button, row, column_button)
+                self.ui.gridLayout_2.addWidget(push_button_label, row, column_label)
+
+                column_button += 2
+                column_label += 2
+
+                if column_button % 3 == 0:
+                    row += 1
+                    column_button = 0
+                    column_label = 1
+
+    def update_atom_color(self):
+        """ opens up color dialog and lets user select a new color for a particular atom """
+        pass
+
+
+
+    def menu_lock(self):
+        """ lock menu when choosing colors so that people cannot switch plotted atoms while color dialog is opened.
+        prevents bugs"""
+        pass
+
 
     def plot_updated_data(self):
         """ plots data after an update to central ALF atom"""
@@ -805,10 +862,6 @@ class VisualizationWindow(Ui_BaseClass):
                 color = self.atom_colors.get(block)
                 print(f"Noncentral atom:{block}, color:{color}")
                 self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
-
-    def update_atom_color(self):
-        pass
-
 
 if __name__ == "__main__":
 
