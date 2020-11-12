@@ -738,7 +738,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.update_central_atom_data()
         self.update_noncentral_atoms_data()
         self.update_checkboxes_widget()
-        self.update_atom_color_box()
+        self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
     @VisualizationWindowDecorators.clear_plot_add_grid
@@ -748,7 +748,6 @@ class VisualizationWindow(Ui_BaseClass):
         when there are changes in atom colors as selected in the GUI"""
 
         self.update_checked_atoms()
-        self.update_atom_color_box()
         self.plot_updated_data()
 
     def update_central_atom_data(self):
@@ -795,7 +794,7 @@ class VisualizationWindow(Ui_BaseClass):
             elif checkbox.isChecked() == True and checkbox.text() not in self.current_checked_atoms:
                 self.current_checked_atoms.append(checkbox.text())
 
-    def update_atom_color_box(self):
+    def update_atom_color_box_buttons(self):
         """ updates atoms that are in the color box, depending on which central atom is chosen and also which
         checkboxes are ticked in the checkbox box."""
 
@@ -818,8 +817,9 @@ class VisualizationWindow(Ui_BaseClass):
         for checkbox in self.checkboxes:
             if checkbox.isChecked() == True:
 
-                push_button = QtWidgets.QPushButton()
-                push_button.setStyleSheet(f"background-color : {self.atom_colors[checkbox.text()]}") 
+                push_button = QtWidgets.QPushButton(f"{checkbox.text()}")
+                push_button.setStyleSheet(f"background-color : {self.atom_colors[checkbox.text()]}; color: {self.atom_colors[checkbox.text()]};")
+                push_button.clicked.connect(self.change_atom_color)
 
                 push_button_label = QtWidgets.QLabel(f"{checkbox.text()}")
 
@@ -837,17 +837,24 @@ class VisualizationWindow(Ui_BaseClass):
                     column_button = 0
                     column_label = 1
 
-    def update_atom_color(self):
+    def change_atom_color(self):
         """ opens up color dialog and lets user select a new color for a particular atom """
-        pass
+        
+        color = QtWidgets.QColorDialog.getColor() # this gives a QColor Object
 
+        # find which button called this method and change its color as needed
+        for push_button in self.color_buttons:
+            if push_button == QtCore.QObject.sender(self):
+                push_button.setStyleSheet("")
+                push_button.setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
+                self.atom_colors[f"{push_button.text()}"] = color.name()
 
+        self.plot_updated_data()
 
     def menu_lock(self):
         """ lock menu when choosing colors so that people cannot switch plotted atoms while color dialog is opened.
         prevents bugs"""
         pass
-
 
     def plot_updated_data(self):
         """ plots data after an update to central ALF atom"""
