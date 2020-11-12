@@ -748,6 +748,7 @@ class VisualizationWindow(Ui_BaseClass):
         when there are changes in atom colors as selected in the GUI"""
 
         self.update_checked_atoms()
+        self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
     def update_central_atom_data(self):
@@ -810,7 +811,6 @@ class VisualizationWindow(Ui_BaseClass):
             self.color_buttons = []
             self.color_button_labels = []
 
-
         row = 0
         column_button = 0
         column_label = 1
@@ -821,6 +821,7 @@ class VisualizationWindow(Ui_BaseClass):
         push_button.clicked.connect(self.change_atom_color)
         push_button_label = QtWidgets.QLabel(self.current_central_atom_name)
         self.color_buttons.append(push_button)
+        self.color_button_labels.append(push_button_label)
         self.ui.gridLayout_2.addWidget(push_button, row, column_button)
         self.ui.gridLayout_2.addWidget(push_button_label, row, column_label)
 
