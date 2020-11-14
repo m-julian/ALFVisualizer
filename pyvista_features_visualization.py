@@ -7,6 +7,7 @@ import string
 import pandas as pd
 from glob import glob
 from itertools import cycle
+from copy import copy
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 #os.environ["QT_API"] = "pyside2"
 # http://qtdocs.pyvista.org/usage.html
@@ -690,8 +691,9 @@ class VisualizationWindow(Ui_BaseClass):
         self.center = np.array([0, 0, 0])
 
         # keeps total noncentral data that can be plotted
-        self.current_noncentral_data = all_atom_dict[self.current_central_atom_name]
-        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
+        self.all_noncentral_data = all_atom_dict[self.current_central_atom_name]
+        self.current_noncentral_data = copy(self.all_noncentral_data)
+        self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
 
         # used in initializing values for slider, atom selecter, and atom color parts
         self.slider_position = 0
@@ -726,6 +728,7 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.ui.points_slider.setMinimum(1)
         self.ui.points_slider.setMaximum(100)
+        self.ui.points_slider.setTickInterval(2)
         self.ui.points_slider.valueChanged.connect(self.update_atom_data_and_plot)
 
     def _start_pyvista_plotter(self):
@@ -757,7 +760,6 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.update_checked_atoms()
         self.update_noncentral_atoms_data()
-        self.slider_update_plotted_data()
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
@@ -770,9 +772,25 @@ class VisualizationWindow(Ui_BaseClass):
     def update_noncentral_atoms_data(self):
 
         self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
-        self.current_noncentral_data = self.all_atom_dict[self.current_central_atom_name]
+        self.all_noncentral_data = self.all_atom_dict[self.current_central_atom_name]
+        
+        self.slider_update_plotted_data()
 
         self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
+
+    def points_slider_reset(self):
+        """ reset slider when changing to a different central atom"""
+
+        self.ui.points_slider.setValue(1)
+
+    def slider_update_plotted_data(self):
+        """ update noncentral atom data to plot when slider is moved. This makes slices of the data before making 
+        it a pyvista MultiBlock"""
+
+        slicing = self.ui.points_slider.value()
+        print(slicing)
+        for atom in self.all_noncentral_data.keys():
+            self.current_noncentral_data[atom] = self.all_noncentral_data[atom][0::slicing,:]
 
     def update_checkboxes_widget(self):
 
@@ -884,16 +902,6 @@ class VisualizationWindow(Ui_BaseClass):
                     self.atom_colors[f"{push_button.text()}"] = color.name()
 
         self.plot_updated_data()
-
-    def points_slider_reset(self):
-
-        self.ui.points_slider.setValue(1)
-
-    def slider_update_plotted_data(self):
-
-        slicing = self.ui.points_slider.value()
-        for atom in self.current_noncentral_data.keys():
-            self.current_noncentral_data[atom] = self.current_noncentral_data[atom][0::slicing,:]
 
     def menu_lock(self):
         """ lock menu when choosing colors so that people cannot switch plotted atoms while color dialog is opened.
