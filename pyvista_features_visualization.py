@@ -526,25 +526,25 @@ def features_and_atom_names(xyz_file):
 ########################################################################
 
 # could not install matplotlib due to package conflicts, this list consists of colors from matplitlib
-# colors = ['#F0F8FF', '#FAEBD7', '#00FFFF', '#7FFFD4', '#F0FFFF', '#F5F5DC',
-#     '#FFE4C4', '#000000', '#FFEBCD', '#0000FF', '#8A2BE2', '#A52A2A', '#DEB887',
-#     '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED', '#FFF8DC', '#DC143C', '#00FFFF',
-#     '#00008B', '#008B8B', '#B8860B', '#A9A9A9', '#006400', '#A9A9A9', '#BDB76B', '#8B008B',
-#     '#556B2F', '#FF8C00', '#9932CC', '#8B0000', '#E9967A', '#8FBC8F', '#483D8B', '#2F4F4F',
-#     '#2F4F4F', '#00CED1', '#9400D3', '#FF1493', '#00BFFF', '#696969', '#696969', '#1E90FF', '#B22222',
-#     '#FFFAF0', '#228B22', '#FF00FF', '#DCDCDC', '#F8F8FF', '#FFD700', '#DAA520', '#808080', '#008000', '#ADFF2F',
-#     '#808080', '#F0FFF0', '#FF69B4', '#CD5C5C', '#4B0082', '#FFFFF0', '#F0E68C', '#E6E6FA', '#FFF0F5', '#7CFC00',
-#     '#FFFACD', '#ADD8E6', '#F08080', '#E0FFFF', '#FAFAD2', '#D3D3D3', '#90EE90', '#D3D3D3', '#FFB6C1', '#FFA07A',
-#     '#20B2AA', '#87CEFA', '#778899', '#778899', '#B0C4DE', '#FFFFE0', '#00FF00', '#32CD32', '#FAF0E6', '#FF00FF',
-#     '#800000', '#66CDAA', '#0000CD', '#BA55D3', '#9370DB', '#3CB371', '#7B68EE', '#00FA9A', '#48D1CC', '#C71585',
-#     '#191970', '#F5FFFA', '#FFE4E1', '#FFE4B5', '#FFDEAD', '#000080', '#FDF5E6', '#808000', '#6B8E23', '#FFA500',
-#     '#FF4500', '#DA70D6', '#EEE8AA', '#98FB98', '#AFEEEE', '#DB7093', '#FFEFD5', '#FFDAB9', '#CD853F', '#FFC0CB',
-#     '#DDA0DD', '#B0E0E6', '#800080', '#663399', '#FF0000', '#BC8F8F', '#4169E1', '#8B4513', '#FA8072', '#F4A460',
-#     '#2E8B57', '#FFF5EE', '#A0522D', '#C0C0C0', '#87CEEB', '#6A5ACD', '#708090', '#708090', '#FFFAFA', '#00FF7F',
-#     '#4682B4', '#D2B48C', '#008080', '#D8BFD8', '#FF6347', '#40E0D0', '#EE82EE', '#F5DEB3', '#FFFFFF', '#F5F5F5',
-#     '#FFFF00', '#9ACD32']
+colors = ['#00FFFF', '#7FFFD4',
+    '#FFE4C4', '#000000', '#DEB887',
+    '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED', '#FFF8DC', '#DC143C', '#00FFFF',
+    '#00008B', '#008B8B', '#B8860B', '#A9A9A9', '#006400', '#A9A9A9', '#BDB76B', '#8B008B',
+    '#556B2F', '#FF8C00', '#9932CC', '#8B0000', '#E9967A', '#8FBC8F', '#483D8B', '#2F4F4F',
+    '#2F4F4F', '#00CED1', '#9400D3', '#FF1493', '#00BFFF', '#696969', '#696969', '#1E90FF', '#B22222',
+    '#FFFAF0', '#228B22', '#FF00FF', '#DCDCDC', '#F8F8FF', '#FFD700', '#DAA520', '#808080', '#008000', '#ADFF2F',
+    '#808080', '#F0FFF0', '#FF69B4', '#CD5C5C', '#4B0082', '#FFFFF0', '#F0E68C', '#E6E6FA', '#FFF0F5', '#7CFC00',
+    '#FFFACD', '#ADD8E6', '#F08080', '#E0FFFF', '#FAFAD2', '#D3D3D3', '#90EE90', '#D3D3D3', '#FFB6C1', '#FFA07A',
+    '#20B2AA', '#87CEFA', '#778899', '#778899', '#B0C4DE', '#FFFFE0', '#00FF00', '#32CD32', '#FAF0E6', '#FF00FF',
+    '#800000', '#66CDAA', '#0000CD', '#BA55D3', '#9370DB', '#3CB371', '#7B68EE', '#00FA9A', '#48D1CC', '#C71585',
+    '#191970', '#F5FFFA', '#FFE4E1', '#FFE4B5', '#FFDEAD', '#000080', '#FDF5E6', '#808000', '#6B8E23', '#FFA500',
+    '#FF4500', '#DA70D6', '#EEE8AA', '#98FB98', '#AFEEEE', '#DB7093', '#FFEFD5', '#FFDAB9', '#CD853F', '#FFC0CB',
+    '#DDA0DD', '#B0E0E6', '#800080', '#663399', '#FF0000', '#BC8F8F', '#4169E1', '#8B4513', '#FA8072', '#F4A460',
+    '#2E8B57', '#FFF5EE', '#A0522D', '#C0C0C0', '#87CEEB', '#6A5ACD', '#708090', '#708090', '#FFFAFA', '#00FF7F',
+    '#4682B4', '#D2B48C', '#008080', '#D8BFD8', '#FF6347', '#40E0D0', '#EE82EE', '#F5DEB3', '#FFFFFF', '#F5F5F5',
+    '#FFFF00', '#9ACD32']
 
-colors = ["red", "green", "blue", "orange", "purple", "pink"]
+# colors = ["red", "green", "blue", "orange", "purple", "pink"]
 
 class XYZArrays:
     """ Class for converting to Cartesian space. 
@@ -664,13 +664,20 @@ Ui_MainWindow, Ui_BaseClass = uic.loadUiType("testing.ui")
 class VisualizationWindowDecorators:
 
     @staticmethod
-    def clear_plot_add_grid(original_method):
+    def clear_plot_use_grid(original_method):
 
         def wrapper(instance_reference):
 
-            instance_reference.plotter.clear()
-            original_method(instance_reference)
-            instance_reference.plotter.show_grid()
+            if instance_reference.use_grid == True:
+
+                instance_reference.plotter.clear()
+                original_method(instance_reference)
+                instance_reference.plotter.show_grid()
+
+            elif instance_reference.use_grid == False:
+
+                instance_reference.plotter.clear()
+                original_method(instance_reference)
 
         return wrapper
 
@@ -704,6 +711,8 @@ class VisualizationWindow(Ui_BaseClass):
         self.color_buttons = []
         self.color_button_labels = []
 
+        self.use_grid = True
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._start_alf_vis_ui()
@@ -715,6 +724,7 @@ class VisualizationWindow(Ui_BaseClass):
         # initialize ui values and plotter
         self._start_combo_central_atom_names()
         self._start_points_to_plot_slider()
+        self._start_grid_checkbox()
         self._start_pyvista_plotter()
         self.update_central_atom_and_plot()
     
@@ -725,22 +735,29 @@ class VisualizationWindow(Ui_BaseClass):
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
 
     def _start_points_to_plot_slider(self):
+        """ Initializes slider that can be used to plot less points. The slider values are slices of data to plot. See slider_update_plotted_data"""
 
         self.ui.points_slider.setMinimum(1)
-        self.ui.points_slider.setMaximum(100)
-        self.ui.points_slider.setTickInterval(2)
+        self.ui.points_slider.setMaximum(500)
+        # self.ui.points_slider.setTickInterval(2)
+        # self.ui.points_slider.setSingleStep(2)
         self.ui.points_slider.valueChanged.connect(self.update_atom_data_and_plot)
+
+    def _start_grid_checkbox(self):
+        """ Initialize checkbox that is used to show or remove grid"""
+
+        self.ui.show_grid_checkbox.setCheckState(QtCore.Qt.Checked)
+        self.ui.show_grid_checkbox.stateChanged.connect(self.grid_status)
 
     def _start_pyvista_plotter(self):
         """ method to initialize pyvista plot"""
 
         self.plotter = QtInteractor(self.ui.pyvista_frame)
         self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
-        self.plotter.show_grid()
 
-    @VisualizationWindowDecorators.clear_plot_add_grid
+    @VisualizationWindowDecorators.clear_plot_use_grid
     def update_central_atom_and_plot(self):
-        """ main method if a different central atom is chosen
+        """ main method if a DIFFERENT central atom is chosen
         method runs ONLY when the central atom is changed in the GUI"""
         """ Updates central atom (always at 0,0,0 but can update color if different atom) as 
         well as updates non central atom data"""
@@ -752,9 +769,9 @@ class VisualizationWindow(Ui_BaseClass):
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
-    @VisualizationWindowDecorators.clear_plot_add_grid
+    @VisualizationWindowDecorators.clear_plot_use_grid
     def update_atom_data_and_plot(self):
-        """main method for updating data/colors for the current central atom being shown
+        """main method for updating data/colors for the CURRENT central atom being shown
         method runs ONLY when there are changes in atoms to be plotted (based on GUI checkboxes changes), or
         when there are changes in atom colors as selected in the GUI"""
 
@@ -763,6 +780,17 @@ class VisualizationWindow(Ui_BaseClass):
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
+    def grid_status(self):
+        """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
+
+        if self.ui.show_grid_checkbox.isChecked() == True:
+            self.use_grid = True
+
+        elif self.ui.show_grid_checkbox.isChecked() == False:
+            self.use_grid = False
+
+        self.update_atom_data_and_plot()
+
     def update_central_atom_data(self):
         """ method used to update the central ALF atom, depending on selected atom in combo box"""
 
@@ -770,6 +798,8 @@ class VisualizationWindow(Ui_BaseClass):
         self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
 
     def update_noncentral_atoms_data(self):
+        """ updates non-central atoms data to be plotted. This method gives all the non-central atoms and manipulates the data to be plotted if the slider has been
+        changed from its inital value. It also makes a pyvista MultiBlock object which is then used for plotting the non-central atoms and their colors."""
 
         self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
         self.all_noncentral_data = self.all_atom_dict[self.current_central_atom_name]
@@ -778,20 +808,20 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
 
-    def points_slider_reset(self):
-        """ reset slider when changing to a different central atom"""
-
-        self.ui.points_slider.setValue(1)
-
     def slider_update_plotted_data(self):
-        """ update noncentral atom data to plot when slider is moved. This makes slices of the data before making 
-        it a pyvista MultiBlock"""
+        """ Makes slices of the data before making the data a pyvista MultiBlock, see update_noncentral_atoms_data method"""
 
         slicing = self.ui.points_slider.value()
         for atom in self.all_noncentral_data.keys():
             self.current_noncentral_data[atom] = self.all_noncentral_data[atom][0::slicing,:]
 
+    def points_slider_reset(self):
+        """ reset slider when changing to a different central atom"""
+
+        self.ui.points_slider.setValue(1)
+
     def update_checkboxes_widget(self):
+        """ Used to dynamically generate the non-central atom checkboxes. They can be used to plot individual noncentral atoms instead of all noncentral atoms."""
 
         if self.checkboxes != []:
             for check in self.checkboxes:
@@ -816,6 +846,7 @@ class VisualizationWindow(Ui_BaseClass):
                 column = 0
 
     def update_checked_atoms(self):
+        """ Method that keeps track of which checkboxes for noncentral atoms are checked. ONLY atoms that are checked are plotted"""
 
         for checkbox in self.checkboxes:
             if checkbox.isChecked() == False and checkbox.text() in self.current_checked_atoms:
@@ -825,7 +856,7 @@ class VisualizationWindow(Ui_BaseClass):
 
     def update_atom_color_box_buttons(self):
         """ updates atoms that are in the color box, depending on which central atom is chosen and also which
-        checkboxes are ticked in the checkbox box."""
+        checkboxes are ticked in the checkbox widget."""
 
         # clear color buttons and labels if checkboxes are changed
         if self.color_buttons != []:
@@ -901,11 +932,6 @@ class VisualizationWindow(Ui_BaseClass):
                     self.atom_colors[f"{push_button.text()}"] = color.name()
 
         self.plot_updated_data()
-
-    def menu_lock(self):
-        """ lock menu when choosing colors so that people cannot switch plotted atoms while color dialog is opened.
-        prevents bugs"""
-        pass
 
     def plot_updated_data(self):
         """ plots data after an update to central ALF atom"""

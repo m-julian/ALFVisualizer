@@ -40,10 +40,10 @@
            </sizepolicy>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="1" column="0">
-            <widget class="QLabel" name="reduce_plotted_points_label">
-             <property name="text">
-              <string>Reduce plotted points</string>
+           <item row="1" column="1">
+            <widget class="QSlider" name="points_slider">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>
@@ -57,10 +57,17 @@
            <item row="0" column="1">
             <widget class="QComboBox" name="atom_names_combo"/>
            </item>
-           <item row="1" column="1">
-            <widget class="QSlider" name="points_slider">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+           <item row="1" column="0">
+            <widget class="QLabel" name="reduce_plotted_points_label">
+             <property name="text">
+              <string>Reduce plotted points</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="show_grid_checkbox">
+             <property name="text">
+              <string>Show Grid</string>
              </property>
             </widget>
            </item>
@@ -126,7 +133,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>438</width>
-                <height>140</height>
+                <height>127</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout"/>
@@ -169,7 +176,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>438</width>
-                <height>194</height>
+                <height>180</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_2"/>

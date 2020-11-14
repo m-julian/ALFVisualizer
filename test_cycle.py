@@ -22,3 +22,7 @@ for idx,i in enumerate(colors):
         less_colors.append(i)
 
 print(less_colors)
+
+xlist = [1,2,3,4,5,6,7]
+
+print(xlist[0::1])
