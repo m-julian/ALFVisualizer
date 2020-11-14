@@ -727,6 +727,8 @@ class VisualizationWindow(Ui_BaseClass):
         self._start_combo_central_atom_names()
         self._start_points_to_plot_slider()
         self._start_grid_checkbox()
+        # self._start_plot_all_atoms_checkbox()
+        # self._start_remove_all_atoms_checkbox()
         self._start_pyvista_plotter()
         self.update_central_atom_and_plot()
     
@@ -753,6 +755,16 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.ui.show_grid_checkbox.setCheckState(QtCore.Qt.Checked)
         self.ui.show_grid_checkbox.stateChanged.connect(self.grid_status)
+
+    # def _start_plot_all_atoms_checkbox(self):
+    #     """ checkbox that plots all noncentral atoms"""
+        
+    #     self.ui.plot_all_atoms_checkbox.setCheckState(QtCore.Qt.Checked)
+    #     self.ui.plot_all_atoms_checkbox.stateChanged.connect(self.)
+
+    # def _start_remove_all_atoms_checkbox(self):
+    #     """ checkbox that removes all noncentral atoms"""
+    #     pass
 
     def _start_pyvista_plotter(self):
         """ method to initialize pyvista plot"""
