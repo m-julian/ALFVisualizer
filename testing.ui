@@ -97,26 +97,6 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="plot_all_atoms_checkbox">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Plot All Atoms</string>
-             </property>
-             <property name="tristate">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="remove_all_atoms_checkbox">
-             <property name="text">
-              <string>Remove All Atoms</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QScrollArea" name="atoms_to_plot_scroll_area">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -133,7 +113,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>438</width>
-                <height>127</height>
+                <height>181</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout"/>
