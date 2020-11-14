@@ -697,7 +697,9 @@ class VisualizationWindow(Ui_BaseClass):
         self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
         self.center = np.array([0, 0, 0])
 
-        # keeps total noncentral data that can be plotted
+        # keeps total noncentral data that can be plotted (self.all_noncentral_data)
+        # self.current_concentral_data is actually what is plotted. This needs to be done to revert back to orginal whole dataset if slider is changed back
+        # to original position
         self.all_noncentral_data = all_atom_dict[self.current_central_atom_name]
         self.current_noncentral_data = copy(self.all_noncentral_data)
         self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
@@ -738,7 +740,10 @@ class VisualizationWindow(Ui_BaseClass):
         """ Initializes slider that can be used to plot less points. The slider values are slices of data to plot. See slider_update_plotted_data"""
 
         self.ui.points_slider.setMinimum(1)
-        self.ui.points_slider.setMaximum(500)
+        if system_as_xyz.all_atom_4d_array.shape[2] > 1000:
+            self.ui.points_slider.setMaximum(system_as_xyz.all_atom_4d_array.shape[2]/100)
+        else:
+            self.ui.points_slider.setMaximum(50)
         # self.ui.points_slider.setTickInterval(2)
         # self.ui.points_slider.setSingleStep(2)
         self.ui.points_slider.valueChanged.connect(self.update_atom_data_and_plot)
@@ -911,7 +916,7 @@ class VisualizationWindow(Ui_BaseClass):
                     column_label = 1
 
     def change_atom_color(self):
-        """ opens up color dialog and lets user select a new color for a particular atom """
+        """ opens up color dialog and lets user select a new color for a particular atom. GUI is automatically frozen until user closes the color dialog box."""
         
         color = QtWidgets.QColorDialog.getColor() # this gives a QColor Object
 
@@ -934,7 +939,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.plot_updated_data()
 
     def plot_updated_data(self):
-        """ plots data after an update to central ALF atom"""
+        """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
 
         center = pv.PolyData(self.center)
         self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
