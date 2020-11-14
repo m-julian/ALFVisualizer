@@ -712,6 +712,7 @@ class VisualizationWindow(Ui_BaseClass):
 
         # initialize ui values and plotter
         self._start_combo_central_atom_names()
+        self._start_points_to_plot_slider()
         self._start_pyvista_plotter()
         self.update_central_atom_and_plot()
     
@@ -720,6 +721,12 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.ui.atom_names_combo.addItems(self.atom_names)
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
+
+    def _start_points_to_plot_slider(self):
+
+        self.ui.points_slider.setMinimum(1)
+        self.ui.points_slider.setMaximum(100)
+        self.ui.points_slider.valueChanged.connect(self.update_atom_data_and_plot)
 
     def _start_pyvista_plotter(self):
         """ method to initialize pyvista plot"""
@@ -736,6 +743,7 @@ class VisualizationWindow(Ui_BaseClass):
         well as updates non central atom data"""
 
         self.update_central_atom_data()
+        self.points_slider_reset()
         self.update_noncentral_atoms_data()
         self.update_checkboxes_widget()
         self.update_atom_color_box_buttons()
@@ -748,6 +756,8 @@ class VisualizationWindow(Ui_BaseClass):
         when there are changes in atom colors as selected in the GUI"""
 
         self.update_checked_atoms()
+        self.update_noncentral_atoms_data()
+        self.slider_update_plotted_data()
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
@@ -761,6 +771,7 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
         self.current_noncentral_data = self.all_atom_dict[self.current_central_atom_name]
+
         self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
 
     def update_checkboxes_widget(self):
@@ -873,6 +884,16 @@ class VisualizationWindow(Ui_BaseClass):
                     self.atom_colors[f"{push_button.text()}"] = color.name()
 
         self.plot_updated_data()
+
+    def points_slider_reset(self):
+
+        self.ui.points_slider.setValue(1)
+
+    def slider_update_plotted_data(self):
+
+        slicing = self.ui.points_slider.value()
+        for atom in self.current_noncentral_data.keys():
+            self.current_noncentral_data[atom] = self.current_noncentral_data[atom][0::slicing,:]
 
     def menu_lock(self):
         """ lock menu when choosing colors so that people cannot switch plotted atoms while color dialog is opened.
