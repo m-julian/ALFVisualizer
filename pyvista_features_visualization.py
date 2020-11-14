@@ -788,7 +788,6 @@ class VisualizationWindow(Ui_BaseClass):
         it a pyvista MultiBlock"""
 
         slicing = self.ui.points_slider.value()
-        print(slicing)
         for atom in self.all_noncentral_data.keys():
             self.current_noncentral_data[atom] = self.all_noncentral_data[atom][0::slicing,:]
 
@@ -914,12 +913,9 @@ class VisualizationWindow(Ui_BaseClass):
         center = pv.PolyData(self.center)
         self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
 
-        print()
-        print(f"Central atom: {self.current_central_atom_name}, color {self.current_central_atom_color}")
         for block in self.current_datablock.keys():
             if block in self.current_checked_atoms:
                 color = self.atom_colors.get(block)
-                print(f"Noncentral atom:{block}, color:{color}")
                 self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
 
 if __name__ == "__main__":
