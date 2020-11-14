@@ -727,8 +727,7 @@ class VisualizationWindow(Ui_BaseClass):
         self._start_combo_central_atom_names()
         self._start_points_to_plot_slider()
         self._start_grid_checkbox()
-        # self._start_plot_all_atoms_checkbox()
-        # self._start_remove_all_atoms_checkbox()
+        self._start_remove_all_atoms_button()
         self._start_pyvista_plotter()
         self.update_central_atom_and_plot()
     
@@ -756,15 +755,10 @@ class VisualizationWindow(Ui_BaseClass):
         self.ui.show_grid_checkbox.setCheckState(QtCore.Qt.Checked)
         self.ui.show_grid_checkbox.stateChanged.connect(self.grid_status)
 
-    # def _start_plot_all_atoms_checkbox(self):
-    #     """ checkbox that plots all noncentral atoms"""
+    def _start_remove_all_atoms_button(self):
+        """ button that unticks all noncentral atoms"""
         
-    #     self.ui.plot_all_atoms_checkbox.setCheckState(QtCore.Qt.Checked)
-    #     self.ui.plot_all_atoms_checkbox.stateChanged.connect(self.)
-
-    # def _start_remove_all_atoms_checkbox(self):
-    #     """ checkbox that removes all noncentral atoms"""
-    #     pass
+        self.ui.remove_all_plotted_atoms.clicked.connect(self.untick_all_noncentral_atoms)
 
     def _start_pyvista_plotter(self):
         """ method to initialize pyvista plot"""
@@ -861,6 +855,13 @@ class VisualizationWindow(Ui_BaseClass):
             if column % 3 == 0:
                 row += 1
                 column = 0
+
+    def untick_all_noncentral_atoms(self):
+        """ method called after clicking the Remove All Plotted Atoms button - this unticks all noncentral atoms"""
+
+        self.current_checked_atoms = []
+        for checkbox in self.checkboxes:
+            checkbox.setCheckState(QtCore.Qt.Unchecked)
 
     def update_checked_atoms(self):
         """ Method that keeps track of which checkboxes for noncentral atoms are checked. ONLY atoms that are checked are plotted"""

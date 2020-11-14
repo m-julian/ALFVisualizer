@@ -97,6 +97,13 @@
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="remove_all_plotted_atoms">
+             <property name="text">
+              <string>Remove All Plotted Atoms</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QScrollArea" name="atoms_to_plot_scroll_area">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -113,7 +120,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>438</width>
-                <height>181</height>
+                <height>147</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout"/>
