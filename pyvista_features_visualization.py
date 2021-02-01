@@ -3,8 +3,6 @@ import numpy as np
 import itertools as it
 import math
 from functools import lru_cache
-import string
-import pandas as pd
 from glob import glob
 from itertools import cycle
 from copy import copy
@@ -574,7 +572,7 @@ class XYZArrays:
 
         all_other_atom_3D_arrays = []
 
-        for one_atom_features in all_atom_features:
+        for one_atom_features in self.all_atom_features:
 
             # xy_atom_3d_array, and polar_atoms_3d_array are both 3D atom arrays
             # (xy_atom_matrix is 2xN_pointsx3, and polar atom matrix
@@ -655,11 +653,67 @@ class XYZArrays:
 
         return polar_atoms_xyz_matrix
 
+#########################################################################
+#                       PYVISTA/ QT PLOTTING TOOL
+#########################################################################
+
+
+class OpenXYZFile(QtWidgets.QWidget):
+    """ Open File Dialog to select XYZ file"""
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.open_file_dialog()
+        self.open_pyvista_box(self.xyz_file)
+
+    def open_file_dialog(self):
+        # options = QtWidgets.QFileDialog.Options()
+        # options = QtWidgets.QFileDialog.DontUseNativeDialog
+        self.xyz_file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select an .xyz file", "","All Files (*);;XYZ files (*.xyz)") # options=options
+
+    def open_pyvista_box(self, xyz_file):
+
+        global system_as_xyz
+
+        # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
+        all_atom_features, atom_names, atoms_names_priorities = features_and_atom_names(xyz_file)
+        atom_colors = dict(zip(atom_names, cycle(colors)))  # initialize atom colors
+
+        system_as_xyz = XYZArrays(all_atom_features, atom_names)  # gives 4D numpy array
+
+        total_dict = {} # dictionary of dictionaries, ordered as {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}, 
+        # "H2": {"C1":xyz_array, "O3":xyz_array.......}........,"H6":{"O3":xyz_array, "C1":xyz_array}
+        # the ordering is {central_atom1: {x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array ..... },
+        #  central_atom2:{x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array, ..... }....}
+        # this was done to keep track of colors (which cannot really be done using np arrays)
+
+        xyz_dict = {} # this dict keeps inner dictionaries from the total_array such as {"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
+        # it gets reset after every iteration of the loop to move onto the next atom center
+
+        # iterate over central atoms, their respective 3D array of other atoms as xyz coords, as well as the priorities of these xyz atoms (i.e which is
+        # x axis, which is xy plane etc.)
+        for center_atom, center_atom_xyzs, atom_names_prio in zip(atom_names, system_as_xyz.all_atom_4d_array, atoms_names_priorities):
+            # C1  #C1 non central atom 3D array # O3, H2, H4, H5, H6 # 2, 1, 3, 4, 5
+            for idx, atom_name_prio in enumerate(atom_names_prio):
+                #  0 O3, 1 H2, etc. used to get out the individual 2d arrays which are ordered as 
+                # x axis, xy plane, and then all atoms in polar coords
+                xyz_dict[atom_name_prio] = center_atom_xyzs[idx]
+            
+            total_dict[center_atom] = xyz_dict
+            xyz_dict = {}
+
+        self.main_window = VisualizationWindow(total_dict, atom_names, atom_colors)
+        self.main_window.show()
 
 #########################################################################
 #                       PYVISTA/ QT PLOTTING TOOL
 #########################################################################
-Ui_MainWindow, Ui_BaseClass = uic.loadUiType("testing.ui")
+
+
+Ui_MainWindow, Ui_BaseClass = uic.loadUiType("pyvista_features_visualization.ui")
+
 
 class VisualizationWindowDecorators:
 
@@ -964,45 +1018,16 @@ class VisualizationWindow(Ui_BaseClass):
 
 if __name__ == "__main__":
 
-    xyz_files = sorted(glob("*.xyz"))
-    if len(xyz_files) == 1:
-        xyz_file = xyz_files[0]
-    else:
-        print("Select xyz file to evaluate:")
-        print ("")
-        for i in range(len(xyz_files)):
-            print (f"[{i+1}] --> ", xyz_files[i])
-        xyz_file = xyz_files[int(input())-1]
-
-    # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
-    all_atom_features, atom_names, atoms_names_priorities = features_and_atom_names(xyz_file)
-    atom_colors = dict(zip(atom_names, cycle(colors))) # initialize atom colors
-
-    system_as_xyz = XYZArrays(all_atom_features, atom_names) # gives 4D numpy array
-
-    total_dict = {} # dictionary of dictionaries, ordered as {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}, 
-    # "H2": {"C1":xyz_array, "O3":xyz_array.......}........,"H6":{"O3":xyz_array, "C1":xyz_array}
-    # the ordering is {central_atom1: {x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array ..... },
-    #  central_atom2:{x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array, ..... }....}
-    # this was done to keep track of colors (which cannot really be done using np arrays)
-
-    xyz_dict = {} # this dict keeps inner dictionaries from the total_array such as {"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
-    # it gets reset after every iteration of the loop to move onto the next atom center
-
-    # iterate over central atoms, their respective 3D array of other atoms as xyz coords, as well as the priorities of these xyz atoms (i.e which is
-    # x axis, which is xy plane etc.)
-    for center_atom, center_atom_xyzs, atom_names_prio in zip(atom_names, system_as_xyz.all_atom_4d_array, atoms_names_priorities):
-        # C1  #C1 non central atom 3D array # O3, H2, H4, H5, H6 # 2, 1, 3, 4, 5
-        for idx, atom_name_prio in enumerate(atom_names_prio):
-            #  0 O3, 1 H2, etc. used to get out the individual 2d arrays which are ordered as 
-            # x axis, xy plane, and then all atoms in polar coords
-            xyz_dict[atom_name_prio] = center_atom_xyzs[idx]
-        
-        total_dict[center_atom] = xyz_dict
-        xyz_dict = {}
+    # xyz_files = sorted(glob("*.xyz"))
+    # if len(xyz_files) == 1:
+    #     xyz_file = xyz_files[0]
+    # else:
+    #     print("Select xyz file to evaluate:")
+    #     print ("")
+    #     for i in range(len(xyz_files)):
+    #         print (f"[{i+1}] --> ", xyz_files[i])
+    #     xyz_file = xyz_files[int(input())-1]
 
     app = QtWidgets.QApplication(sys.argv)
-    main_window = VisualizationWindow(total_dict, atom_names, atom_colors)
-    main_window.show()
-
+    ex = OpenXYZFile()
     app.exec_()
