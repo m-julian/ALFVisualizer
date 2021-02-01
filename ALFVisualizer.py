@@ -17,7 +17,6 @@ from qtpy.QtWidgets import QMainWindow
 import pyvista as pv
 from pyvistaqt import QtInteractor
 from qtpy import uic
-# import matplotlib
 
 ###############################################################################
 #                                XYZ FILE PARSING
@@ -666,7 +665,10 @@ class OpenXYZFile(QtWidgets.QWidget):
         super().__init__()
 
         self.open_file_dialog()
-        self.open_pyvista_box(self.xyz_file)
+        if self.xyz_file:
+            self.open_pyvista_box(self.xyz_file)
+        else:
+            sys.exit()
 
     def open_file_dialog(self):
         # options = QtWidgets.QFileDialog.Options()
@@ -712,7 +714,7 @@ class OpenXYZFile(QtWidgets.QWidget):
 #########################################################################
 
 
-Ui_MainWindow, Ui_BaseClass = uic.loadUiType("pyvista_features_visualization.ui")
+Ui_MainWindow, Ui_BaseClass = uic.loadUiType("ALFVisualizer.ui")
 
 
 class VisualizationWindowDecorators:
