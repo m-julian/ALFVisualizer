@@ -3,5 +3,5 @@ dist*
 __pycache__/
 .vscode
 .vscode/*
-old
-testing
+old/
+testing/
