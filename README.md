@@ -60,7 +60,7 @@ If pyinstaller is not yet installed:
 pyi-makespec.exe --windowed ALFVIsualizer.py
  ```
  This will generate an ALFVisualizer.spec file which contains settings on how to compile the program. If you want to have the executable in one file,
- add the argument --onefile.
+ add the argument `--onefile `. The one file executable is around 350 mb and a bit slower to run.
 
  In order for the program to compile, the .ui and other hidden libraries need to be added. This is done by
  adding these lines in the .spec file. (These lines are empty in the .spec file initially)
@@ -78,7 +78,8 @@ Finally save the changes to the .spec file and do
 pyinstaller ALFVisualizer.spec
 ```
 
-This should compile the script in the **dist** directory.
+This should compile the script in the **dist** directory. If the `--onefile` option is specified, it will just show up as an executable. If it was not specified,
+a folder will show up with the executable inside it. Make sure to move the whole folder if it was compiled like that.
 
 # If things are not working, some tips:
 
