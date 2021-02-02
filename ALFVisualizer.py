@@ -656,7 +656,6 @@ class XYZArrays:
 #                       PYVISTA/ QT PLOTTING TOOL
 #########################################################################
 
-
 class OpenXYZFile(QtWidgets.QWidget):
     """ Open File Dialog to select XYZ file"""
 
@@ -713,14 +712,29 @@ class OpenXYZFile(QtWidgets.QWidget):
 #                       PYVISTA/ QT PLOTTING TOOL
 #########################################################################
 
+# Define function to import external files when using PyInstaller.
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller
+    see https://stackoverflow.com/a/37920111"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
 
-Ui_MainWindow, Ui_BaseClass = uic.loadUiType("ALFVisualizer.ui")
+    return os.path.join(base_path, relative_path)
+
+# need to do this, otherwise pyinstaller does not find .ui file when using --onefile flag
+ui_path = resource_path("ALFVisualizer.ui")
+Ui_MainWindow, Ui_BaseClass = uic.loadUiType(ui_path)
 
 
 class VisualizationWindowDecorators:
+    """ Decorators for UI """
 
     @staticmethod
     def clear_plot_use_grid(original_method):
+        """ remove or show grid for pyvista """
 
         def wrapper(instance_reference):
 
@@ -738,7 +752,8 @@ class VisualizationWindowDecorators:
         return wrapper
 
 class VisualizationWindow(Ui_BaseClass):
-    """ handles GUI and connects user commands with what to plot on pyvista plot"""
+    """ handles GUI and connects user commands with what to plot on pyvista plot
+    see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
     def __init__(self, all_atom_dict, atom_names, atom_colors):
 
@@ -771,6 +786,7 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.use_grid = True
 
+        # Setup for ui
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._start_alf_vis_ui()
@@ -1019,16 +1035,6 @@ class VisualizationWindow(Ui_BaseClass):
                 self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
 
 if __name__ == "__main__":
-
-    # xyz_files = sorted(glob("*.xyz"))
-    # if len(xyz_files) == 1:
-    #     xyz_file = xyz_files[0]
-    # else:
-    #     print("Select xyz file to evaluate:")
-    #     print ("")
-    #     for i in range(len(xyz_files)):
-    #         print (f"[{i+1}] --> ", xyz_files[i])
-    #     xyz_file = xyz_files[int(input())-1]
 
     app = QtWidgets.QApplication(sys.argv)
     ex = OpenXYZFile()
