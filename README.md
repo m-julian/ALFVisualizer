@@ -57,7 +57,7 @@ If pyinstaller is not yet installed:
 # Then to compile do:
 
  ```
-pyi-makespec.exe --windowed ALFVIsualizer.py
+pyi-makespec --windowed ALFVIsualizer.py
  ```
  This will generate an ALFVisualizer.spec file which contains settings on how to compile the program. If you want to have the executable in one file,
  add the argument `--onefile `. The one file executable is around 350 mb and a bit slower to run.
