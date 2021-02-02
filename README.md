@@ -64,8 +64,8 @@ pyi-makespec --windowed ALFVIsualizer.py
 
  In order for the program to compile, the .ui and other hidden libraries need to be added. This is done by
  adding these lines in the .spec file. (These lines are empty in the .spec file initially)
- For more info see https://pyinstaller.readthedocs.io/en/latest/spec-files.html
- and https://pyinstaller.readthedocs.io/en/stable/man/pyi-makespec.html
+ For more info see https://pyinstaller.readthedocs.io/en/latest/spec-files.html , https://pyinstaller.readthedocs.io/en/stable/man/pyi-makespec.html
+ and https://github.com/pyvista/pyvista-support/issues/167
 
 ```
 datas=[("ALFVisualizer.ui", ".")],
