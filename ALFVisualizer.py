@@ -680,6 +680,13 @@ class OpenXYZFile(QtWidgets.QWidget):
 
         # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
         all_atom_features, atom_names, atoms_names_priorities = features_and_atom_names(xyz_file)
+
+        # these lines are useful if you want to print out information on maximum difference for every feature
+        # all_atoms_max = np.amax(all_atom_features, axis=1) # gives n_atoms x n_features matrix of max feature values
+        # all_atoms_min = np.amin(all_atom_features, axis=1) # gives n_atoms x n_features matrix of min feature values
+        # all_atom_diff = all_atoms_max - all_atoms_min # differences between min and max matrices, check if phi angles are above pi for some atom
+        # print(np.amax(all_atom_diff, axis=0)) # if the max is above pi for a phi angle (every 3rd feature), then it is cyclic
+
         atom_colors = dict(zip(atom_names, cycle(colors)))  # initialize atom colors
 
         system_as_xyz = XYZArrays(all_atom_features, atom_names)  # gives 4D numpy array
