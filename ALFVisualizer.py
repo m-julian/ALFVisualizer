@@ -6,11 +6,13 @@ from functools import lru_cache
 from glob import glob
 from itertools import cycle
 from copy import copy
+import string
+
+import os
+import sys
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 #os.environ["QT_API"] = "pyside2"
 # http://qtdocs.pyvista.org/usage.html
-import os
-import sys
 os.environ["QT_API"] = "pyqt5"
 from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtWidgets import QMainWindow
@@ -18,7 +20,7 @@ import pyvista as pv
 from pyvistaqt import QtInteractor
 from qtpy import uic
 
-###############################################################################
+##############################################-#################################
 #                                XYZ FILE PARSING
 # TAKES .XYZ TRAJECTORY FILE AND CALCULATES FEATURES OF EACH ATOM IN EACH POINT 
 ###############################################################################
@@ -195,6 +197,7 @@ class Atoms:
                 iatom.add_alf_atom(queue.max_priority)
         Atoms.ALF = self.alf
         Atoms.PRIORITIES = self.alf
+        # add atoms that are central, x-axis, or xy-plane atoms
         for alf_atom in Atoms.PRIORITIES:
             for n_atom in range(1,len(self)+1):
                 if n_atom in alf_atom:
@@ -493,8 +496,7 @@ class Atom:
         return hash(str(self.num) + str(self.coordinates_string))
 
 
-
-def features_and_atom_names(xyz_file):
+def features_and_atom_names(xyz_file: str) -> (np.ndarray, list, list):
     """ Returns features as 3D array, [atom][point][feature]
     Example: 10 points water xyz file would have shape (3, 10, 3) where 3 is the number of atoms,
     10 is the number of points, and 3 is the number of features"""
@@ -522,37 +524,15 @@ def features_and_atom_names(xyz_file):
 # 
 ########################################################################
 
-# could not install matplotlib due to package conflicts, this list consists of colors from matplitlib
-colors = ['#00FFFF', '#7FFFD4',
-    '#FFE4C4', '#000000', '#DEB887',
-    '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED', '#FFF8DC', '#DC143C', '#00FFFF',
-    '#00008B', '#008B8B', '#B8860B', '#A9A9A9', '#006400', '#A9A9A9', '#BDB76B', '#8B008B',
-    '#556B2F', '#FF8C00', '#9932CC', '#8B0000', '#E9967A', '#8FBC8F', '#483D8B', '#2F4F4F',
-    '#2F4F4F', '#00CED1', '#9400D3', '#FF1493', '#00BFFF', '#696969', '#696969', '#1E90FF', '#B22222',
-    '#FFFAF0', '#228B22', '#FF00FF', '#DCDCDC', '#F8F8FF', '#FFD700', '#DAA520', '#808080', '#008000', '#ADFF2F',
-    '#808080', '#F0FFF0', '#FF69B4', '#CD5C5C', '#4B0082', '#FFFFF0', '#F0E68C', '#E6E6FA', '#FFF0F5', '#7CFC00',
-    '#FFFACD', '#ADD8E6', '#F08080', '#E0FFFF', '#FAFAD2', '#D3D3D3', '#90EE90', '#D3D3D3', '#FFB6C1', '#FFA07A',
-    '#20B2AA', '#87CEFA', '#778899', '#778899', '#B0C4DE', '#FFFFE0', '#00FF00', '#32CD32', '#FAF0E6', '#FF00FF',
-    '#800000', '#66CDAA', '#0000CD', '#BA55D3', '#9370DB', '#3CB371', '#7B68EE', '#00FA9A', '#48D1CC', '#C71585',
-    '#191970', '#F5FFFA', '#FFE4E1', '#FFE4B5', '#FFDEAD', '#000080', '#FDF5E6', '#808000', '#6B8E23', '#FFA500',
-    '#FF4500', '#DA70D6', '#EEE8AA', '#98FB98', '#AFEEEE', '#DB7093', '#FFEFD5', '#FFDAB9', '#CD853F', '#FFC0CB',
-    '#DDA0DD', '#B0E0E6', '#800080', '#663399', '#FF0000', '#BC8F8F', '#4169E1', '#8B4513', '#FA8072', '#F4A460',
-    '#2E8B57', '#FFF5EE', '#A0522D', '#C0C0C0', '#87CEEB', '#6A5ACD', '#708090', '#708090', '#FFFAFA', '#00FF7F',
-    '#4682B4', '#D2B48C', '#008080', '#D8BFD8', '#FF6347', '#40E0D0', '#EE82EE', '#F5DEB3', '#FFFFFF', '#F5F5F5',
-    '#FFFF00', '#9ACD32']
-
-# colors = ["red", "green", "blue", "orange", "purple", "pink"]
-
 class XYZArrays:
     """ Class for converting to Cartesian space. 
     Creates a 3D array for each atom on which the ALF is centered (1 4D array total). Each 2D array in the 3D array
     consists of N_pointsx3 (because each point has x,y,z coords in 3D space) matrices, where each matrix contains
     the xyz coordinates of every atom that is NOT the atom on which the ALF is centered."""
 
-    def __init__(self, all_atom_features, atom_names):
+    def __init__(self, all_atom_features):
 
         self.all_atom_features = all_atom_features
-        self.atom_names = atom_names
         self.n_atoms, self.n_points, self.n_features = all_atom_features.shape
         self.all_atom_4d_array = self.stack_one_atom_xyz_3D_arrays()
 
@@ -670,9 +650,7 @@ class OpenXYZFile(QtWidgets.QWidget):
             sys.exit()
 
     def open_file_dialog(self):
-        # options = QtWidgets.QFileDialog.Options()
-        # options = QtWidgets.QFileDialog.DontUseNativeDialog
-        self.xyz_file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select an .xyz file", "","All Files (*);;XYZ files (*.xyz)") # options=options
+        self.xyz_file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select an .xyz file", "","All Files (*);;XYZ files (*.xyz)")
 
     def open_pyvista_box(self, xyz_file):
 
@@ -687,9 +665,7 @@ class OpenXYZFile(QtWidgets.QWidget):
         # all_atom_diff = all_atoms_max - all_atoms_min # differences between min and max matrices, check if phi angles are above pi for some atom
         # print(np.amax(all_atom_diff, axis=0)) # if the max is above pi for a phi angle (every 3rd feature), then it is cyclic
 
-        atom_colors = dict(zip(atom_names, cycle(colors)))  # initialize atom colors
-
-        system_as_xyz = XYZArrays(all_atom_features, atom_names)  # gives 4D numpy array
+        system_as_xyz = XYZArrays(all_atom_features)  # gives 4D numpy array
 
         total_dict = {} # dictionary of dictionaries, ordered as {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}, 
         # "H2": {"C1":xyz_array, "O3":xyz_array.......}........,"H6":{"O3":xyz_array, "C1":xyz_array}
@@ -705,19 +681,43 @@ class OpenXYZFile(QtWidgets.QWidget):
         for center_atom, center_atom_xyzs, atom_names_prio in zip(atom_names, system_as_xyz.all_atom_4d_array, atoms_names_priorities):
             # C1  #C1 non central atom 3D array # O3, H2, H4, H5, H6 # 2, 1, 3, 4, 5
             for idx, atom_name_prio in enumerate(atom_names_prio):
-                #  0 O3, 1 H2, etc. used to get out the individual 2d arrays which are ordered as 
+                #  0 O3, 1 H2, etc. used to get out the individual 2d arrays which are ordered as:
                 # x axis, xy plane, and then all atoms in polar coords
                 xyz_dict[atom_name_prio] = center_atom_xyzs[idx]
             
             total_dict[center_atom] = xyz_dict
             xyz_dict = {}
 
-        self.main_window = VisualizationWindow(total_dict, atom_names, atom_colors)
+        self.main_window = VisualizationWindow(total_dict, atom_names)
         self.main_window.show()
+
 
 #########################################################################
 #                       PYVISTA/ QT PLOTTING TOOL
 #########################################################################
+
+# use these random colors and the atom_colors defined below if you want to see positions of individual atoms (which gets lost if the same colors are specified
+# for each type of atom)
+random_colors = ['#00FFFF', '#7FFFD4',
+    '#FFE4C4', '#000000', '#DEB887',
+    '#5F9EA0', '#7FFF00', '#D2691E', '#FF7F50', '#6495ED', '#FFF8DC', '#DC143C', '#00FFFF',
+    '#00008B', '#008B8B', '#B8860B', '#A9A9A9', '#006400', '#A9A9A9', '#BDB76B', '#8B008B',
+    '#556B2F', '#FF8C00', '#9932CC', '#8B0000', '#E9967A', '#8FBC8F', '#483D8B', '#2F4F4F',
+    '#2F4F4F', '#00CED1', '#9400D3', '#FF1493', '#00BFFF', '#696969', '#696969', '#1E90FF', '#B22222',
+    '#FFFAF0', '#228B22', '#FF00FF', '#DCDCDC', '#F8F8FF', '#FFD700', '#DAA520', '#808080', '#008000', '#ADFF2F',
+    '#808080', '#F0FFF0', '#FF69B4', '#CD5C5C', '#4B0082', '#FFFFF0', '#F0E68C', '#E6E6FA', '#FFF0F5', '#7CFC00',
+    '#FFFACD', '#ADD8E6', '#F08080', '#E0FFFF', '#FAFAD2', '#D3D3D3', '#90EE90', '#D3D3D3', '#FFB6C1', '#FFA07A',
+    '#20B2AA', '#87CEFA', '#778899', '#778899', '#B0C4DE', '#FFFFE0', '#00FF00', '#32CD32', '#FAF0E6', '#FF00FF',
+    '#800000', '#66CDAA', '#0000CD', '#BA55D3', '#9370DB', '#3CB371', '#7B68EE', '#00FA9A', '#48D1CC', '#C71585',
+    '#191970', '#F5FFFA', '#FFE4E1', '#FFE4B5', '#FFDEAD', '#000080', '#FDF5E6', '#808000', '#6B8E23', '#FFA500',
+    '#FF4500', '#DA70D6', '#EEE8AA', '#98FB98', '#AFEEEE', '#DB7093', '#FFEFD5', '#FFDAB9', '#CD853F', '#FFC0CB',
+    '#DDA0DD', '#B0E0E6', '#800080', '#663399', '#FF0000', '#BC8F8F', '#4169E1', '#8B4513', '#FA8072', '#F4A460',
+    '#2E8B57', '#FFF5EE', '#A0522D', '#C0C0C0', '#87CEEB', '#6A5ACD', '#708090', '#708090', '#FFFAFA', '#00FF7F',
+    '#4682B4', '#D2B48C', '#008080', '#D8BFD8', '#FF6347', '#40E0D0', '#EE82EE', '#F5DEB3', '#FFFFFF', '#F5F5F5',
+    '#FFFF00', '#9ACD32']
+
+# use these default colors for each atom type if you do not care about looking at specific atoms
+default_colors = {"O": "red", "H": "white", "Cl": "green", "N": "blue", "C": "grey", "S": "yellow", "P": "orange"}
 
 # Define function to import external files when using PyInstaller.
 def resource_path(relative_path):
@@ -762,13 +762,14 @@ class VisualizationWindow(Ui_BaseClass):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
-    def __init__(self, all_atom_dict, atom_names, atom_colors):
+    def __init__(self, all_atom_dict, atom_names):
 
         super().__init__()
 
         self.all_atom_dict = all_atom_dict
         self.atom_names = atom_names # list of atom names
-        self.atom_colors = atom_colors #dict of atom:color
+
+        self.atom_colors = dict(zip(atom_names, random_colors)) # initialize to random colors
 
         # used to initialize UI to plot first central alf atom (based on index, ex. C1, O1, etc.)
         self.current_central_atom_name = atom_names[0]
@@ -776,7 +777,7 @@ class VisualizationWindow(Ui_BaseClass):
         self.center = np.array([0, 0, 0])
 
         # keeps total noncentral data that can be plotted (self.all_noncentral_data)
-        # self.current_concentral_data is actually what is plotted. This needs to be done to revert back to orginal whole dataset if slider is changed back
+        # self.current_noncentral_data is actually what is plotted. This needs to be done to revert back to orginal whole dataset if slider is changed back
         # to original position
         self.all_noncentral_data = all_atom_dict[self.current_central_atom_name]
         self.current_noncentral_data = copy(self.all_noncentral_data)
@@ -806,6 +807,7 @@ class VisualizationWindow(Ui_BaseClass):
         self._start_combo_central_atom_names()
         self._start_points_to_plot_slider()
         self._start_grid_checkbox()
+        self._start_default_color_checkbox()
         self._start_remove_all_atoms_button()
         self._start_pyvista_plotter()
         self.update_central_atom_and_plot()
@@ -833,6 +835,12 @@ class VisualizationWindow(Ui_BaseClass):
 
         self.ui.show_grid_checkbox.setCheckState(QtCore.Qt.Checked)
         self.ui.show_grid_checkbox.stateChanged.connect(self.grid_status)
+
+    def _start_default_color_checkbox(self):
+        """ Initialize checkbox that is used to make atoms default colors or random colors. Unchecked is random color and checked is default colors."""
+
+        self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
+        self.ui.default_atom_colors_checkbox.stateChanged.connect(self.default_or_random_atom_colors)
 
     def _start_remove_all_atoms_button(self):
         """ button that unticks all noncentral atoms"""
@@ -1029,6 +1037,25 @@ class VisualizationWindow(Ui_BaseClass):
                     self.atom_colors[f"{push_button.text()}"] = color.name()
 
         self.plot_updated_data()
+
+    def default_or_random_atom_colors(self):
+        """ if checkbox for default atom_colors is unchecked, random colors are used (this is initial state). If checkbox is checked, then
+        default colors for atoms, i.e. oxygen:red , hydrogen:white, etc. are used"""
+        
+        if self.ui.default_atom_colors_checkbox.isChecked() == False: # use random colors, this is initial state
+            self.atom_colors = dict(zip(self.atom_names, random_colors))
+
+        elif self.ui.default_atom_colors_checkbox.isChecked() == True: # use default colors
+            self.atom_colors = {}
+            for atom_name in self.atom_names:
+                if atom_name.rstrip(string.digits) in default_colors.keys():
+                    default_color = default_colors[atom_name.rstrip(string.digits)]
+                else:
+                    default_color = "black"
+                self.atom_colors[atom_name] = default_color
+
+        self.update_central_atom_data() # have to call this to also update the central atom color, don't want to add this to the main methods used for updating
+        self.update_atom_data_and_plot()
 
     def plot_updated_data(self):
         """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""

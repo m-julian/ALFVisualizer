@@ -71,6 +71,13 @@
              </property>
             </widget>
            </item>
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="default_atom_colors_checkbox">
+             <property name="text">
+              <string>Default Colors</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -119,8 +126,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>438</width>
-                <height>147</height>
+                <width>439</width>
+                <height>157</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout"/>
@@ -162,8 +169,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>438</width>
-                <height>180</height>
+                <width>439</width>
+                <height>185</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_2"/>
@@ -206,7 +213,7 @@
      <x>0</x>
      <y>0</y>
      <width>1100</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOpen">
