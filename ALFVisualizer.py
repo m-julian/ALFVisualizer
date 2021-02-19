@@ -1039,8 +1039,9 @@ class VisualizationWindow(Ui_BaseClass):
         self.plot_updated_data()
 
     def default_or_random_atom_colors(self):
-        """ if checkbox for default atom_colors is unchecked, random colors are used (this is initial state). If checkbox is checked, then
-        default colors for atoms, i.e. oxygen:red , hydrogen:white, etc. are used"""
+        """ updates atom colors depending on default_atom_colors_checkbox. This checkbox is initialized to unchecked state, so
+        random colors are used (this is initial state). If checkbox is checked, then default colors for atoms,
+        i.e. oxygen:red , hydrogen:white, etc. are used"""
         
         if self.ui.default_atom_colors_checkbox.isChecked() == False: # use random colors, this is initial state
             self.atom_colors = dict(zip(self.atom_names, random_colors))
