@@ -164,8 +164,7 @@ class Atoms(list):
     def features(self) -> np.ndarray:
         """Returns the features for this Atoms instance, corresponding to the features of each Atom instance held in this Atoms isinstance
         Features are calculated in the Atom class and concatenated to a 2d array here.
-
-        The array shape is n_atoms x n_features (3*n_atoms - 6)
+        The array shape is n_atoms x n_features (3*n_atoms - 6).
 
         Returns:
             :type: `np.ndarray` of shape n_atoms x n_features (3N-6)

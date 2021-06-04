@@ -12,7 +12,8 @@ class ALFFeatureCalculator(FeatureCalculator):
 
     @classmethod
     def calculate_alf(cls, atom) -> list:
-        """Returns the Atomic Local Frame (ALF) of the specified atom. The ALF consists of 3 Atom instances,
+        """
+        Returns the Atomic Local Frame (ALF) of the specified atom. The ALF consists of 3 Atom instances,
         the central atom, the x-axis atom, and the xy-plane atom. These are later used to calculate the C rotation
         matrix and features.
 
