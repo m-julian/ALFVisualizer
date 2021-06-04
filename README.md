@@ -2,6 +2,7 @@
 Using pyvista to visualize atomic ALF
 
 Select a .xyz file to visualize. Wait until a new window pops up with the visualization tool. It might take a while if the .xyz has a lot of timesteps.
+Make sure to run the script when you are in the src directory because it uses relative paths for the .ui file.
 
 # The main files are ALFVisualizer.py and ALFVisualizer.ui
 The python code to calculate features and use pyvista is in the .py file and the actual ui is in the .ui file. The .ui file can be opened with Qt Designer.

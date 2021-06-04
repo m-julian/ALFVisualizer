@@ -1,5 +1,5 @@
 .. ALFVisualizer documentation master file, created by
-   sphinx-quickstart on Fri Feb 19 16:13:25 2021.
+   sphinx-quickstart on Sat Feb 20 14:16:26 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -10,7 +10,7 @@ Welcome to ALFVisualizer's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   modules
 
 Indices and tables
 ==================
