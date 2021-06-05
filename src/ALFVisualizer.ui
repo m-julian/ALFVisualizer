@@ -40,27 +40,10 @@
            </sizepolicy>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="1" column="1">
-            <widget class="QSlider" name="points_slider">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="central_alf_atom_label">
+           <item row="1" column="0" colspan="2">
+            <widget class="QCheckBox" name="plot_individual_point_checkbox">
              <property name="text">
-              <string>Central Atom</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="atom_names_combo"/>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="reduce_plotted_points_label">
-             <property name="text">
-              <string>Reduce plotted points</string>
+              <string>Plot Individual Points</string>
              </property>
             </widget>
            </item>
@@ -71,10 +54,27 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
+           <item row="0" column="0">
+            <widget class="QLabel" name="central_alf_atom_label">
+             <property name="text">
+              <string>Central Atom</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
             <widget class="QCheckBox" name="default_atom_colors_checkbox">
              <property name="text">
               <string>Default Colors</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QComboBox" name="atom_names_combo"/>
+           </item>
+           <item row="1" column="2">
+            <widget class="QSlider" name="individual_point_slider">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>
