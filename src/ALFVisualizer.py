@@ -358,6 +358,7 @@ class VisualizationWindow(QMainWindow):
         self._start_combo_central_atom_names()
         self._start_individual_point_checkbox()
         self._start_individual_point_slider()
+        self._start_individual_point_box()
         self._start_grid_checkbox()
         self._start_default_color_checkbox()
         self._start_remove_all_atoms_button()
@@ -373,7 +374,7 @@ class VisualizationWindow(QMainWindow):
     def _start_individual_point_checkbox(self):
         """ method that initializes the state of the individual atom checkbox."""
         self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
-        self.ui.plot_individual_point_checkbox.stateChanged.connect(self.update_individual_point_slider_status)
+        self.ui.plot_individual_point_checkbox.stateChanged.connect(self.update_individual_point_slider_status_and_box)
 
     def _start_individual_point_slider(self):
         """ method that initializes the individual point slider as well as the state of the slider"""
@@ -382,6 +383,10 @@ class VisualizationWindow(QMainWindow):
         self.ui.individual_point_slider.setMinimum(0)  # 0 is the first timestep
         self.ui.individual_point_slider.setMaximum(system_as_xyz.all_atom_4d_array.shape[2] - 1)  # this is the last timestep in the trajectory
         self.ui.individual_point_slider.valueChanged.connect(self.update_individual_point_slider_plotted_data)
+
+    def _start_individual_point_box(self):
+        self.ui.individual_point_box.setText(f"{self.ui.individual_point_slider.value()}")
+        self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value)
 
     def _start_grid_checkbox(self):
         """ Initialize checkbox that is used to show or remove grid"""
@@ -446,14 +451,16 @@ class VisualizationWindow(QMainWindow):
         self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
         self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
 
-    def update_individual_point_slider_status(self):
+    def update_individual_point_slider_status_and_box(self):
         """ Updates the status of the individual point slider depending on the checked state of the individual point checkbox.
         If that checkbox is enabled, then only 1 point will be plotted at a time. The slider can then be slider to the point of interest
         in the trajectory.
         """
         if self.ui.plot_individual_point_checkbox.isChecked() is True:
             self.ui.individual_point_slider.setEnabled(True)
+            self.ui.individual_point_box.setEnabled(True)
             current_point = self.ui.individual_point_slider.value()
+            self.ui.individual_point_box.setText(f"{current_point}")
             for atom in self.all_noncentral_data.keys():
                 self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point, :]
 
@@ -462,12 +469,19 @@ class VisualizationWindow(QMainWindow):
 
         elif self.ui.plot_individual_point_checkbox.isChecked() is False:
             self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
+            self.ui.individual_point_box.setEnabled(False)
             self.ui.individual_point_slider.setEnabled(False)
             self.update_atom_data_and_plot()
+
+    def update_individual_point_slider_value(self):
+        """ Updates the slider value based on the value of the individual point text box."""
+        current_val = int(self.ui.individual_point_box.text())
+        self.ui.individual_point_slider.setValue(current_val)
 
     def update_individual_point_slider_plotted_data(self):
         """ Makes slices of the data before making the data a pyvista MultiBlock"""
         current_point = self.ui.individual_point_slider.value()
+        self.ui.individual_point_box.setText(f"{current_point}")
         for atom in self.all_noncentral_data.keys():
             self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point, :]
 
