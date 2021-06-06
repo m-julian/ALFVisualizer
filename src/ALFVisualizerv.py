@@ -385,6 +385,7 @@ class VisualizationWindow(QMainWindow):
         """
         self.update_central_atom_data()
         self.update_checkboxes_widget()
+        self.update_individual_point_slider_status_and_box()
         self.update_checked_atoms()
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
@@ -469,9 +470,6 @@ class VisualizationWindow(QMainWindow):
             self.current_noncentral_data = {}
             for atom in self.all_noncentral_data.keys():
                 self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
-
-            print("after for loop")
-            print(self.all_noncentral_data)
 
             self.update_noncentral_atoms_and_plot()
 
