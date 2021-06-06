@@ -298,7 +298,7 @@ class VisualizationWindow(QMainWindow):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
-    def __init__(self, all_atom_dict, atom_names, atomic_local_frame_dict):
+    def __init__(self, all_atom_dict, atom_names, atomic_local_frame_dict, energies=None):
 
         super().__init__()
 
@@ -316,6 +316,9 @@ class VisualizationWindow(QMainWindow):
         # self.current_noncentral_data is actually what is plotted.
         # This needs to be done to revert back to orginal whole dataset if slider is changed back to original position
         self.current_noncentral_data = self.all_noncentral_data
+
+        if energies is not None:
+            self.energies = energies
 
         # used in initializing values for slider, atom selecter, and atom color parts, and grid
         self.checkboxes = []
@@ -652,22 +655,20 @@ class VisualizationWindow(QMainWindow):
 
         for block in self.current_datablock.keys():
             if block in self.current_checked_atoms:
-                self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=15, render_points_as_spheres=True)
+                self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True)
 
-    # def plot_data_with_cmap(self):
+    def plot_data_with_cmap(self):
+        """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
 
-    #     """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
+        center = pv.PolyData(self.center)
+        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True)
 
-    #     center = pv.PolyData(self.center)
-    #     self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
+        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
 
-    #     for idx, block in enumerate(self.current_datablock.keys(), start=2):
-    #         if block in self.current_checked_atoms:
-    #             # color = self.atom_colors.get(block)
-
-    #             # self.current_datablock[block]["values"] = np.random.randn(20001)
-    #             # add this to bottom line to add colors scalars="values", cmap="jet",
-    #             self.plotter.add_mesh(self.current_datablock[block], point_size=10, render_points_as_spheres=True)
+        for block in self.current_datablock.keys():
+            if block in self.current_checked_atoms:
+                self.current_datablock[block]["values"] = self.energies
+                self.plotter.add_mesh(self.current_datablock[block], scalars="values", cmap="jet", point_size=12, render_points_as_spheres=True)
 
 
 if __name__ == "__main__":

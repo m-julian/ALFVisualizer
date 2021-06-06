@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from typing import List
 import numpy as np
 from list_of_atoms import ListOfAtoms
 from atoms import Atoms
@@ -24,17 +25,22 @@ class Trajectory(ListOfAtoms):
                     continue
                 elif re.match(r"^\s*\d+$", line):
                     natoms = int(line)
-                    while len(atoms) < natoms:
-                        line = next(f)
-                        if re.match(
-                            r"\s*\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line
-                        ):
-                            atom_type, x, y, z = line.split()
-                            atoms.add(
-                                Atom(atom_type, float(x), float(y), float(z))
-                            )
-                    self.add(atoms)
-                    atoms = Atoms()
+                    continue
+                elif re.match(r"^\s*i\s*=\s*\d+\s*energy\s*=\s*\d+[+-]?([0-9]*[.])?[0-9]+", line):
+                    energy = line.split()[-1]
+                    atoms.energy = energy
+                    continue
+                while len(atoms) < natoms:
+                    line = next(f)
+                    if re.match(
+                        r"\s*\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line
+                    ):
+                        atom_type, x, y, z = line.split()
+                        atoms.add(
+                            Atom(atom_type, float(x), float(y), float(z))
+                        )
+                self.add(atoms)
+                atoms = Atoms()
 
         self.state = FileState.Read
 
@@ -73,6 +79,12 @@ class Trajectory(ListOfAtoms):
             ref = self[ref]
 
         return [ref.rmsd(point) for point in self]
+
+    @property
+    def energies(self) -> List:
+        """returns a list of energies as read in from the .xyz file comment line.
+        This is used to plot colormaps of the whole trajectory to see any points which produce poor results."""
+        return [timesteps.energy for timesteps in self]
 
     @property
     def features(self) -> np.ndarray:
