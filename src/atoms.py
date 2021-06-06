@@ -153,6 +153,13 @@ class Atoms(list):
         return np.array([atom.alf for atom in self])
 
     @property
+    def alf_index(self):
+        """Returns the Atomic Local Frame (ALF) for all Atom instances that are held in Atoms
+        e.g. [[1,2,3],[2,1,3], [3,1,2]] These indexes are as in atom names (start at 1)
+        """
+        return np.array([atom.alf_index for atom in self])
+
+    @property
     def atoms(self):
         return [atom.name for atom in self]
 

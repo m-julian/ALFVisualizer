@@ -98,8 +98,14 @@ class Trajectory(ListOfAtoms):
     @property
     def alf(self):
         """ Returns the Atomic Local Frame (ALF) of the first Atoms instance in the trajectory. We expect the ALF to remain the same for all atoms
-        throughout the trajectory."""
+        throughout the trajectory. Atoms are indexed as in Python lists (start at 0)"""
         return self[0].alf
+
+    @property
+    def alf_index(self):
+        """ Returns the Atomic Local Frame (ALF) of the first Atoms instance in the trajectory. We expect the ALF to remain the same for all atoms
+        throughout the trajectory. Atoms are indexes as in their names (start at 1)"""
+        return self[0].alf_index
 
     @property
     def priorities(self):

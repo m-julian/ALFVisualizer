@@ -65,7 +65,10 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List]:
         del atom_name_prio[0]  # removing central atom which is not going to be present in the 3D xyz array used in plotting
         # only non-central atoms are in this array in order x_axis atom, xyz_plane atom, followed by atoms that were in spherical polar coords
 
-    return features, atom_names, atom_name_priorities
+    # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
+    atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index))
+
+    return features, atom_names, atom_name_priorities, atomic_local_frame_dict
 
 ########################################################################
 #                     CREATING 4D ARRAY TO PLOT
@@ -205,7 +208,7 @@ class OpenXYZFile(QtWidgets.QWidget):
     def open_pyvista_box(self, xyz_file):
 
         # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
-        all_atom_features, atom_names, atoms_names_priorities = features_and_atom_names(xyz_file)
+        all_atom_features, atom_names, atoms_names_priorities, atomic_local_frame_dict = features_and_atom_names(xyz_file)
 
         # these lines are useful if you want to print out information on maximum difference for every feature
         # all_atoms_max = np.amax(all_atom_features, axis=1) # gives n_atoms x n_features matrix of max feature values
@@ -236,7 +239,7 @@ class OpenXYZFile(QtWidgets.QWidget):
             total_dict[center_atom] = xyz_dict
             xyz_dict = {}
 
-        self.main_window = VisualizationWindow(total_dict, atom_names)
+        self.main_window = VisualizationWindow(total_dict, atom_names, atomic_local_frame_dict)
         self.main_window.show()
 
 
@@ -294,12 +297,13 @@ class VisualizationWindow(QMainWindow):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
-    def __init__(self, all_atom_dict, atom_names):
+    def __init__(self, all_atom_dict, atom_names, atomic_local_frame_dict):
 
         super().__init__()
 
         self.all_atom_dict = all_atom_dict
         self.atom_names = atom_names  # list of atom names
+        self.alf_dict = atomic_local_frame_dict
 
         self.current_atom_colors = dict(zip(atom_names, random_colors))
         self.saved_atom_colors = dict(zip(atom_names, random_colors))
@@ -436,12 +440,15 @@ class VisualizationWindow(QMainWindow):
     def _start_pyvista_plotter(self):
         """ method to initialize pyvista plot"""
         self.plotter = QtInteractor(self.ui.pyvista_frame)
+        self.plotter.set_background("royalblue", top="aliceblue")
         self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
 
     def update_central_atom_data(self):
         """ method used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
         self.current_central_atom_name = self.ui.atom_names_combo.currentText()
         self.current_noncentral_data = self.all_noncentral_data
+        current_alf_str = ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
+        self.ui.atomic_local_frame.setText(current_alf_str)
 
     def update_individual_point_slider_status_and_box(self):
         """ Updates the status of the individual point slider depending on the checked state of the individual point checkbox.
@@ -637,13 +644,13 @@ class VisualizationWindow(QMainWindow):
         """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
 
         center = pv.PolyData(self.center)
-        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
+        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True)
 
         self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
 
         for block in self.current_datablock.keys():
             if block in self.current_checked_atoms:
-                self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=10, render_points_as_spheres=True)
+                self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=15, render_points_as_spheres=True)
 
     # def plot_data_with_cmap(self):
 
