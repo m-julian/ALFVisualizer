@@ -107,6 +107,16 @@
              </property>
             </widget>
            </item>
+           <item row="3" column="5">
+            <widget class="QCheckBox" name="energy_cmap_checkbox">
+             <property name="text">
+              <string>Plot Energy Cmap</string>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>

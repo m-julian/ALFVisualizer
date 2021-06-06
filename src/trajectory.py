@@ -28,8 +28,7 @@ class Trajectory(ListOfAtoms):
                     continue
                 elif re.match(r"^\s*i\s*=\s*\d+\s*energy\s*=\s*\d+[+-]?([0-9]*[.])?[0-9]+", line):
                     energy = line.split()[-1]
-                    atoms.energy = energy
-                    continue
+                    atoms.energy = float(energy)
                 while len(atoms) < natoms:
                     line = next(f)
                     if re.match(
@@ -81,10 +80,13 @@ class Trajectory(ListOfAtoms):
         return [ref.rmsd(point) for point in self]
 
     @property
-    def energies(self) -> List:
+    def energy(self) -> List:
         """returns a list of energies as read in from the .xyz file comment line.
         This is used to plot colormaps of the whole trajectory to see any points which produce poor results."""
-        return [timesteps.energy for timesteps in self]
+        if hasattr(self[0], 'energy'):
+            return [timesteps.energy for timesteps in self]
+        else:
+            return None
 
     @property
     def features(self) -> np.ndarray:

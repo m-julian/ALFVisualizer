@@ -9,6 +9,7 @@ import numpy as np
 import string
 import os
 import sys
+import matplotlib
 
 from copy import copy
 
@@ -69,7 +70,9 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict
     # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
     atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
 
-    return features, atom_names, atom_name_priorities, atomic_local_frame_dict
+    energies = trajectory.energy
+
+    return features, atom_names, atom_name_priorities, atomic_local_frame_dict, energies
 
 ########################################################################
 #                     CREATING 4D ARRAY TO PLOT
@@ -209,7 +212,7 @@ class OpenXYZFile(QtWidgets.QWidget):
     def open_pyvista_box(self, xyz_file):
 
         # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
-        all_atom_features, atom_names, atoms_names_priorities, atomic_local_frame_dict = features_and_atom_names(xyz_file)
+        all_atom_features, atom_names, atoms_names_priorities, atomic_local_frame_dict, energies = features_and_atom_names(xyz_file)
 
         # these lines are useful if you want to print out information on maximum difference for every feature
         # all_atoms_max = np.amax(all_atom_features, axis=1) # gives n_atoms x n_features matrix of max feature values
@@ -240,7 +243,7 @@ class OpenXYZFile(QtWidgets.QWidget):
             total_dict[center_atom] = xyz_dict
             xyz_dict = {}
 
-        self.main_window = VisualizationWindow(total_dict, atom_names, atomic_local_frame_dict)
+        self.main_window = VisualizationWindow(total_dict, atom_names, atomic_local_frame_dict, energies)
         self.main_window.show()
 
 
@@ -317,8 +320,7 @@ class VisualizationWindow(QMainWindow):
         # This needs to be done to revert back to orginal whole dataset if slider is changed back to original position
         self.current_noncentral_data = self.all_noncentral_data
 
-        if energies is not None:
-            self.energies = energies
+        self.energies = energies
 
         # used in initializing values for slider, atom selecter, and atom color parts, and grid
         self.checkboxes = []
@@ -374,6 +376,7 @@ class VisualizationWindow(QMainWindow):
         self._start_individual_point_textbox()
         self._start_grid_checkbox()
         self._start_default_color_checkbox()
+        self._start_energy_cmap_checkbox()
         self._start_remove_all_atoms_button()
         self._start_pyvista_plotter()
         # called here to initialize the plot
@@ -437,6 +440,17 @@ class VisualizationWindow(QMainWindow):
         self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
         self.ui.default_atom_colors_checkbox.stateChanged.connect(self.use_default_or_random_atom_colors)
 
+    def _start_energy_cmap_checkbox(self):
+        """ Initialize checkbox that is used to plot colormaps of energies, if they are read if from
+        comment line in xyz file."""
+        if self.energies is None:
+            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.energy_cmap_checkbox.setEnabled(False)
+            self.ui.energy_cmap_checkbox.setToolTip("Energies need to be read from xyz file to use this function.")  
+        else:
+            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.energy_cmap_checkbox.stateChanged.connect(self.update_cmap_or_normal)
+
     def _start_remove_all_atoms_button(self):
         """ button that unticks all noncentral atoms"""
         self.ui.remove_all_plotted_atoms.clicked.connect(self.untick_all_noncentral_atoms_checkboxes)
@@ -464,6 +478,7 @@ class VisualizationWindow(QMainWindow):
         if self.ui.plot_individual_point_checkbox.isChecked() is True:
             self.ui.individual_point_slider.setEnabled(True)
             self.ui.individual_point_box.setEnabled(True)
+            self.ui.energy_cmap_checkbox.setCheckState(False)
 
             # update slider box value depending on slider position
             current_point = self.ui.individual_point_slider.value()
@@ -478,11 +493,11 @@ class VisualizationWindow(QMainWindow):
 
         # disable slider and point box, plot all timesteps
         elif self.ui.plot_individual_point_checkbox.isChecked() is False:
+
             self.ui.individual_point_box.setEnabled(False)
             self.ui.individual_point_slider.setEnabled(False)
 
             self.current_noncentral_data = self.all_noncentral_data
-
             self.update_noncentral_atoms_and_plot()
 
     def update_individual_point_slider_plotted_data(self):
@@ -522,7 +537,25 @@ class VisualizationWindow(QMainWindow):
 
         elif self.ui.default_atom_colors_checkbox.isChecked() is True:  # use default colors
             self.current_atom_colors = self.default_atom_colors
+            self.ui.energy_cmap_checkbox.setCheckState(False)
             # self.ui.atom_color_scroll_area.setEnabled(False) # cannot update colors since using default colors
+
+        self.update_noncentral_atoms_and_plot()
+
+    def update_cmap_or_normal(self):
+
+        if self.ui.energy_cmap_checkbox.isChecked() is True:
+            self.ui.plot_individual_point_checkbox.setCheckState(False)
+            self.ui.default_atom_colors_checkbox.setCheckState(False)
+            self.ui.plot_individual_point_checkbox.setEnabled(False)
+            self.ui.default_atom_colors_checkbox.setEnabled(False)
+            self.ui.atom_color_scroll_area.setEnabled(False)
+
+        elif self.ui.energy_cmap_checkbox.isChecked() is False:
+
+            self.ui.plot_individual_point_checkbox.setEnabled(True)
+            self.ui.default_atom_colors_checkbox.setEnabled(True)
+            self.ui.atom_color_scroll_area.setEnabled(True)
 
         self.update_noncentral_atoms_and_plot()
 
@@ -651,24 +684,20 @@ class VisualizationWindow(QMainWindow):
         center = pv.PolyData(self.center)
         self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True)
 
-        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
+        if self.ui.energy_cmap_checkbox.isChecked() is False:
+            self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
+            for block in self.current_datablock.keys():
+                if block in self.current_checked_atoms:
+                    self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True)
 
-        for block in self.current_datablock.keys():
-            if block in self.current_checked_atoms:
-                self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True)
+        elif self.ui.energy_cmap_checkbox.isChecked() is True:
 
-    def plot_data_with_cmap(self):
-        """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
+            self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
+            for block in self.current_datablock.keys():
+                if block in self.current_checked_atoms:
+                    self.current_datablock[block]["energies"] = self.energies
+                    self.plotter.add_mesh(self.current_datablock[block], scalars="energies", cmap="jet", point_size=15, render_points_as_spheres=True)
 
-        center = pv.PolyData(self.center)
-        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True)
-
-        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
-
-        for block in self.current_datablock.keys():
-            if block in self.current_checked_atoms:
-                self.current_datablock[block]["values"] = self.energies
-                self.plotter.add_mesh(self.current_datablock[block], scalars="values", cmap="jet", point_size=12, render_points_as_spheres=True)
 
 
 if __name__ == "__main__":
