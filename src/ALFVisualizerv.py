@@ -9,9 +9,6 @@ import numpy as np
 import string
 import os
 import sys
-import matplotlib
-
-from copy import copy
 
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
