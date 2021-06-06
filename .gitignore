@@ -7,3 +7,5 @@ old/
 testing/
 .mypy_cache/
 .empty
+venv
+.idea
