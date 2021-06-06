@@ -18,8 +18,8 @@ class ALFFeatureCalculator(FeatureCalculator):
         matrix and features.
 
         Args:
-            :param: `cls` the class ALFFeatureCalculator:
-            :param: `atom` an instance of the `Atom` class:
+            :param: `cls` the class ALFFeatureCalculator
+            :param: `atom` an instance of the `Atom` class
                 This atom is the central atom for which we want to calculate the ALF.
 
         Returns:

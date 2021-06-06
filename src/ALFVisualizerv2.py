@@ -4,9 +4,8 @@ import pyvista as pv
 from pyvistaqt import QtInteractor
 from qtpy import uic
 from trajectory import Trajectory
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy as np
-from copy import copy, deepcopy
 import string
 import os
 import sys
@@ -44,7 +43,7 @@ dlpoly_weights = {"H": 1.007975, "He": 4.002602, "Li": 6.9675, "Be": 9.0121831, 
                   "Rb": 85.4678, "Sr": 87.62, "Y": 88.90584, "Zr": 91.224, "Nb": 92.90637, "Mo": 95.95}
 
 
-def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List]:
+def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict]:
     """ Returns features as 3D array, [atom][point][feature]
     Example: 10 points water xyz file would have shape (3, 10, 3) where 3 is the number of atoms,
     10 is the number of points, and 3 is the number of features
@@ -66,7 +65,7 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List]:
         # only non-central atoms are in this array in order x_axis atom, xyz_plane atom, followed by atoms that were in spherical polar coords
 
     # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
-    atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index))
+    atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
 
     return features, atom_names, atom_name_priorities, atomic_local_frame_dict
 
@@ -382,7 +381,6 @@ class VisualizationWindow(QMainWindow):
         Updates central atom (always at 0,0,0 but can update color if different atom) as
         well as updates non central atom data.
         """
-
         self.update_central_atom_data()
         self.update_checkboxes_widget()
         self.update_checked_atoms()
@@ -393,7 +391,6 @@ class VisualizationWindow(QMainWindow):
     def update_noncentral_atoms_and_plot(self):
         """ updates noncentral atom data and colors to be plotted. Called by methods that do not change the current atom. The checkboxes do not need to be
         updated when data is changed but the central atom remains the same."""
-
         self.update_checked_atoms()
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
@@ -451,7 +448,8 @@ class VisualizationWindow(QMainWindow):
         self.ui.atomic_local_frame.setText(current_alf_str)
 
     def update_individual_point_slider_status_and_box(self):
-        """ Updates the status of the individual point slider depending on the checked state of the individual point checkbox.
+        """
+        Updates the status of the individual point slider depending on the checked state of the individual point checkbox.
         If that checkbox is enabled, then only 1 point will be plotted at a time. The slider can then be slider to the point of interest
         in the trajectory.
         """
@@ -548,7 +546,7 @@ class VisualizationWindow(QMainWindow):
                 column = 0
 
     def untick_all_noncentral_atoms_checkboxes(self):
-        """ method called after clicking the Remove All Plotted Atoms button - this unticks all noncentral atoms. Since the sates of the 
+        """ method called after clicking the Remove All Plotted Atoms button - this unticks all noncentral atoms. Since the sates of the
         checkboxes has changed, this will cause the plot to be updated."""
         self.current_checked_atoms = []
         for checkbox in self.checkboxes:
@@ -586,7 +584,6 @@ class VisualizationWindow(QMainWindow):
         # add color button for central atom as well
         push_button = QtWidgets.QPushButton(self.current_central_atom_name)
         push_button.setStyleSheet(f"background-color : {self.current_atom_colors[self.current_central_atom_name]}; color: {self.current_atom_colors[self.current_central_atom_name]};")
-        # push_button.setStyleSheet(f"background-color : {self.saved_atom_colors[self.current_central_atom_name]}; color: {self.saved_atom_colors[self.current_central_atom_name]};")
         push_button.clicked.connect(self.change_atom_color_color_dialog)
         push_button_label = QtWidgets.QLabel(self.current_central_atom_name)
         self.color_buttons.append(push_button)
@@ -602,7 +599,6 @@ class VisualizationWindow(QMainWindow):
 
                 push_button = QtWidgets.QPushButton(f"{checkbox.text()}")
                 push_button.setStyleSheet(f"background-color : {self.current_atom_colors[checkbox.text()]}; color: {self.current_atom_colors[checkbox.text()]};")
-                # push_button.setStyleSheet(f"background-color : {self.saved_atom_colors[self.current_central_atom_name]}; color: {self.saved_atom_colors[self.current_central_atom_name]};")
                 push_button.clicked.connect(self.change_atom_color_color_dialog)
 
                 push_button_label = QtWidgets.QLabel(f"{checkbox.text()}")
@@ -668,7 +664,6 @@ class VisualizationWindow(QMainWindow):
     #             self.plotter.add_mesh(self.current_datablock[block], point_size=10, render_points_as_spheres=True)
 
 
-# needed from here because otherwise Sphinx runs the loading Ui
 if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
