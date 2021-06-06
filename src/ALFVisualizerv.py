@@ -4,12 +4,14 @@ import pyvista as pv
 from pyvistaqt import QtInteractor
 from qtpy import uic
 from trajectory import Trajectory
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy as np
-from copy import copy
 import string
 import os
 import sys
+
+from copy import copy
+
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
 # http://qtdocs.pyvista.org/usage.html
@@ -43,7 +45,7 @@ dlpoly_weights = {"H": 1.007975, "He": 4.002602, "Li": 6.9675, "Be": 9.0121831, 
                   "Rb": 85.4678, "Sr": 87.62, "Y": 88.90584, "Zr": 91.224, "Nb": 92.90637, "Mo": 95.95}
 
 
-def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List]:
+def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict]:
     """ Returns features as 3D array, [atom][point][feature]
     Example: 10 points water xyz file would have shape (3, 10, 3) where 3 is the number of atoms,
     10 is the number of points, and 3 is the number of features
@@ -64,7 +66,10 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List]:
         del atom_name_prio[0]  # removing central atom which is not going to be present in the 3D xyz array used in plotting
         # only non-central atoms are in this array in order x_axis atom, xyz_plane atom, followed by atoms that were in spherical polar coords
 
-    return features, atom_names, atom_name_priorities
+    # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
+    atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
+
+    return features, atom_names, atom_name_priorities, atomic_local_frame_dict
 
 ########################################################################
 #                     CREATING 4D ARRAY TO PLOT
@@ -199,14 +204,12 @@ class OpenXYZFile(QtWidgets.QWidget):
             sys.exit()
 
     def open_file_dialog(self):
-        self.xyz_file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select an .xyz file", "", "All Files (*);;XYZ files (*.xyz)")
+        self.xyz_file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select an .xyz file", "../xyzs", "All Files (*);;XYZ files (*.xyz)")
 
     def open_pyvista_box(self, xyz_file):
 
-        global system_as_xyz
-
         # all_atom_features are 3D array [atom][point][feature], shape is (n_atoms, n_points, n_features)
-        all_atom_features, atom_names, atoms_names_priorities = features_and_atom_names(xyz_file)
+        all_atom_features, atom_names, atoms_names_priorities, atomic_local_frame_dict = features_and_atom_names(xyz_file)
 
         # these lines are useful if you want to print out information on maximum difference for every feature
         # all_atoms_max = np.amax(all_atom_features, axis=1) # gives n_atoms x n_features matrix of max feature values
@@ -237,7 +240,7 @@ class OpenXYZFile(QtWidgets.QWidget):
             total_dict[center_atom] = xyz_dict
             xyz_dict = {}
 
-        self.main_window = VisualizationWindow(total_dict, atom_names)
+        self.main_window = VisualizationWindow(total_dict, atom_names, atomic_local_frame_dict)
         self.main_window.show()
 
 
@@ -265,23 +268,7 @@ random_colors = ['#00FFFF', '#7FFFD4', '#FFE4C4', '#000000', '#DEB887',
                  '#FFFF00', '#9ACD32']
 
 # use these default colors for each atom type if you do not care about looking at specific atoms
-default_colors = {"O": "red", "H": "white", "Cl": "green", "N": "blue", "C": "black", "S": "yellow", "P": "orange"}
-
-# Define function to import external files when using PyInstaller.
-# need to do this, otherwise pyinstaller does not find .ui file when using --onefile flag
-# currently not using because I have not found a way to use this function to make --onefile flag work and also use sphinx for documentation
-
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller
-    see https://stackoverflow.com/a/37920111"""
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
+default_atom_colors = {"O": "red", "H": "white", "Cl": "green", "N": "blue", "C": "grey", "S": "yellow", "P": "orange"}
 
 
 class VisualizationWindowDecorators:
@@ -311,33 +298,28 @@ class VisualizationWindow(QMainWindow):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
-    def __init__(self, all_atom_dict, atom_names):
+    def __init__(self, all_atom_dict, atom_names, atomic_local_frame_dict):
 
         super().__init__()
 
         self.all_atom_dict = all_atom_dict
         self.atom_names = atom_names  # list of atom names
+        self.alf_dict = atomic_local_frame_dict
 
-        self.atom_colors = dict(zip(atom_names, random_colors))  # initialize to random colors
+        self.current_atom_colors = dict(zip(atom_names, random_colors))
+        self.saved_atom_colors = dict(zip(atom_names, random_colors))
 
         # used to initialize UI to plot first central alf atom (based on index, ex. C1, O1, etc.)
         self.current_central_atom_name = atom_names[0]
-        self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
-        self.center = np.array([0, 0, 0])
 
         # keeps total noncentral data that can be plotted (self.all_noncentral_data)
         # self.current_noncentral_data is actually what is plotted.
         # This needs to be done to revert back to orginal whole dataset if slider is changed back to original position
-        self.all_noncentral_data = all_atom_dict[self.current_central_atom_name]
-        self.current_noncentral_data = copy(self.all_noncentral_data)
-        self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
+        self.current_noncentral_data = self.all_noncentral_data
 
-        # used in initializing values for slider, atom selecter, and atom color parts
-        self.slider_position = 0
-        self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
+        # used in initializing values for slider, atom selecter, and atom color parts, and grid
         self.checkboxes = []
         self.current_checked_atoms = []
-
         self.color_buttons = []
         self.color_button_labels = []
         self.use_grid = True
@@ -349,143 +331,199 @@ class VisualizationWindow(QMainWindow):
         self.ui.setupUi(self)
         self._start_alf_vis_ui()
 
+    @property
+    def center(self):
+        return np.array([0, 0, 0])
+
+    @property
+    def all_noncentral_data(self):
+        return self.all_atom_dict[self.current_central_atom_name]
+
+    @property
+    def default_atom_colors(self):
+        atom_colors = {}
+        for atom_name in self.atom_names:
+            atom_element = atom_name.rstrip(string.digits)
+            # if an atom's default color is defined in the default_colors dictionary
+            if atom_element in default_atom_colors.keys():
+                default_color = default_atom_colors[atom_element]
+            # if the atom's color is not defined in the default_colors, set color to pink
+            else:
+                default_color = "pink"
+            atom_colors[atom_name] = default_color
+
+        return atom_colors
+
+    @property
+    def current_central_atom_color(self):
+        return self.current_atom_colors[self.current_central_atom_name]
+
+    @property
+    def current_noncentral_atom_names(self):
+        return [name for name in self.atom_names if name != self.current_central_atom_name]
+
     def _start_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed
         Methods starting with _ only called here"""
-
-        # initialize ui values and plotter
         self._start_combo_central_atom_names()
         self._start_individual_point_checkbox()
         self._start_individual_point_slider()
-        self._start_individual_point_box()
+        self._start_individual_point_textbox()
         self._start_grid_checkbox()
         self._start_default_color_checkbox()
         self._start_remove_all_atoms_button()
         self._start_pyvista_plotter()
+        # called here to initialize the plot
         self.update_central_atom_and_plot()
 
-    def _start_combo_central_atom_names(self):
-        """ method initializing atom names combo box from list of atom names"""
+    @VisualizationWindowDecorators.clear_plot_use_grid
+    def update_central_atom_and_plot(self):
+        """
+        method runs ONLY when the central atom is changed in the GUI
+        Updates central atom (always at 0,0,0 but can update color if different atom) as
+        well as updates non central atom data.
+        """
+        self.update_central_atom_data()
+        self.update_checkboxes_widget()
+        self.update_checked_atoms()
+        self.update_atom_color_box_buttons()
+        self.plot_updated_data()
 
+    @VisualizationWindowDecorators.clear_plot_use_grid
+    def update_noncentral_atoms_and_plot(self):
+        """ updates noncentral atom data and colors to be plotted. Called by methods that do not change the current atom. The checkboxes do not need to be
+        updated when data is changed but the central atom remains the same."""
+        self.update_checked_atoms()
+        self.update_atom_color_box_buttons()
+        self.plot_updated_data()
+
+    def _start_combo_central_atom_names(self):
+        """method initializing atom names combo box from list of atom names"""
         self.ui.atom_names_combo.addItems(self.atom_names)
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
 
     def _start_individual_point_checkbox(self):
-        """ method that initializes the state of the individual atom checkbox."""
+        """method that initializes the state of the individual atom checkbox. If the checkbox is enabled, only one point is plotted at a time.
+        If it is disabled, all points are plotted at the same time. This is useful to have when you want to focus on a specific point."""
         self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
         self.ui.plot_individual_point_checkbox.stateChanged.connect(self.update_individual_point_slider_status_and_box)
 
     def _start_individual_point_slider(self):
-        """ method that initializes the individual point slider as well as the state of the slider"""
+        """method that initializes slider used to plot individual points instead of whole trajectory."""
         self.ui.individual_point_slider.setEnabled(False)  # default is set to false
-
         self.ui.individual_point_slider.setMinimum(0)  # 0 is the first timestep
-        self.ui.individual_point_slider.setMaximum(system_as_xyz.all_atom_4d_array.shape[2] - 1)  # this is the last timestep in the trajectory
+        n_timesteps = self.all_noncentral_data[self.current_noncentral_atom_names[0]].shape[0]  # getting the number of timesteps from one of the atoms
+        self.ui.individual_point_slider.setMaximum(n_timesteps - 1)  # need to index starting at 0, so subtract 1
         self.ui.individual_point_slider.valueChanged.connect(self.update_individual_point_slider_plotted_data)
 
-    def _start_individual_point_box(self):
+    def _start_individual_point_textbox(self):
+        """method that initializes textbox used to display the current individual point, it can also be used to go to a specific point."""
+        self.ui.individual_point_box.setEnabled(False)
         self.ui.individual_point_box.setText(f"{self.ui.individual_point_slider.value()}")
-        self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value)
+        self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
 
     def _start_grid_checkbox(self):
         """ Initialize checkbox that is used to show or remove grid"""
-
         self.ui.show_grid_checkbox.setCheckState(QtCore.Qt.Checked)
         self.ui.show_grid_checkbox.stateChanged.connect(self.grid_status)
 
     def _start_default_color_checkbox(self):
         """ Initialize checkbox that is used to make atoms default colors or random colors.
         Unchecked is random color and checked is default colors."""
-
         self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
-        self.ui.default_atom_colors_checkbox.stateChanged.connect(self.default_or_random_atom_colors)
+        self.ui.default_atom_colors_checkbox.stateChanged.connect(self.use_default_or_random_atom_colors)
 
     def _start_remove_all_atoms_button(self):
         """ button that unticks all noncentral atoms"""
-
-        self.ui.remove_all_plotted_atoms.clicked.connect(self.untick_all_noncentral_atoms)
+        self.ui.remove_all_plotted_atoms.clicked.connect(self.untick_all_noncentral_atoms_checkboxes)
 
     def _start_pyvista_plotter(self):
         """ method to initialize pyvista plot"""
-
         self.plotter = QtInteractor(self.ui.pyvista_frame)
+        self.plotter.set_background("royalblue", top="aliceblue")
         self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
 
-    @VisualizationWindowDecorators.clear_plot_use_grid
-    def update_central_atom_and_plot(self):
-        """ main method if a DIFFERENT central atom is chosen
-        method runs ONLY when the central atom is changed in the GUI"""
-        """ Updates central atom (always at 0,0,0 but can update color if different atom) as
-        well as updates non central atom data"""
+    def update_central_atom_data(self):
+        """ method used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
+        self.current_central_atom_name = self.ui.atom_names_combo.currentText()
+        self.current_noncentral_data = self.all_noncentral_data
+        current_alf_str = ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
+        self.ui.atomic_local_frame.setText(current_alf_str)
 
-        self.update_central_atom_data()
-        self.update_checkboxes_widget()
-        self.update_atom_color_box_buttons()
-        self.plot_updated_data()
+    def update_individual_point_slider_status_and_box(self):
+        """
+        Updates the status of the individual point slider depending on the checked state of the individual point checkbox.
+        If that checkbox is enabled, then only 1 point will be plotted at a time. The slider can then be slider to the point of interest
+        in the trajectory.
+        """
+        # enable slider and point box, update noncentral data according to slider/box
+        if self.ui.plot_individual_point_checkbox.isChecked() is True:
+            self.ui.individual_point_slider.setEnabled(True)
+            self.ui.individual_point_box.setEnabled(True)
 
-    @VisualizationWindowDecorators.clear_plot_use_grid
-    def update_atom_data_and_plot(self):
-        """main method for updating data/colors for the CURRENT central atom being shown
-        method runs ONLY when there are changes in atoms to be plotted (based on GUI checkboxes changes), or
-        when there are changes in atom colors as selected in the GUI"""
+            # update slider box value depending on slider position
+            current_point = self.ui.individual_point_slider.value()
+            self.ui.individual_point_box.setText(f"{current_point}")
+            # only get one point in the trajectory corresponding to the timestep selected by the slider/box
 
-        self.update_checked_atoms()
-        self.update_atom_color_box_buttons()
-        self.plot_updated_data()
+            self.current_noncentral_data = {}
+            for atom in self.all_noncentral_data.keys():
+                self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
+
+            print("after for loop")
+            print(self.all_noncentral_data)
+
+            self.update_noncentral_atoms_and_plot()
+
+        # disable slider and point box, plot all timesteps
+        elif self.ui.plot_individual_point_checkbox.isChecked() is False:
+            self.ui.individual_point_box.setEnabled(False)
+            self.ui.individual_point_slider.setEnabled(False)
+
+            self.current_noncentral_data = self.all_noncentral_data
+
+            self.update_noncentral_atoms_and_plot()
+
+    def update_individual_point_slider_plotted_data(self):
+        """ Makes slices of the data depending on the position of the slider or the user input in the box next to the slider."""
+        current_point = self.ui.individual_point_slider.value()
+        self.ui.individual_point_box.setText(f"{current_point}")
+        # only get one point in the trajectory corresponding to the timestep selected by the slider/box
+        self.current_noncentral_data = {}
+        for atom in self.all_noncentral_data.keys():
+            self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
+
+        self.update_noncentral_atoms_and_plot()
+
+    def update_individual_point_slider_value_with_box(self):
+        """ Updates the slider value based on the value of the individual point text box. The slider is updates, so the data is also automatically
+        updated. No need to update data to be plotted."""
+        current_val = int(self.ui.individual_point_box.text())
+        self.ui.individual_point_slider.setValue(current_val)
 
     def grid_status(self):
         """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
         if self.ui.show_grid_checkbox.isChecked() is True:
             self.use_grid = True
-
         elif self.ui.show_grid_checkbox.isChecked() is False:
             self.use_grid = False
 
-        self.update_atom_data_and_plot()
+        self.update_noncentral_atoms_and_plot()
 
-    def update_central_atom_data(self):
-        """ method used to update the central ALF atom, depending on selected atom in combo box"""
-        self.current_central_atom_name = self.ui.atom_names_combo.currentText()
-        self.current_central_atom_color = self.atom_colors[self.current_central_atom_name]
-        self.current_noncentral_atom_names = [name for name in self.atom_names if name != self.current_central_atom_name]
-        self.current_noncentral_data = self.all_atom_dict[self.current_central_atom_name]
+    def use_default_or_random_atom_colors(self):
+        """ updates atom colors depending on default_atom_colors_checkbox. This checkbox is initialized to unchecked state, so
+        random colors are used (this is initial state). If checkbox is checked, then default colors for atoms,
+        i.e. oxygen:red , hydrogen:white, etc. are used"""
 
-    def update_individual_point_slider_status_and_box(self):
-        """ Updates the status of the individual point slider depending on the checked state of the individual point checkbox.
-        If that checkbox is enabled, then only 1 point will be plotted at a time. The slider can then be slider to the point of interest
-        in the trajectory.
-        """
-        if self.ui.plot_individual_point_checkbox.isChecked() is True:
-            self.ui.individual_point_slider.setEnabled(True)
-            self.ui.individual_point_box.setEnabled(True)
-            current_point = self.ui.individual_point_slider.value()
-            self.ui.individual_point_box.setText(f"{current_point}")
-            for atom in self.all_noncentral_data.keys():
-                self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point, :]
+        if self.ui.default_atom_colors_checkbox.isChecked() is False:  # use random colors, this is initial state
+            self.current_atom_colors = self.saved_atom_colors
+            # self.ui.atom_color_scroll_area.setEnabled(True)
 
-            self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
-            self.update_atom_data_and_plot()
+        elif self.ui.default_atom_colors_checkbox.isChecked() is True:  # use default colors
+            self.current_atom_colors = self.default_atom_colors
+            # self.ui.atom_color_scroll_area.setEnabled(False) # cannot update colors since using default colors
 
-        elif self.ui.plot_individual_point_checkbox.isChecked() is False:
-            self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
-            self.ui.individual_point_box.setEnabled(False)
-            self.ui.individual_point_slider.setEnabled(False)
-            self.update_atom_data_and_plot()
-
-    def update_individual_point_slider_value(self):
-        """ Updates the slider value based on the value of the individual point text box."""
-        current_val = int(self.ui.individual_point_box.text())
-        self.ui.individual_point_slider.setValue(current_val)
-
-    def update_individual_point_slider_plotted_data(self):
-        """ Makes slices of the data before making the data a pyvista MultiBlock"""
-        current_point = self.ui.individual_point_slider.value()
-        self.ui.individual_point_box.setText(f"{current_point}")
-        for atom in self.all_noncentral_data.keys():
-            self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point, :]
-
-        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
-        self.update_atom_data_and_plot()
+        self.update_noncentral_atoms_and_plot()
 
     def update_checkboxes_widget(self):
         """ Used to dynamically generate the non-central atom checkboxes.
@@ -504,17 +542,20 @@ class VisualizationWindow(QMainWindow):
         for atom in self.current_noncentral_atom_names:
             checkbox = QtWidgets.QCheckBox(f"{atom}")
             checkbox.setCheckState(QtCore.Qt.Checked)
-            checkbox.stateChanged.connect(self.update_atom_data_and_plot)
+            # connect each checkbox to be able to change noncentral data that is plotted
+            checkbox.stateChanged.connect(self.update_noncentral_atoms_and_plot)
             self.checkboxes.append(checkbox)
             self.current_checked_atoms.append(checkbox.text())
             self.ui.gridLayout.addWidget(checkbox, row, column)
             column += 1
+            # if there are 3 checkboxes on 1 row, go to the next one
             if column % 3 == 0:
                 row += 1
                 column = 0
 
-    def untick_all_noncentral_atoms(self):
-        """ method called after clicking the Remove All Plotted Atoms button - this unticks all noncentral atoms"""
+    def untick_all_noncentral_atoms_checkboxes(self):
+        """ method called after clicking the Remove All Plotted Atoms button - this unticks all noncentral atoms. Since the sates of the
+        checkboxes has changed, this will cause the plot to be updated."""
         self.current_checked_atoms = []
         for checkbox in self.checkboxes:
             checkbox.setCheckState(QtCore.Qt.Unchecked)
@@ -550,7 +591,7 @@ class VisualizationWindow(QMainWindow):
 
         # add color button for central atom as well
         push_button = QtWidgets.QPushButton(self.current_central_atom_name)
-        push_button.setStyleSheet(f"background-color : {self.atom_colors[self.current_central_atom_name]}; color: {self.atom_colors[self.current_central_atom_name]};")
+        push_button.setStyleSheet(f"background-color : {self.current_atom_colors[self.current_central_atom_name]}; color: {self.current_atom_colors[self.current_central_atom_name]};")
         push_button.clicked.connect(self.change_atom_color_color_dialog)
         push_button_label = QtWidgets.QLabel(self.current_central_atom_name)
         self.color_buttons.append(push_button)
@@ -565,7 +606,7 @@ class VisualizationWindow(QMainWindow):
             if checkbox.isChecked() is True:
 
                 push_button = QtWidgets.QPushButton(f"{checkbox.text()}")
-                push_button.setStyleSheet(f"background-color : {self.atom_colors[checkbox.text()]}; color: {self.atom_colors[checkbox.text()]};")
+                push_button.setStyleSheet(f"background-color : {self.current_atom_colors[checkbox.text()]}; color: {self.current_atom_colors[checkbox.text()]};")
                 push_button.clicked.connect(self.change_atom_color_color_dialog)
 
                 push_button_label = QtWidgets.QLabel(f"{checkbox.text()}")
@@ -588,59 +629,32 @@ class VisualizationWindow(QMainWindow):
         """ opens up color dialog and lets user select a new color for a particular atom.
         GUI is automatically frozen until user closes the color dialog box."""
 
-        color = QtWidgets.QColorDialog.getColor()  # this gives a QColor Object
+        color = QtWidgets.QColorDialog.getColor()  # this opens up a color dialog box and returns a QColor Object
+        # if the user has pressed cancel, this is set to False and does not run
+        if QtGui.QColor.isValid(color) is True:
 
-        # find which button called this method and change its color as needed
-        for push_button in self.color_buttons:
-            if push_button == QtCore.QObject.sender(self):
-
-                if push_button.text() == self.current_central_atom_name:
-
-                    self.current_central_atom_color = color.name()
-                    push_button.setStyleSheet("")
-                    push_button.setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
-                    self.atom_colors[f"{push_button.text()}"] = color.name()
-                else:
+            # find which button called this method and change its color as needed
+            for push_button in self.color_buttons:
+                if push_button == QtCore.QObject.sender(self):
 
                     push_button.setStyleSheet("")
                     push_button.setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
-                    self.atom_colors[f"{push_button.text()}"] = color.name()
+                    self.current_atom_colors[f"{push_button.text()}"] = color.name()
+                    self.saved_atom_colors[f"{push_button.text()}"] = color.name()
 
-        self.update_central_atom_and_plot()
-
-    def default_or_random_atom_colors(self):
-        """ updates atom colors depending on default_atom_colors_checkbox. This checkbox is initialized to unchecked state, so
-        random colors are used (this is initial state). If checkbox is checked, then default colors for atoms,
-        i.e. oxygen:red , hydrogen:white, etc. are used"""
-
-        if self.ui.default_atom_colors_checkbox.isChecked() is False:  # use random colors, this is initial state
-            self.atom_colors = dict(zip(self.atom_names, random_colors))
-            self.ui.atom_color_scroll_area.setEnabled(True)
-
-        elif self.ui.default_atom_colors_checkbox.isChecked() is True:  # use default colors
-            self.ui.atom_color_scroll_area.setEnabled(False)
-            self.atom_colors = {}
-            for atom_name in self.atom_names:
-                # if an atom's default color is defined in the default_colors dictionary
-                if atom_name.rstrip(string.digits) in default_colors.keys():
-                    default_color = default_colors[atom_name.rstrip(string.digits)]
-                # if the atom's color is not defined in the default_colors, set color to pink
-                else:
-                    default_color = "pink"
-                self.atom_colors[atom_name] = default_color
-
-        self.update_central_atom_and_plot()
+            self.update_noncentral_atoms_and_plot()
 
     def plot_updated_data(self):
         """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
 
         center = pv.PolyData(self.center)
-        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=30, render_points_as_spheres=True)
+        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True)
+
+        self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
 
         for block in self.current_datablock.keys():
             if block in self.current_checked_atoms:
-                color = self.atom_colors.get(block)
-                self.plotter.add_mesh(self.current_datablock[block], color=color, point_size=10, render_points_as_spheres=True)
+                self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=15, render_points_as_spheres=True)
 
     # def plot_data_with_cmap(self):
 
@@ -658,7 +672,6 @@ class VisualizationWindow(QMainWindow):
     #             self.plotter.add_mesh(self.current_datablock[block], point_size=10, render_points_as_spheres=True)
 
 
-# needed from here because otherwise Sphinx runs the loading Ui
 if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
