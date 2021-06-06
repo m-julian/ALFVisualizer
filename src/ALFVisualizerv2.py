@@ -10,6 +10,8 @@ import string
 import os
 import sys
 
+from copy import copy
+
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
 # http://qtdocs.pyvista.org/usage.html
@@ -410,7 +412,8 @@ class VisualizationWindow(QMainWindow):
         """method that initializes slider used to plot individual points instead of whole trajectory."""
         self.ui.individual_point_slider.setEnabled(False)  # default is set to false
         self.ui.individual_point_slider.setMinimum(0)  # 0 is the first timestep
-        self.ui.individual_point_slider.setMaximum(self.all_noncentral_data[self.current_noncentral_atom_names[0]].shape[0] - 1)  # this is the last timestep in the trajectory
+        n_timesteps = self.all_noncentral_data[self.current_noncentral_atom_names[0]].shape[0]  # getting the number of timesteps from one of the atoms
+        self.ui.individual_point_slider.setMaximum(n_timesteps - 1)  # need to index starting at 0, so subtract 1
         self.ui.individual_point_slider.valueChanged.connect(self.update_individual_point_slider_plotted_data)
 
     def _start_individual_point_textbox(self):
@@ -463,9 +466,12 @@ class VisualizationWindow(QMainWindow):
             self.ui.individual_point_box.setText(f"{current_point}")
             # only get one point in the trajectory corresponding to the timestep selected by the slider/box
 
-            # TODO: fix issue with self.all_noncentral_data changing its values for some reason
-            for atm in self.all_noncentral_data.keys():
-                self.current_noncentral_data[atm] = self.all_noncentral_data[atm][current_point]
+            self.current_noncentral_data = {}
+            for atom in self.all_noncentral_data.keys():
+                self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
+
+            print("after for loop")
+            print(self.all_noncentral_data)
 
             self.update_noncentral_atoms_and_plot()
 
@@ -483,6 +489,7 @@ class VisualizationWindow(QMainWindow):
         current_point = self.ui.individual_point_slider.value()
         self.ui.individual_point_box.setText(f"{current_point}")
         # only get one point in the trajectory corresponding to the timestep selected by the slider/box
+        self.current_noncentral_data = {}
         for atom in self.all_noncentral_data.keys():
             self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
 
@@ -535,12 +542,13 @@ class VisualizationWindow(QMainWindow):
         for atom in self.current_noncentral_atom_names:
             checkbox = QtWidgets.QCheckBox(f"{atom}")
             checkbox.setCheckState(QtCore.Qt.Checked)
-            # connect each checkbox to be able to change noncentral data
+            # connect each checkbox to be able to change noncentral data that is plotted
             checkbox.stateChanged.connect(self.update_noncentral_atoms_and_plot)
             self.checkboxes.append(checkbox)
             self.current_checked_atoms.append(checkbox.text())
             self.ui.gridLayout.addWidget(checkbox, row, column)
             column += 1
+            # if there are 3 checkboxes on 1 row, go to the next one
             if column % 3 == 0:
                 row += 1
                 column = 0
