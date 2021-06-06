@@ -450,7 +450,7 @@ class VisualizationWindow(QMainWindow):
             self.ui.energy_cmap_checkbox.setEnabled(False)
             self.ui.energy_cmap_checkbox.setToolTip("Energies need to be read from xyz file to use this function.")  
         else:
-            self.ui.energy_cmap_checkbox.stateChanged.connect(self.update_cmap_or_normal)
+            self.ui.energy_cmap_checkbox.stateChanged.connect(self.use_cmap_or_regular_colors)
 
     def _start_remove_all_atoms_button(self):
         """ button that unticks all noncentral atoms"""
@@ -541,7 +541,7 @@ class VisualizationWindow(QMainWindow):
 
         self.update_noncentral_atoms_and_plot()
 
-    def update_cmap_or_normal(self):
+    def use_cmap_or_regular_colors(self):
         """ Used to remove other checkboxes that cannot be used at the same time, as well as to plot the cmap."""
 
         self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
@@ -699,6 +699,7 @@ class VisualizationWindow(QMainWindow):
                 if block in self.current_checked_atoms:
                     self.current_datablock[block]["energies"] = self.energies
                     self.plotter.add_mesh(self.current_datablock[block], scalars="energies", cmap="jet", point_size=15, render_points_as_spheres=True)
+
 
 if __name__ == "__main__":
 
