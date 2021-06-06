@@ -443,12 +443,13 @@ class VisualizationWindow(QMainWindow):
     def _start_energy_cmap_checkbox(self):
         """ Initialize checkbox that is used to plot colormaps of energies, if they are read if from
         comment line in xyz file."""
+
+        self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
+
         if self.energies is None:
-            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
             self.ui.energy_cmap_checkbox.setEnabled(False)
             self.ui.energy_cmap_checkbox.setToolTip("Energies need to be read from xyz file to use this function.")  
         else:
-            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
             self.ui.energy_cmap_checkbox.stateChanged.connect(self.update_cmap_or_normal)
 
     def _start_remove_all_atoms_button(self):
@@ -543,18 +544,17 @@ class VisualizationWindow(QMainWindow):
     def update_cmap_or_normal(self):
         """ Used to remove other checkboxes that cannot be used at the same time, as well as to plot the cmap."""
 
+        self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
+        self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
+
         if self.ui.energy_cmap_checkbox.isChecked() is True:
 
             self.ui.plot_individual_point_checkbox.setEnabled(False)
             self.ui.default_atom_colors_checkbox.setEnabled(False)
             self.ui.atom_color_scroll_area.setEnabled(False)
-            self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
-            self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
         elif self.ui.energy_cmap_checkbox.isChecked() is False:
 
-            self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
-            self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
             self.ui.plot_individual_point_checkbox.setEnabled(True)
             self.ui.default_atom_colors_checkbox.setEnabled(True)
             self.ui.atom_color_scroll_area.setEnabled(True)
@@ -694,13 +694,11 @@ class VisualizationWindow(QMainWindow):
                     self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True)
 
         elif self.ui.energy_cmap_checkbox.isChecked() is True:
-            self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
+            self.current_datablock = pv.MultiBlock(self.all_noncentral_data)  # cmap plots all data every time
             for block in self.current_datablock.keys():
                 if block in self.current_checked_atoms:
                     self.current_datablock[block]["energies"] = self.energies
                     self.plotter.add_mesh(self.current_datablock[block], scalars="energies", cmap="jet", point_size=15, render_points_as_spheres=True)
-
-
 
 if __name__ == "__main__":
 
