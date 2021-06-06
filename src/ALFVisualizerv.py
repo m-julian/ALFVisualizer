@@ -478,7 +478,7 @@ class VisualizationWindow(QMainWindow):
         if self.ui.plot_individual_point_checkbox.isChecked() is True:
             self.ui.individual_point_slider.setEnabled(True)
             self.ui.individual_point_box.setEnabled(True)
-            self.ui.energy_cmap_checkbox.setCheckState(False)
+            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
             # update slider box value depending on slider position
             current_point = self.ui.individual_point_slider.value()
@@ -533,26 +533,28 @@ class VisualizationWindow(QMainWindow):
 
         if self.ui.default_atom_colors_checkbox.isChecked() is False:  # use random colors, this is initial state
             self.current_atom_colors = self.saved_atom_colors
-            # self.ui.atom_color_scroll_area.setEnabled(True)
 
         elif self.ui.default_atom_colors_checkbox.isChecked() is True:  # use default colors
             self.current_atom_colors = self.default_atom_colors
-            self.ui.energy_cmap_checkbox.setCheckState(False)
-            # self.ui.atom_color_scroll_area.setEnabled(False) # cannot update colors since using default colors
+            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
         self.update_noncentral_atoms_and_plot()
 
     def update_cmap_or_normal(self):
+        """ Used to remove other checkboxes that cannot be used at the same time, as well as to plot the cmap."""
 
         if self.ui.energy_cmap_checkbox.isChecked() is True:
-            self.ui.plot_individual_point_checkbox.setCheckState(False)
-            self.ui.default_atom_colors_checkbox.setCheckState(False)
+
             self.ui.plot_individual_point_checkbox.setEnabled(False)
             self.ui.default_atom_colors_checkbox.setEnabled(False)
             self.ui.atom_color_scroll_area.setEnabled(False)
+            self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
         elif self.ui.energy_cmap_checkbox.isChecked() is False:
 
+            self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
             self.ui.plot_individual_point_checkbox.setEnabled(True)
             self.ui.default_atom_colors_checkbox.setEnabled(True)
             self.ui.atom_color_scroll_area.setEnabled(True)
@@ -590,6 +592,7 @@ class VisualizationWindow(QMainWindow):
     def untick_all_noncentral_atoms_checkboxes(self):
         """ method called after clicking the Remove All Plotted Atoms button - this unticks all noncentral atoms. Since the sates of the
         checkboxes has changed, this will cause the plot to be updated."""
+
         self.current_checked_atoms = []
         for checkbox in self.checkboxes:
             checkbox.setCheckState(QtCore.Qt.Unchecked)
@@ -691,7 +694,6 @@ class VisualizationWindow(QMainWindow):
                     self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True)
 
         elif self.ui.energy_cmap_checkbox.isChecked() is True:
-
             self.current_datablock = pv.MultiBlock(self.all_noncentral_data)
             for block in self.current_datablock.keys():
                 if block in self.current_checked_atoms:
