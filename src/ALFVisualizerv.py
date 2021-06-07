@@ -67,7 +67,7 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict
     # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
     atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
 
-    energies = trajectory.energy
+    energies = trajectory.energy  # energies are a list of energies, if given in the comment line of xyz file. Otherwise this is None.
 
     return features, atom_names, atom_name_priorities, atomic_local_frame_dict, energies
 
@@ -428,8 +428,11 @@ class VisualizationWindow(QMainWindow):
         self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
 
     def _start_individual_energy_box(self):
+        """starts the energies box that shows the energy of the current single point that is displayed"""
         if self.energies is not None:
             self.ui.energy.setText(f"{self.energies[self.ui.individual_point_slider.value()]:.4f}")
+        else:
+            self.ui.energy.setText("none")
 
     def _start_grid_checkbox(self):
         """ Initialize checkbox that is used to show or remove grid"""
@@ -509,6 +512,7 @@ class VisualizationWindow(QMainWindow):
         """ Makes slices of the data depending on the position of the slider or the user input in the box next to the slider."""
         current_point = self.ui.individual_point_slider.value()
         self.ui.individual_point_box.setText(f"{current_point}")
+        # update energy box here as well as the slider is updated
         if self.energies:
             self.ui.energy.setText(f"{self.energies[current_point]:.4f}")
         # only get one point in the trajectory corresponding to the timestep selected by the slider/box
@@ -553,6 +557,7 @@ class VisualizationWindow(QMainWindow):
         self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
         self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
+        # disable stuff that cannot be used while in cmap
         if self.ui.energy_cmap_checkbox.isChecked() is True:
 
             self.ui.plot_individual_point_checkbox.setEnabled(False)
@@ -560,6 +565,7 @@ class VisualizationWindow(QMainWindow):
             self.ui.atom_color_scroll_area.setEnabled(False)
             self.ui.energy.setEnabled(False)
 
+        # enable stuff after cmap checkbox is unticked
         elif self.ui.energy_cmap_checkbox.isChecked() is False:
 
             self.ui.plot_individual_point_checkbox.setEnabled(True)
