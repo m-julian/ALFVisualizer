@@ -371,6 +371,7 @@ class VisualizationWindow(QMainWindow):
         self._start_individual_point_checkbox()
         self._start_individual_point_slider()
         self._start_individual_point_textbox()
+        self._start_individual_energy_box()
         self._start_grid_checkbox()
         self._start_default_color_checkbox()
         self._start_energy_cmap_checkbox()
@@ -426,6 +427,10 @@ class VisualizationWindow(QMainWindow):
         self.ui.individual_point_box.setText(f"{self.ui.individual_point_slider.value()}")
         self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
 
+    def _start_individual_energy_box(self):
+        if self.energies is not None:
+            self.ui.energy.setText(f"{self.energies[self.ui.individual_point_slider.value()]:.4f}")
+
     def _start_grid_checkbox(self):
         """ Initialize checkbox that is used to show or remove grid"""
         self.ui.show_grid_checkbox.setCheckState(QtCore.Qt.Checked)
@@ -476,6 +481,7 @@ class VisualizationWindow(QMainWindow):
         if self.ui.plot_individual_point_checkbox.isChecked() is True:
             self.ui.individual_point_slider.setEnabled(True)
             self.ui.individual_point_box.setEnabled(True)
+            self.ui.energy.setEnabled(True)
             self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
             # update slider box value depending on slider position
@@ -494,6 +500,7 @@ class VisualizationWindow(QMainWindow):
 
             self.ui.individual_point_box.setEnabled(False)
             self.ui.individual_point_slider.setEnabled(False)
+            self.ui.energy.setEnabled(False)
 
             self.current_noncentral_data = self.all_noncentral_data
             self.update_noncentral_atoms_and_plot()
@@ -502,6 +509,8 @@ class VisualizationWindow(QMainWindow):
         """ Makes slices of the data depending on the position of the slider or the user input in the box next to the slider."""
         current_point = self.ui.individual_point_slider.value()
         self.ui.individual_point_box.setText(f"{current_point}")
+        if self.energies:
+            self.ui.energy.setText(f"{self.energies[current_point]:.4f}")
         # only get one point in the trajectory corresponding to the timestep selected by the slider/box
         self.current_noncentral_data = {}
         for atom in self.all_noncentral_data.keys():
@@ -549,12 +558,14 @@ class VisualizationWindow(QMainWindow):
             self.ui.plot_individual_point_checkbox.setEnabled(False)
             self.ui.default_atom_colors_checkbox.setEnabled(False)
             self.ui.atom_color_scroll_area.setEnabled(False)
+            self.ui.energy.setEnabled(False)
 
         elif self.ui.energy_cmap_checkbox.isChecked() is False:
 
             self.ui.plot_individual_point_checkbox.setEnabled(True)
             self.ui.default_atom_colors_checkbox.setEnabled(True)
             self.ui.atom_color_scroll_area.setEnabled(True)
+            self.ui.energy.setEnabled(True)
 
         self.update_noncentral_atoms_and_plot()
 
