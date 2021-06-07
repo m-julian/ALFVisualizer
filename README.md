@@ -4,6 +4,8 @@ Using pyvista to visualize atomic ALF
 Select a .xyz file to visualize. Wait until a new window pops up with the visualization tool. It might take a while if the .xyz has a lot of timesteps.
 Make sure to run the script when you are in the src directory because it uses relative paths for the .ui file.
 
+Energies can also be read in from the comment line in the xyz file. If they are read in, a cmap checkbox can be ticked which displays a colormap of the enrgies.
+
 # The main files are ALFVisualizer.py and ALFVisualizer.ui
 The python code to calculate features and use pyvista is in the .py file and the actual ui is in the .ui file. The .ui file can be opened with Qt Designer.
 The .ui file can also be converted to a python file if needed for some reason (currently it is loaded as the .ui file directly). This .ui file should ***not** be
