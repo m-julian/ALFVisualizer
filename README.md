@@ -1,4 +1,4 @@
-# pyvista_alf
+# ALFVisualizer
 Using pyvista to visualize atomic ALF
 
 Select a .xyz file to visualize. Wait until a new window pops up with the visualization tool. It might take a while if the .xyz has a lot of timesteps.
@@ -63,10 +63,13 @@ If you want energies to be read in, add them to the comment line as floats. This
   H        -2.4098627840        2.0863041759       -0.7030934029
 ```
 
-# requirements.txt contains all of the packages needed to run and compile the script into binary
+# Options
+- Default Colors: Plot atoms with default colors, can still change individual atom colors using color box. Useful to have in cause you want to highlight a specific atom.
+- Plot Cmap: If energies are read in from the .xyz file, this makes a cmap of all the plotted points (so can be used to plot energies/multipoles or model predictions).
+- Plot Individual Point: Only 1 points is displayed at a time. Use the slider or write in box to go to specific point. Starts from 0. This cannot be used with cmap.
 
+# Installation
 if you are not making an enviroment with the requirements.txt file packages, you can instead run
-
 ```
  conda install -c conda-forge pyvista 
 ```
