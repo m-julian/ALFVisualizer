@@ -26,13 +26,13 @@ class Trajectory(ListOfAtoms):
                 elif re.match(r"^\s*\d+$", line):
                     natoms = int(line)
                     continue
-                elif re.match(r"^\s*i\s*=\s*\d+\s*energy\s*=\s*\d+[+-]?([0-9]*[.])?[0-9]+", line):
+                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*energy\s*?=\s*?\d+[+-]?([0-9]*[.])?[0-9]+", line):
                     energy = line.split()[-1]
                     atoms.energy = float(energy)
                 while len(atoms) < natoms:
                     line = next(f)
                     if re.match(
-                        r"\s*\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line
+                        r"\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line
                     ):
                         atom_type, x, y, z = line.split()
                         atoms.add(
