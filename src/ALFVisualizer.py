@@ -113,11 +113,17 @@ class XYZArrays:
             xy_atom_3d_array = self.get_xy_plane_atom_3d_array(one_atom_features)
             polar_atoms_3d_array = self.get_polar_atom_3d_array(one_atom_features)
 
-            # so now we stack these matrices into one 3D array that is the xyz coordinates
-            # for all atoms OTHER than the atom on which the ALF is centered,
-            # shape ((2+N_remaining_atoms),N_points,3)
-            one_atom_total_array = np.concatenate((xy_atom_3d_array, polar_atoms_3d_array), axis=0)
-            all_other_atom_3D_arrays.append(one_atom_total_array)
+            # only add polar atoms if there are over 3 atoms in system
+            if self.n_atoms > 3:
+                polar_atoms_3d_array = self.get_polar_atom_3d_array(one_atom_features)
+                # so now we stack these matrices into one 3D array that is the xyz coordinates
+                # for all atoms OTHER than the atom on which the ALF is centered,
+                # shape ((2+N_remaining_atoms),N_points,3)
+                one_atom_total_array = np.concatenate((xy_atom_3d_array, polar_atoms_3d_array), axis=0)
+                all_other_atom_3D_arrays.append(one_atom_total_array)
+            else:
+                one_atom_total_array = xy_atom_3d_array
+                all_other_atom_3D_arrays.append(one_atom_total_array)
 
         # finally we can stack these 3D arrays into one 4D array, which will contain all the info needed
         # for plotting every atom as the ALF center. This 4D array will be stored and then if can be used
