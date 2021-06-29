@@ -111,7 +111,6 @@ class XYZArrays:
             # is of shape N_remaining_atomsxN_pointsx3 where N remaining atoms is N_atoms-3)
 
             xy_atom_3d_array = self.get_xy_plane_atom_3d_array(one_atom_features)
-            polar_atoms_3d_array = self.get_polar_atom_3d_array(one_atom_features)
 
             # only add polar atoms if there are over 3 atoms in system
             if self.n_atoms > 3:
