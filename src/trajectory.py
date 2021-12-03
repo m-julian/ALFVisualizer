@@ -6,6 +6,7 @@ from list_of_atoms import ListOfAtoms
 from atoms import Atoms
 from atom import Atom
 from file_state import FileState
+import ast
 
 
 class Trajectory(ListOfAtoms):
@@ -26,9 +27,10 @@ class Trajectory(ListOfAtoms):
                 elif re.match(r"^\s*\d+$", line):
                     natoms = int(line)
                     continue
-                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*energy\s*?=\s*?\d+[+-]?([0-9]*[.])?[0-9]+", line):
-                    energy = line.split()[-1]
-                    atoms.energy = float(energy)
+                # this is the comment line that can contain extra info
+                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*energy", line):
+                    energy = line.split("=")[-1].strip()
+                    atoms.energy = ast.literal_eval(energy)
                 while len(atoms) < natoms:
                     line = next(f)
                     if re.match(
@@ -85,6 +87,7 @@ class Trajectory(ListOfAtoms):
         This is used to plot colormaps of the whole trajectory to see any points which produce poor results."""
         if hasattr(self[0], 'energy'):
             return [timesteps.energy for timesteps in self]
+        # if no energy/errors have been read in this needs to return None because it is used in the GUI class __int__
         else:
             return None
 

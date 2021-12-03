@@ -219,7 +219,7 @@ class OpenXYZFile(QtWidgets.QWidget):
         # these lines are useful if you want to print out information on maximum difference for every feature
         # all_atoms_max = list(np.amax(all_atom_features, axis=1)[7]) # gives n_atoms x n_features matrix of max feature values
         # all_atoms_min = list(np.amin(all_atom_features, axis=1)[7]) # gives n_atoms x n_features matrix of min feature values
-        
+
         # print(",".join(map(str, all_atoms_max)))
         # print()
         # print(",".join(map(str, all_atoms_min)))
@@ -308,7 +308,7 @@ class VisualizationWindow(QMainWindow):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
-    def __init__(self, all_atom_dict, atom_names, atomic_local_frame_dict, energies=None):
+    def __init__(self, all_atom_dict, atom_names, atomic_local_frame_dict, errors_for_each_timestep: List[dict] = None):
 
         super().__init__()
 
@@ -327,7 +327,10 @@ class VisualizationWindow(QMainWindow):
         # This needs to be done to revert back to orginal whole dataset if slider is changed back to original position
         self.current_noncentral_data = self.all_noncentral_data
 
-        self.energies = energies
+        # energies is a list of dictionaries. Each dictionary contains property errors for each atom
+        self.errors_for_each_timestep = errors_for_each_timestep
+        self.cmap_properties = errors_for_each_timestep[0].keys() if errors_for_each_timestep is not None else None
+        self.energies = None  # this is modified later to be a list of energies or any other property
 
         # used in initializing values for slider, atom selecter, and atom color parts, and grid
         self.checkboxes = []
@@ -381,10 +384,11 @@ class VisualizationWindow(QMainWindow):
         self._start_individual_point_checkbox()
         self._start_individual_point_slider()
         self._start_individual_point_textbox()
-        self._start_individual_energy_box()
         self._start_grid_checkbox()
         self._start_default_color_checkbox()
         self._start_energy_cmap_checkbox()
+        self._start_property_cmap_combo_box()
+        self._start_individual_energy_box()
         self._start_remove_all_atoms_button()
         self._start_pyvista_plotter()
         # called here to initialize the plot
@@ -398,6 +402,7 @@ class VisualizationWindow(QMainWindow):
         well as updates non central atom data.
         """
         self.update_central_atom_data()
+        self.update_selected_property()
         self.update_checkboxes_widget()
         self.update_individual_point_slider_status_and_box()
         self.update_checked_atoms()
@@ -438,11 +443,15 @@ class VisualizationWindow(QMainWindow):
         self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
 
     def _start_individual_energy_box(self):
-        """starts the energies box that shows the energy of the current single point that is displayed"""
-        if self.energies is not None:
-            self.ui.energy.setText(f"{self.energies[self.ui.individual_point_slider.value()]:.4f}")
+        """starts the energies box that shows the energy of the current single point that is displayed. If not data has been read in from the xyz file,
+        a message is displayed instead."""
+
+        # if data has not been read in
+        if self.errors_for_each_timestep is None:
+            self.ui.energy.setText("Data has not been read in.")
+        # if data has been read in but individual energies are still not being plotted
         else:
-            self.ui.energy.setText("none")
+            self.ui.energy.setText("----")
 
     def _start_grid_checkbox(self):
         """ Initialize checkbox that is used to show or remove grid"""
@@ -461,11 +470,24 @@ class VisualizationWindow(QMainWindow):
 
         self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
-        if self.energies is None:
+        if self.errors_for_each_timestep is None:
             self.ui.energy_cmap_checkbox.setEnabled(False)
-            self.ui.energy_cmap_checkbox.setToolTip("Energies need to be read from xyz file to use this function.")  
+            self.ui.energy_cmap_checkbox.setToolTip("Energies were not read in.")
         else:
             self.ui.energy_cmap_checkbox.stateChanged.connect(self.use_cmap_or_regular_colors)
+
+    def _start_property_cmap_combo_box(self):
+        """ Initialize combo box containing all properties for which a cmap can be made. This is only available if data has been read in from
+        comment line of .xyz file."""
+
+        if self.errors_for_each_timestep:
+            self.ui.properties_cmap_combo_box.setEnabled(True)
+            self.ui.properties_cmap_combo_box.addItems(self.cmap_properties)
+            self.current_selected_property = self.ui.properties_cmap_combo_box.currentText()
+            self.ui.properties_cmap_combo_box.currentIndexChanged.connect(self.update_central_atom_and_plot)
+        else:
+            self.ui.properties_cmap_combo_box.setEnabled(False)
+            self.ui.energy_cmap_checkbox.setToolTip("Energies were not read in.")
 
     def _start_remove_all_atoms_button(self):
         """ button that unticks all noncentral atoms"""
@@ -484,6 +506,12 @@ class VisualizationWindow(QMainWindow):
         current_alf_str = ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
         self.ui.atomic_local_frame.setText(current_alf_str)
 
+    def update_selected_property(self):
+        """ method used to update the selected property (iqa or multipole moment) and the cmap that is being plotted"""
+        self.current_selected_property = self.ui.properties_cmap_combo_box.currentText()
+        # update the energies here
+        self.energies = [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_each_timestep]
+
     def update_individual_point_slider_status_and_box(self):
         """
         Updates the status of the individual point slider depending on the checked state of the individual point checkbox.
@@ -491,7 +519,7 @@ class VisualizationWindow(QMainWindow):
         in the trajectory.
         """
         # enable slider and point box, update noncentral data according to slider/box
-        if self.ui.plot_individual_point_checkbox.isChecked() is True:
+        if self.ui.plot_individual_point_checkbox.isChecked():
             self.ui.individual_point_slider.setEnabled(True)
             self.ui.individual_point_box.setEnabled(True)
             self.ui.energy.setEnabled(True)
@@ -509,7 +537,7 @@ class VisualizationWindow(QMainWindow):
             self.update_noncentral_atoms_and_plot()
 
         # disable slider and point box, plot all timesteps
-        elif self.ui.plot_individual_point_checkbox.isChecked() is False:
+        elif not self.ui.plot_individual_point_checkbox.isChecked():
 
             self.ui.individual_point_box.setEnabled(False)
             self.ui.individual_point_slider.setEnabled(False)
@@ -523,8 +551,10 @@ class VisualizationWindow(QMainWindow):
         current_point = self.ui.individual_point_slider.value()
         self.ui.individual_point_box.setText(f"{current_point}")
         # update energy box here as well as the slider is updated
-        if self.energies:
-            self.ui.energy.setText(f"{self.energies[current_point]:.4f}")
+        if self.errors_for_each_timestep:
+            # get a list of integers for the current atom and property that are selected in combo boxes
+            self.energies = [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_each_timestep]
+            self.ui.energy.setText(f"{self.energies[current_point]:.8f}")
         # only get one point in the trajectory corresponding to the timestep selected by the slider/box
         self.current_noncentral_data = {}
         for atom in self.all_noncentral_data.keys():
@@ -568,7 +598,9 @@ class VisualizationWindow(QMainWindow):
         self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
         # disable stuff that cannot be used while in cmap
-        if self.ui.energy_cmap_checkbox.isChecked() is True:
+        if self.ui.energy_cmap_checkbox.isChecked():
+            # get a list of integers for the current atom and property that are selected in combo boxes
+            self.energies = [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_each_timestep]
 
             self.ui.plot_individual_point_checkbox.setEnabled(False)
             self.ui.default_atom_colors_checkbox.setEnabled(False)
@@ -576,12 +608,13 @@ class VisualizationWindow(QMainWindow):
             self.ui.energy.setEnabled(False)
 
         # enable stuff after cmap checkbox is unticked
-        elif self.ui.energy_cmap_checkbox.isChecked() is False:
+        elif not self.ui.energy_cmap_checkbox.isChecked():
 
             self.ui.plot_individual_point_checkbox.setEnabled(True)
             self.ui.default_atom_colors_checkbox.setEnabled(True)
             self.ui.atom_color_scroll_area.setEnabled(True)
             self.ui.energy.setEnabled(True)
+            self.ui.energy.setText("'Plot Individual Points' not on")
 
         self.update_noncentral_atoms_and_plot()
 
@@ -664,7 +697,7 @@ class VisualizationWindow(QMainWindow):
         column_label += 2
 
         for checkbox in self.checkboxes:
-            if checkbox.isChecked() is True:
+            if checkbox.isChecked():
 
                 push_button = QtWidgets.QPushButton(f"{checkbox.text()}")
                 push_button.setStyleSheet(f"background-color : {self.current_atom_colors[checkbox.text()]}; color: {self.current_atom_colors[checkbox.text()]};")

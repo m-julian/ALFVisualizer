@@ -43,10 +43,34 @@
            <item row="0" column="3">
             <widget class="QComboBox" name="atom_names_combo"/>
            </item>
-           <item row="2" column="1" colspan="2">
-            <widget class="QCheckBox" name="plot_individual_point_checkbox">
+           <item row="4" column="1">
+            <widget class="QCheckBox" name="show_grid_checkbox">
              <property name="text">
-              <string>Plot Individual Points</string>
+              <string>Show Grid</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="6">
+            <widget class="QLabel" name="energy">
+             <property name="text">
+              <string>none</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="5">
+            <widget class="QLineEdit" name="individual_point_box"/>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="central_alf_atom_label">
+             <property name="text">
+              <string>Central Atom</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="3">
+            <widget class="QCheckBox" name="default_atom_colors_checkbox">
+             <property name="text">
+              <string>Default Colors</string>
              </property>
             </widget>
            </item>
@@ -69,30 +93,6 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="5">
-            <widget class="QLineEdit" name="individual_point_box"/>
-           </item>
-           <item row="3" column="3">
-            <widget class="QCheckBox" name="default_atom_colors_checkbox">
-             <property name="text">
-              <string>Default Colors</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QCheckBox" name="show_grid_checkbox">
-             <property name="text">
-              <string>Show Grid</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="central_alf_atom_label">
-             <property name="text">
-              <string>Central Atom</string>
-             </property>
-            </widget>
-           </item>
            <item row="2" column="3">
             <widget class="QSlider" name="individual_point_slider">
              <property name="orientation">
@@ -100,13 +100,30 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="5">
+           <item row="4" column="5">
             <widget class="QCheckBox" name="energy_cmap_checkbox">
              <property name="text">
               <string>Plot Energy Cmap</string>
              </property>
              <property name="autoExclusive">
               <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QLabel" name="energy_label">
+             <property name="text">
+              <string>Error for Point</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1" colspan="2">
+            <widget class="QCheckBox" name="plot_individual_point_checkbox">
+             <property name="text">
+              <string>Plot Individual Points</string>
              </property>
             </widget>
            </item>
@@ -117,20 +134,13 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="5">
-            <widget class="QLabel" name="energy_label">
-             <property name="text">
-              <string>Individual Point Energy</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
+           <item row="1" column="3">
+            <widget class="QComboBox" name="properties_cmap_combo_box"/>
            </item>
-           <item row="1" column="6">
-            <widget class="QLabel" name="energy">
+           <item row="1" column="1">
+            <widget class="QLabel" name="current_property_textbox">
              <property name="text">
-              <string>none</string>
+              <string>Property</string>
              </property>
             </widget>
            </item>
@@ -183,7 +193,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>439</width>
-                <height>147</height>
+                <height>144</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout"/>
@@ -226,7 +236,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>439</width>
-                <height>176</height>
+                <height>172</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_2"/>
