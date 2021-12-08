@@ -735,6 +735,7 @@ class VisualizationWindow(QMainWindow):
                     self.current_datablock[block]["energies"] = self.energies
                     self.plotter.add_mesh(self.current_datablock[block], scalars="energies", cmap="jet", point_size=15, render_points_as_spheres=True)
 
+
 if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
