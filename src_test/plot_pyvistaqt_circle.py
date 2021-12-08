@@ -41,29 +41,55 @@ class VisualizationWindowDecorators:
                 original_method(instance_reference)
 
         return wrapper
-    
+
 
 class VisualizationWindow(QMainWindow):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
     def __init__(self):
-        
+
         super().__init__()
 
         # Setup for ui
-        ui_path = os.path.join(".", "ALFVisualizer.ui")
+        ui_path = os.path.join(".", "test.ui")
         Ui_MainWindow, _ = uic.loadUiType(ui_path)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.plotter = QtInteractor(self.ui.pyvista_frame)
+        self.plotter = QtInteractor(self.ui.pyvista_frame, line_smoothing=True, point_smoothing=True)
         self.plotter.set_background("royalblue", top="aliceblue")
         print(dir(self.plotter))
-        self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
+        self.ui.horizontalLayout_3.addWidget(self.plotter)
 
-        circle = pv.Circle()
-        self.plotter.add_mesh(circle, render_points_as_spheres=True)
+        self.plotter.add_mesh(pv.Sphere(), render_points_as_spheres=True, name="sphere")
+        self.plotter.add_mesh(pv.Pyramid(), render_points_as_spheres=True, name="pyramid")
+        
+        self.ui.remove_all.clicked.connect(self.remove_all_actors)
+        self.ui.remove_circle.clicked.connect(self.remove_actor)
+        self.ui.add_circle.clicked.connect(self.add_actor)
+
+    @property
+    def renderer(self):
+        return self.plotter.renderer
+
+    @property
+    def actors(self):
+        return self.renderer.actors
+
+    def remove_all_actors(self):
+        for actor_name in list(self.actors):
+            self.remove_actor(actor_name=actor_name)
+
+    def remove_actor(self, signal=False, actor_name="sphere"):
+        self.renderer.remove_actor(actor_name)
+        print("removed actor", actor_name)
+
+    def add_actor(self):
+        actor = pv.Sphere()
+        actor_name = "sphere"
+        self.plotter.add_mesh(actor, render_points_as_spheres=True, name=actor_name, reset_camera=False)
+        print("added actor", actor, actor_name)
 
 if __name__ == "__main__":
 
