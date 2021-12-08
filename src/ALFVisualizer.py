@@ -21,28 +21,6 @@ os.environ["QT_API"] = "pyqt5"
 # TAKES .XYZ TRAJECTORY FILE AND CALCULATES FEATURES OF EACH ATOM IN EACH POINT
 ###############################################################################
 
-type2mass = {'H': 1.007825, 'He': 4.002603, 'Li': 7.016005, 'Be': 9.012182, 'B': 11.009305, 'C': 12.0,
-             'N': 14.003074, 'O': 15.994915, 'F': 18.998403, 'Ne': 19.99244, 'Na': 22.989769, 'Mg': 23.985042,
-             'Al': 26.981539, 'Si': 27.976927, 'P': 30.973762, 'S': 31.972071, 'Cl': 34.968853, 'Ar': 39.962383,
-             'K': 38.963707, 'Ca': 39.962591, 'Sc': 44.955912, 'Ti': 47.947946, 'V': 50.94396, 'Cr': 51.940508,
-             'Mn': 54.938045, 'Fe': 55.9349382, 'Co': 58.933195, 'Ni': 57.935343, 'Cu': 62.929598, 'Zn': 63.929142,
-             'Ga': 68.925574, 'Ge': 73.921178, 'As': 74.921597, 'Se': 79.916521, 'Br': 78.918337, 'Kr': 83.911507}
-
-type2rad = {'H': 0.37, 'He': 0.32, 'Li': 1.34, 'Be': 0.9, 'B': 0.82, 'C': 0.77, 'N': 0.74, 'O': 0.73, 'F': 0.71,
-            'Ne': 0.69, 'Na': 1.54, 'Mg': 1.3, 'Al': 1.18, 'Si': 1.11, 'P': 1.06, 'S': 1.02, 'Cl': 0.99, 'Ar': 0.97,
-            'K': 1.96, 'Ca': 1.74, 'Sc': 1.44, 'Ti': 1.36, 'V': 1.25, 'Cr': 1.27, 'Mn': 1.39, 'Fe': 1.25,
-            'Co': 1.26, 'Ni': 1.21, 'Cu': 1.38, 'Zn': 1.31, 'Ga': 1.26, 'Ge': 1.22, 'As': 1.19, 'Se': 1.16,
-            'Br': 1.14, 'Kr': 1.1}
-
-dlpoly_weights = {"H": 1.007975, "He": 4.002602, "Li": 6.9675, "Be": 9.0121831, "B": 10.8135, "C": 12.0106,
-                  "N": 14.006855, "O": 15.9994, "F": 18.99840316, "Ne": 20.1797, "Na": 22.98976928, "Mg": 24.3055,
-                  "Al": 26.9815385, "Si": 28.085, "P": 30.973762, "S": 32.0675, "Cl": 35.4515, "Ar": 39.948,
-                  "K": 39.0983, "Ca": 40.078, "Sc": 44.955908, "Ti": 47.867, "V": 50.9415, "Cr": 51.9961,
-                  "Mn": 54.938044, "Fe": 55.845, "Co": 58.933194, "Ni": 58.6934, "Cu": 63.546, "Zn": 65.38,
-                  "Ga": 69.723, "Ge": 72.63, "As": 74.921595, "Se": 78.971, "Br": 79.904, "Kr": 83.798,
-                  "Rb": 85.4678, "Sr": 87.62, "Y": 88.90584, "Zr": 91.224, "Nb": 92.90637, "Mo": 95.95}
-
-
 def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict]:
     """ Returns features as 3D array, [atom][point][feature]
     Example: 10 points water xyz file would have shape (3, 10, 3) where 3 is the number of atoms,
@@ -67,9 +45,9 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict
     # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
     atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
 
-    energies = trajectory.energy  # energies are a list of energies, if given in the comment line of xyz file. Otherwise this is None.
+    cmap_properties = trajectory.energy  # energies are a list of energies, if given in the comment line of xyz file. Otherwise this is None.
 
-    return features, atom_names, atom_name_priorities, atomic_local_frame_dict, energies
+    return features, atom_names, atom_name_priorities, atomic_local_frame_dict, cmap_properties
 
 ########################################################################
 #                     CREATING 4D ARRAY TO PLOT
@@ -756,7 +734,6 @@ class VisualizationWindow(QMainWindow):
                 if block in self.current_checked_atoms:
                     self.current_datablock[block]["energies"] = self.energies
                     self.plotter.add_mesh(self.current_datablock[block], scalars="energies", cmap="jet", point_size=15, render_points_as_spheres=True)
-
 
 if __name__ == "__main__":
 
