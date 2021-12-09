@@ -3,7 +3,7 @@ from qtpy.QtWidgets import QMainWindow
 import pyvista as pv
 from pyvistaqt import QtInteractor
 from qtpy import uic
-from trajectory import Trajectory
+from alfvis_core import Trajectory
 from typing import List, Tuple, Dict
 import numpy as np
 import string

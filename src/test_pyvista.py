@@ -3,14 +3,14 @@ from qtpy.QtWidgets import QMainWindow
 import pyvista as pv
 from pyvistaqt import QtInteractor
 from qtpy import uic
-from trajectory import Trajectory
-from typing import List, Tuple, Dict
+from alfvis_core import Trajectory
+from typing import List, Tuple, Dict, Union
 import numpy as np
 import string
 import os
 import sys
 from pathlib import Path
-from constants import random_colors, default_atom_colors
+from alfvis_core.constants import random_colors, default_atom_colors
 
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
@@ -29,7 +29,6 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict
     10 is the number of points, and 3 is the number of features
 
     :param xyz_file: An xyz file format file that contain trajectory information
-
     """
 
     trajectory = Trajectory(xyz_file)
@@ -47,24 +46,25 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict
     # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
     atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
 
-    cmap_properties = trajectory.energy  # energies are a list of energies, if given in the comment line of xyz file. Otherwise this is None.
+    errors_for_properties = trajectory.properties_error  # dictionary of errors for each property
 
-    return features, atom_names, atom_name_priorities, atomic_local_frame_dict, cmap_properties
+    return features, atom_names, atom_name_priorities, atomic_local_frame_dict, errors_for_properties
 
-########################################################################
-#                     CREATING 4D ARRAY TO PLOT
+##############################################################################################
+#                     CREATING 4D ARRAY TO PLOT, SHAPE shape (N_atoms, N_atoms-1, N_points, 3)
 #
-########################################################################
+##############################################################################################
+
 
 class XYZArrays:
-    
+
     """ Class for converting to Cartesian space.
     Creates a 3D array for each atom on which the ALF is centered (1 4D array total). Each 2D array in the 3D array
     consists of N_pointsx3 (because each point has x,y,z coords in 3D space) matrices, where each matrix contains
     the xyz coordinates of every atom that is NOT the atom on which the ALF is centered."""
 
-    def __init__(self, all_atom_features):
-        
+    def __init__(self, all_atom_features: np.ndarray):
+
         self.n_atoms, self.n_points, self.n_features = all_atom_features.shape
         self.all_atom_4d_array = self.stack_one_atom_xyz_3D_arrays(all_atom_features)
 
@@ -174,53 +174,6 @@ class XYZArrays:
 #########################################################################
 
 
-class OpenXYZFile(QtWidgets.QWidget):
-    """ Open File Dialog to select XYZ file"""
-
-    def __init__(self):
-
-        super().__init__()
-
-        self.open_file_dialog()
-        if self.xyz_file:
-            self.open_pyvista_box(self.xyz_file)
-        else:
-            sys.exit()
-
-        self.main_window = VisualizationWindow(total_dict, atom_names, atomic_local_frame_dict, energies)
-        self.main_window.show()
-
-
-#########################################################################
-#                       PYVISTA/ QT PLOTTING TOOL
-#########################################################################
-
-# use these random colors and the atom_colors defined below if you want to see positions of individual atoms
-# (which gets lost if the same colors are specified for each type of atom)
-
-class VisualizationWindowDecorators:
-    """ Decorators for UI """
-
-    @staticmethod
-    def clear_plot_use_grid(original_method):
-        """ remove or show grid for pyvista """
-
-        def wrapper(instance_reference):
-
-            if instance_reference.use_grid is True:
-
-                instance_reference.plotter.clear()
-                original_method(instance_reference)
-                instance_reference.plotter.show_grid()
-
-            elif instance_reference.use_grid is False:
-
-                instance_reference.plotter.clear()
-                original_method(instance_reference)
-
-        return wrapper
-
-
 class VisualizationWindow(QMainWindow):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
@@ -229,26 +182,35 @@ class VisualizationWindow(QMainWindow):
 
         super().__init__()
 
-        all_atom_features, atom_names, atoms_names_priorities, atomic_local_frame_dict, errors_for_properties_dict = features_and_atom_names(xyz_file)
+        # errors_for_properties could be None in case no per-property data is read in from xyz comment line
+        all_atom_features, atom_names, atoms_names_priorities, atomic_local_frame_dict, errors_for_properties = features_and_atom_names(xyz_file)
 
-        self.atom_names = atom_names  # list of atom names
-        self.atoms_names_priorities = atoms_names_priorities
-        self.alf_dict = atomic_local_frame_dict
-        # energies is a list of dictionaries. Each dictionary contains property errors for each atom
-        self.errors_for_each_timestep = errors_for_properties_dict
-        self.cmap_properties = errors_for_properties_dict[0].keys() if errors_for_properties_dict is not None else None
-        self.current_plotted_property = None
+        # list of atom names
+        self.atom_names: list = atom_names
+        # a list of lists which gives the full ALF of every atom (not just the central, x, xy atoms)
+        self.atoms_names_priorities: List[list] = atoms_names_priorities
+        # dict of key: central atom, val: list of ALF indeces
+        self.alf_dict: dict = atomic_local_frame_dict
+
+        # dictionary of dictionaries, ordered as  eg. {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
         self.all_atom_dict = self.calculate_all_atom_dictionary(all_atom_features)
 
+        # errors_for_properties is a list of dictionaries. Each dictionary contains property errors for each atom. Could be None if data is not in xyz.
+        self.errors_for_properties = errors_for_properties
+        self.cmap_properties = errors_for_properties[0].keys() if errors_for_properties is not None else None
+
+        #################################################
+        # initialize stuff to plot
+        #################################################
+
+        # current colors used for atoms
         self.current_atom_colors = dict(zip(atom_names, random_colors))
+        # a saved list (in case the default colors was used and then reverted)
         self.saved_atom_colors = dict(zip(atom_names, random_colors))
 
-        # used to initialize UI to plot first central alf atom (based on index, ex. C1, O1, etc.)
-        self.current_central_atom_name = atom_names[0]
-
-        # keeps total noncentral data that can be plotted (self.all_noncentral_data)
-        # self.current_noncentral_data is actually what is plotted.
-        # This needs to be done to revert back to orginal whole dataset if slider is changed back to original position
+        # getting the number of timesteps from one of the atoms
+        self.n_timesteps = self.all_noncentral_data[self.current_noncentral_atom_names[0]].shape[0]
+        
         self.current_noncentral_data = self.all_noncentral_data
 
         # used in initializing values for slider, atom selecter, and atom color parts, and grid
@@ -256,16 +218,25 @@ class VisualizationWindow(QMainWindow):
         self.current_checked_atoms = []
         self.color_buttons = []
         self.color_button_labels = []
-        self.use_grid = True
 
-        # Setup for ui
-        ui_path = os.path.join(".", "ALFVisualizer.ui")
+        ################################################
+        # start user interface
+        ################################################
+        ui_path = os.path.join(".", "test_ui.ui")
         Ui_MainWindow, _ = uic.loadUiType(ui_path)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._start_alf_vis_ui()
 
     def calculate_all_atom_dictionary(self, all_atom_features):
+        """Returns a dictionary of dictonaries, with outer keys being the names of a central atom, eg. C1, H2, etc. The value corresponding to that outer key
+        is another dictionary containing the xyz coordinates of every non-central atom that needs to be plotted. The values of the inner dictionary is a 2d-array
+        of the positions of the non-central atoms for every timestep (shape n_timesteps x 3)
+
+        :param all_atom_features: numpy array of shape n_atoms x n_timesteps x n_features
+        :return: a dictonary of dictionaries containing the corresponding non-central data to plot for every central atom
+        :rtype: dict
+        """
 
         system_as_xyz = XYZArrays(all_atom_features)  # gives 4D numpy array
 
@@ -293,15 +264,46 @@ class VisualizationWindow(QMainWindow):
         return total_dict
 
     @property
-    def center(self):
+    def current_central_atom_name(self) -> str:
+        """ returns the name of the current central atom"""
+        return self.ui.atom_names_combo.currentText()
+
+    @property
+    def current_alf_str(self) -> str:
+        return ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
+
+    @property
+    def current_noncentral_atom_names(self) -> list:
+        """ Returns the non central atom names as a list"""
+        return [name for name in self.atom_names if name != self.current_central_atom_name]
+
+    @property
+    def current_selected_property(self) -> Union[str, None]:
+        """ returns the name of the current selected property or `None` if no properties were read in from the xyz file."""
+        if self.cmap_properties:
+            return self.ui.properties_cmap_combo_box.currentText()
+        else:
+            return
+
+    @property
+    def current_errors_list(self) -> list:
+        return [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_properties]
+
+    @property
+    def center(self) -> np.ndarray:
         return np.array([0, 0, 0])
 
     @property
-    def all_noncentral_data(self):
+    def all_noncentral_data(self) -> dict:
+        """A dictonary of non central data to plot for the current central atom."""
         return self.all_atom_dict[self.current_central_atom_name]
 
     @property
-    def default_atom_colors(self):
+    def default_atom_colors(self) -> dict:
+        """Returns a dictionary of default colors for the atoms in the system. (e.g. carbon is grey, nitrogen is blue)
+
+        :rtype: dict
+        """
         atom_colors = {}
         for atom_name in self.atom_names:
             atom_element = atom_name.rstrip(string.digits)
@@ -316,12 +318,52 @@ class VisualizationWindow(QMainWindow):
         return atom_colors
 
     @property
-    def current_central_atom_color(self):
+    def current_central_atom_color(self) -> str:
+        """ Returns the central atom color"""
         return self.current_atom_colors[self.current_central_atom_name]
 
     @property
-    def current_noncentral_atom_names(self):
-        return [name for name in self.atom_names if name != self.current_central_atom_name]
+    def renderer(self):
+        """ Returns the renderer instance responsible for displaying things on screen"""
+        return self.plotter.renderer
+
+    @property
+    def actors(self) -> dict:
+        """ Returns a dictionary of actor names as keys and VTK objects as values (these are the things that are plotted)"""
+        return self.renderer.actors
+
+    def show_actor(self, singal, actor_name):
+        """ Show the actor to screen """
+        actor = self.actors.get(actor_name)
+        if actor:
+            actor.SetVisibility(True)
+
+    def hide_actor(self, actor_name):
+        """ Hide the actor."""
+        actor = self.actors.get(actor_name)
+        if actor:
+            actor.SetVisibility(False)
+
+    def add_actor(self, actor, actor_name):
+        """ Add an actor. This adds it to the self.actors dict"""
+        self.plotter.add_mesh(actor, render_points_as_spheres=True, name=actor_name, reset_camera=False)
+
+    def remove_actor(self, actor_name):
+        """ Remove the actor. This deletes it from the self.actors dict"""
+        self.plotter.remove_actor(actor_name)
+
+    def remove_all_actors(self):
+        """ Clear the whole pyvista screen of any actors and remove grid. Only leaves empty background. """
+        for actor_name in list(self.actors):
+            self.remove_actor(actor_name=actor_name)
+
+    def remove_grid(self):
+        """ Remove the grid"""
+        self.plotter.remove_bounds_axes()
+
+    def show_grid(self):
+        """ Show the grid """
+        self.plotter.show_grid()
 
     def _start_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed
@@ -340,7 +382,6 @@ class VisualizationWindow(QMainWindow):
         # called here to initialize the plot
         self.update_central_atom_and_plot()
 
-    @VisualizationWindowDecorators.clear_plot_use_grid
     def update_central_atom_and_plot(self):
         """
         method runs ONLY when the central atom is changed in the GUI
@@ -355,7 +396,6 @@ class VisualizationWindow(QMainWindow):
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
-    @VisualizationWindowDecorators.clear_plot_use_grid
     def update_noncentral_atoms_and_plot(self):
         """ updates noncentral atom data and colors to be plotted. Called by methods that do not change the current atom. The checkboxes do not need to be
         updated when data is changed but the central atom remains the same."""
@@ -363,81 +403,58 @@ class VisualizationWindow(QMainWindow):
         self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
+    #####################################################
+    # Initial Setup and Connect QObjects signals to slots
+    #####################################################
+
     def _start_combo_central_atom_names(self):
         """method initializing atom names combo box from list of atom names"""
         self.ui.atom_names_combo.addItems(self.atom_names)
         self.ui.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
 
-    def _start_individual_point_checkbox(self):
-        """method that initializes the state of the individual atom checkbox. If the checkbox is enabled, only one point is plotted at a time.
-        If it is disabled, all points are plotted at the same time. This is useful to have when you want to focus on a specific point."""
-        self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
-        self.ui.plot_individual_point_checkbox.stateChanged.connect(self.update_individual_point_slider_status_and_box)
-
-    def _start_individual_point_slider(self):
-        """method that initializes slider used to plot individual points instead of whole trajectory."""
-        self.ui.individual_point_slider.setEnabled(False)  # default is set to false
-        self.ui.individual_point_slider.setMinimum(0)  # 0 is the first timestep
-        n_timesteps = self.all_noncentral_data[self.current_noncentral_atom_names[0]].shape[0]  # getting the number of timesteps from one of the atoms
-        self.ui.individual_point_slider.setMaximum(n_timesteps - 1)  # need to index starting at 0, so subtract 1
-        self.ui.individual_point_slider.valueChanged.connect(self.update_individual_point_slider_plotted_data)
-
-    def _start_individual_point_textbox(self):
-        """method that initializes textbox used to display the current individual point, it can also be used to go to a specific point."""
-        self.ui.individual_point_box.setEnabled(False)
-        self.ui.individual_point_box.setText(f"{self.ui.individual_point_slider.value()}")
-        self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
-
-    def _start_individual_energy_box(self):
-        """starts the energies box that shows the energy of the current single point that is displayed. If not data has been read in from the xyz file,
-        a message is displayed instead."""
-
-        # if data has not been read in
-        if self.errors_for_each_timestep is None:
-            self.ui.energy.setText("Data has not been read in.")
-        # if data has been read in but individual energies are still not being plotted
+    def _start_properties_combo(self):
+        """ method initializing the property names for which cmap can be plotted"""
+        if self.cmap_properties:
+            self.ui.properties_cmap_combo_box.addItems(self.cmap_properties)
         else:
-            self.ui.energy.setText("----")
+            self.ui.properties_cmap_combo_box.setEnabled(False)
+            self.ui.energy_cmap_checkbox.setToolTip("Energies were not read in.")
 
     def _start_grid_checkbox(self):
         """ Initialize checkbox that is used to show or remove grid"""
         self.ui.show_grid_checkbox.setCheckState(QtCore.Qt.Checked)
         self.ui.show_grid_checkbox.stateChanged.connect(self.grid_status)
 
-    def _start_default_color_checkbox(self):
-        """ Initialize checkbox that is used to make atoms default colors or random colors.
-        Unchecked is random color and checked is default colors."""
-        self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
-        self.ui.default_atom_colors_checkbox.stateChanged.connect(self.use_default_or_random_atom_colors)
+    def _start_coloring_radio_buttoms(self):
+        self.ui.random_colors_radio.toggled(self.use_random_colors)
+        self.ui.default_atom_colors_radio.toggled(self.use_default_colors)
+        self.ui.cmap_radio.toggled(self.use_cmap)
 
-    def _start_energy_cmap_checkbox(self):
-        """ Initialize checkbox that is used to plot colormaps of energies, if they are read if from
-        comment line in xyz file."""
+    def _start_individual_points(self):
+        """method that initializes the state of the individual atom checkbox. If the checkbox is enabled, only one point is plotted at a time.
+        If it is disabled, all points are plotted at the same time. This is useful to have when you want to focus on a specific point."""
 
-        self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
+        self.ui.plot_individual_point_checkbox.toggled.connect(self.update_individual_point_slider_status_and_box)
 
-        if self.errors_for_each_timestep is None:
-            self.ui.energy_cmap_checkbox.setEnabled(False)
-            self.ui.energy_cmap_checkbox.setToolTip("Energies were not read in.")
+        self.ui.individual_point_slider.setMinimum(0)  # 0 is the first timestep
+        self.ui.individual_point_slider.setMaximum(self.n_timesteps - 1)  # need to index starting at 0, so subtract 1
+        self.ui.individual_point_slider.valueChanged.connect(self.update_individual_point_slider_plotted_data)
+
+        """method that initializes textbox used to display the current individual point, it can also be used to go to a specific point."""
+        self.ui.individual_point_box.setEnabled(False)
+        self.ui.individual_point_box.setText(f"{self.ui.individual_point_slider.value()}")
+        self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
+
+        # if data has not been read in
+        if self.cmap_properties is None:
+            self.ui.error_for_current_point.setText("Data has not been read in.")
+        # if data has been read in but individual energies are still not being plotted
         else:
-            self.ui.energy_cmap_checkbox.stateChanged.connect(self.use_cmap_or_regular_colors)
+            self.ui.error_for_current_point.setText(str(self.current_errors_list[self.ui.individual_point_slider.value()]))
 
-    def _start_property_cmap_combo_box(self):
-        """ Initialize combo box containing all properties for which a cmap can be made. This is only available if data has been read in from
-        comment line of .xyz file."""
-
-        if self.errors_for_each_timestep:
-            self.ui.properties_cmap_combo_box.setEnabled(True)
-            self.ui.properties_cmap_combo_box.addItems(self.cmap_properties)
-            self.current_selected_property = self.ui.properties_cmap_combo_box.currentText()
-            self.ui.properties_cmap_combo_box.currentIndexChanged.connect(self.update_central_atom_and_plot)
-        else:
-            self.ui.properties_cmap_combo_box.setEnabled(False)
-            self.ui.energy_cmap_checkbox.setToolTip("Energies were not read in.")
-
-    def _start_remove_all_atoms_button(self):
+    def _start_hide_all_atoms_button(self):
         """ button that unticks all noncentral atoms"""
-        self.ui.remove_all_plotted_atoms.clicked.connect(self.untick_all_noncentral_atoms_checkboxes)
+        self.ui.hide_all_plotted_atoms.clicked.connect(self.hide_all_atoms)
 
     def _start_pyvista_plotter(self):
         """ method to initialize pyvista plot"""
@@ -445,18 +462,42 @@ class VisualizationWindow(QMainWindow):
         self.plotter.set_background("royalblue", top="aliceblue")
         self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
 
+    ####################################################################
+    # COLORING
+    ####################################################################
+
+    def use_random_colors(self):
+        """sets random colors for atoms"""
+
+        self.ui.individual_points_widget.setEnabled(True)
+        self.ui.plot_individual_point_radio.setEnabled(True)
+        self.ui.atom_color_scroll_area.setEnabled(True)
+
+        self.current_atom_colors = self.saved_atom_colors
+        self.update_noncentral_atoms_and_plot()
+
+    def use_default_colors(self):
+        """ sets default colors for atoms"""
+
+        self.ui.individual_points_widget.setEnabled(True)
+        self.ui.plot_individual_point_radio.setEnabled(True)
+        self.ui.atom_color_scroll_area.setEnabled(True)
+
+        self.current_atom_colors = self.default_atom_colors
+        self.update_noncentral_atoms_and_plot()
+
+    def use_cmap(self):
+        """ Used to remove other checkboxes that cannot be used at the same time, as well as to plot the cmap."""
+        self.ui.individual_points_widget.setEnabled(False)
+        self.ui.plot_individual_point_radio.setEnabled(False)
+        self.ui.atom_color_scroll_area.setEnabled(False)
+
+        self.update_noncentral_atoms_and_plot()
+
     def update_central_atom_data(self):
         """ method used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
-        self.current_central_atom_name = self.ui.atom_names_combo.currentText()
         self.current_noncentral_data = self.all_noncentral_data
-        current_alf_str = ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
-        self.ui.atomic_local_frame.setText(current_alf_str)
-
-    def update_selected_property(self):
-        """ method used to update the selected property (iqa or multipole moment) and the cmap that is being plotted"""
-        self.current_selected_property = self.ui.properties_cmap_combo_box.currentText()
-        # update the energies here
-        self.energies = [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_each_timestep]
+        self.ui.atomic_local_frame.setText(self.current_alf_str)
 
     def update_individual_point_slider_status_and_box(self):
         """
@@ -464,127 +505,55 @@ class VisualizationWindow(QMainWindow):
         If that checkbox is enabled, then only 1 point will be plotted at a time. The slider can then be slider to the point of interest
         in the trajectory.
         """
-        # enable slider and point box, update noncentral data according to slider/box
-        if self.ui.plot_individual_point_checkbox.isChecked():
-            self.ui.individual_point_slider.setEnabled(True)
-            self.ui.individual_point_box.setEnabled(True)
-            self.ui.energy.setEnabled(True)
-            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
 
-            # update slider box value depending on slider position
-            current_point = self.ui.individual_point_slider.value()
-            self.ui.individual_point_box.setText(f"{current_point}")
-            # only get one point in the trajectory corresponding to the timestep selected by the slider/box
-
-            self.current_noncentral_data = {}
-            for atom in self.all_noncentral_data.keys():
-                self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
-
-            self.update_noncentral_atoms_and_plot()
-
-        # disable slider and point box, plot all timesteps
-        elif not self.ui.plot_individual_point_checkbox.isChecked():
-
-            self.ui.individual_point_box.setEnabled(False)
-            self.ui.individual_point_slider.setEnabled(False)
-            self.ui.energy.setEnabled(False)
-
-            self.current_noncentral_data = self.all_noncentral_data
-            self.update_noncentral_atoms_and_plot()
-
-    def update_individual_point_slider_plotted_data(self):
-        """ Makes slices of the data depending on the position of the slider or the user input in the box next to the slider."""
+        # update slider box value depending on slider position
         current_point = self.ui.individual_point_slider.value()
         self.ui.individual_point_box.setText(f"{current_point}")
-        # update energy box here as well as the slider is updated
-        if self.errors_for_each_timestep:
-            # get a list of integers for the current atom and property that are selected in combo boxes
-            self.energies = [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_each_timestep]
-            self.ui.energy.setText(f"{self.energies[current_point]:.8f}")
+
         # only get one point in the trajectory corresponding to the timestep selected by the slider/box
         self.current_noncentral_data = {}
         for atom in self.all_noncentral_data.keys():
             self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
+
+        if self.errors_for_each_timestep:
+            # get a list of integers for the current atom and property that are selected in combo boxes
+            self.ui.property_value_for_current_point.setText(f"{self.current_errors_list[current_point]:.8f}")
+        else:
+            self.ui.property_value_for_current_point.setText("Not read in.")
 
         self.update_noncentral_atoms_and_plot()
 
     def update_individual_point_slider_value_with_box(self):
         """ Updates the slider value based on the value of the individual point text box. The slider is updates, so the data is also automatically
         updated. No need to update data to be plotted."""
-        current_val = int(self.ui.individual_point_box.text())
-        self.ui.individual_point_slider.setValue(current_val)
+        current_box_val = int(self.ui.individual_point_box.text())
+        self.ui.individual_point_slider.setValue(current_box_val)  # slider changes, so calls update_individual_point_slider_status_and_box
 
     def grid_status(self):
         """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
-        if self.ui.show_grid_checkbox.isChecked() is True:
-            self.use_grid = True
-        elif self.ui.show_grid_checkbox.isChecked() is False:
-            self.use_grid = False
+        if self.ui.show_grid_checkbox.isChecked():
+            self.show_grid()
+        elif not self.ui.show_grid_checkbox.isChecked():
+            self.remove_grid()
 
-        self.update_noncentral_atoms_and_plot()
-
-    def use_default_or_random_atom_colors(self):
-        """ updates atom colors depending on default_atom_colors_checkbox. This checkbox is initialized to unchecked state, so
-        random colors are used (this is initial state). If checkbox is checked, then default colors for atoms,
-        i.e. oxygen:red , hydrogen:white, etc. are used"""
-
-        if self.ui.default_atom_colors_checkbox.isChecked() is False:  # use random colors, this is initial state
-            self.current_atom_colors = self.saved_atom_colors
-
-        elif self.ui.default_atom_colors_checkbox.isChecked() is True:  # use default colors
-            self.current_atom_colors = self.default_atom_colors
-            self.ui.energy_cmap_checkbox.setCheckState(QtCore.Qt.Unchecked)
-
-        self.update_noncentral_atoms_and_plot()
-
-    def use_cmap_or_regular_colors(self):
-        """ Used to remove other checkboxes that cannot be used at the same time, as well as to plot the cmap."""
-
-        self.ui.plot_individual_point_checkbox.setCheckState(QtCore.Qt.Unchecked)
-        self.ui.default_atom_colors_checkbox.setCheckState(QtCore.Qt.Unchecked)
-
-        # disable stuff that cannot be used while in cmap
-        if self.ui.energy_cmap_checkbox.isChecked():
-            # get a list of integers for the current atom and property that are selected in combo boxes
-            self.energies = [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_each_timestep]
-
-            self.ui.plot_individual_point_checkbox.setEnabled(False)
-            self.ui.default_atom_colors_checkbox.setEnabled(False)
-            self.ui.atom_color_scroll_area.setEnabled(False)
-            self.ui.energy.setEnabled(False)
-
-        # enable stuff after cmap checkbox is unticked
-        elif not self.ui.energy_cmap_checkbox.isChecked():
-
-            self.ui.plot_individual_point_checkbox.setEnabled(True)
-            self.ui.default_atom_colors_checkbox.setEnabled(True)
-            self.ui.atom_color_scroll_area.setEnabled(True)
-            self.ui.energy.setEnabled(True)
-            self.ui.energy.setText("'Plot Individual Points' not on")
-
-        self.update_noncentral_atoms_and_plot()
-
-    def update_checkboxes_widget(self):
+    def update_checkboxes_box(self):
         """ Used to dynamically generate the non-central atom checkboxes.
         They can be used to plot individual noncentral atoms instead of all noncentral atoms."""
 
-        if self.checkboxes != []:
-            for check in self.checkboxes:
-                self.ui.gridLayout.removeWidget(check)
-                check.deleteLater()
-                check = None
-            self.checkboxes = []
-
-        self.current_checked_atoms = []
+        self.checkboxes = []
+        self.color_boxes = []
         row = 0
         column = 0
-        for atom in self.current_noncentral_atom_names:
-            checkbox = QtWidgets.QCheckBox(f"{atom}")
+
+        for atom_name in self.current_noncentral_atom_names:
+            
+            checkbox = QtWidgets.QCheckBox(f"{atom_name}")
             checkbox.setCheckState(QtCore.Qt.Checked)
+            
             # connect each checkbox to be able to change noncentral data that is plotted
-            checkbox.stateChanged.connect(self.update_noncentral_atoms_and_plot)
+            checkbox.stateChanged.connect(self.show_or_hide_one_atom_actor, show_or_hide_one_atom_color_box)
+            
             self.checkboxes.append(checkbox)
-            self.current_checked_atoms.append(checkbox.text())
             self.ui.gridLayout.addWidget(checkbox, row, column)
             column += 1
             # if there are 3 checkboxes on 1 row, go to the next one
@@ -592,78 +561,14 @@ class VisualizationWindow(QMainWindow):
                 row += 1
                 column = 0
 
-    def untick_all_noncentral_atoms_checkboxes(self):
-        """ method called after clicking the Remove All Plotted Atoms button - this unticks all noncentral atoms. Since the sates of the
-        checkboxes has changed, this will cause the plot to be updated."""
+    def show_or_hide_one_atom_actor(self):
 
-        self.current_checked_atoms = []
-        for checkbox in self.checkboxes:
-            checkbox.setCheckState(QtCore.Qt.Unchecked)
+        sender_checkbox_text = self.sender().text()
 
-    def update_checked_atoms(self):
-        """ Method that keeps track of which checkboxes for noncentral atoms are checked. ONLY atoms that are checked are plotted"""
-
-        for checkbox in self.checkboxes:
-            if checkbox.isChecked() is False and checkbox.text() in self.current_checked_atoms:
-                self.current_checked_atoms.remove(checkbox.text())
-            elif checkbox.isChecked() is True and checkbox.text() not in self.current_checked_atoms:
-                self.current_checked_atoms.append(checkbox.text())
-
-    def update_atom_color_box_buttons(self):
-        """ updates atoms that are in the color box, depending on which central atom is chosen and also which
-        checkboxes are ticked in the checkbox widget."""
-
-        # clear color buttons and labels if checkboxes are changed
-        if self.color_buttons != []:
-            for button, button_label in zip(self.color_buttons, self.color_button_labels):
-                self.ui.gridLayout.removeWidget(button)
-                self.ui.gridLayout.removeWidget(button_label)
-                button.deleteLater()
-                button_label.deleteLater()
-                button = None
-                button_label = None
-            self.color_buttons = []
-            self.color_button_labels = []
-
-        row = 0
-        column_button = 0
-        column_label = 1
-
-        # add color button for central atom as well
-        push_button = QtWidgets.QPushButton(self.current_central_atom_name)
-        push_button.setStyleSheet(f"background-color : {self.current_atom_colors[self.current_central_atom_name]}; color: {self.current_atom_colors[self.current_central_atom_name]};")
-        push_button.clicked.connect(self.change_atom_color_color_dialog)
-        push_button_label = QtWidgets.QLabel(self.current_central_atom_name)
-        self.color_buttons.append(push_button)
-        self.color_button_labels.append(push_button_label)
-        self.ui.gridLayout_2.addWidget(push_button, row, column_button)
-        self.ui.gridLayout_2.addWidget(push_button_label, row, column_label)
-
-        column_button += 2
-        column_label += 2
-
-        for checkbox in self.checkboxes:
-            if checkbox.isChecked():
-
-                push_button = QtWidgets.QPushButton(f"{checkbox.text()}")
-                push_button.setStyleSheet(f"background-color : {self.current_atom_colors[checkbox.text()]}; color: {self.current_atom_colors[checkbox.text()]};")
-                push_button.clicked.connect(self.change_atom_color_color_dialog)
-
-                push_button_label = QtWidgets.QLabel(f"{checkbox.text()}")
-
-                self.color_buttons.append(push_button)
-                self.color_button_labels.append(push_button_label)
-
-                self.ui.gridLayout_2.addWidget(push_button, row, column_button)
-                self.ui.gridLayout_2.addWidget(push_button_label, row, column_label)
-
-                column_button += 2
-                column_label += 2
-
-                if column_button % 3 == 0:
-                    row += 1
-                    column_button = 0
-                    column_label = 1
+        if self.sender().isChecked():
+            self.show_actor(sender_checkbox_text)
+        else:
+            self.hide_actor(sender_checkbox_text)
 
     def change_atom_color_color_dialog(self):
         """ opens up color dialog and lets user select a new color for a particular atom.
@@ -707,7 +612,6 @@ class VisualizationWindow(QMainWindow):
 def open_file_dialog(name="Select a file", default_folder=str(Path.cwd()), files_to_look_for="All Files (*);;XYZ files (*.xyz)"):
     xyz_file, _ = QtWidgets.QFileDialog.getOpenFileName(None, name, default_folder, files_to_look_for)
     return xyz_file
-
 
 if __name__ == "__main__":
 

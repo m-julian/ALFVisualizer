@@ -1,8 +1,8 @@
 from typing import Optional, Union
 import numpy as np
-import constants
-from alf_feature_calculator import ALFFeatureCalculator
-from units import AtomicDistance
+import alfvis_core.constants as constants
+from alfvis_core.alf_feature_calculator import ALFFeatureCalculator
+from alfvis_core.units import AtomicDistance
 
 
 class Atom:
@@ -157,7 +157,7 @@ class Atom:
         """Returns a list of Atom indeces to which this Atom instance is connected
 
         Returns:
-            :type: `list` of `int`, coresponding to the Atom instances indeces, as used in python lists (starting at 0).
+            :type: `list` of `int`, alfvis_coresponding to the Atom instances indeces, as used in python lists (starting at 0).
         """
         connectivity_matrix_row = self.connectivity
         return [

@@ -41,6 +41,39 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
+            <widget class="QGroupBox" name="groupBox">
+             <property name="title">
+              <string>GroupBox</string>
+             </property>
+             <widget class="QCheckBox" name="checkBox">
+              <property name="geometry">
+               <rect>
+                <x>150</x>
+                <y>80</y>
+                <width>70</width>
+                <height>17</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>CheckBox</string>
+              </property>
+             </widget>
+             <widget class="QCheckBox" name="checkBox_2">
+              <property name="geometry">
+               <rect>
+                <x>280</x>
+                <y>170</y>
+                <width>70</width>
+                <height>17</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>CheckBox</string>
+              </property>
+             </widget>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="add_circle">
              <property name="text">
               <string>Add circle</string>
@@ -58,6 +91,34 @@
             <widget class="QPushButton" name="remove_all">
              <property name="text">
               <string>Remove All</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="remove_grid">
+             <property name="text">
+              <string>Remove Grid</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="show_grid">
+             <property name="text">
+              <string>Show Grid</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="visibility_on_button">
+             <property name="text">
+              <string>Visibility On</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="visibility_off_button">
+             <property name="text">
+              <string>Visibility Off</string>
              </property>
             </widget>
            </item>

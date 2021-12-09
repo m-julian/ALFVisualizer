@@ -64,10 +64,14 @@ class VisualizationWindow(QMainWindow):
 
         self.plotter.add_mesh(pv.Sphere(), render_points_as_spheres=True, name="sphere")
         self.plotter.add_mesh(pv.Pyramid(), render_points_as_spheres=True, name="pyramid")
-        
+
         self.ui.remove_all.clicked.connect(self.remove_all_actors)
         self.ui.remove_circle.clicked.connect(self.remove_actor)
         self.ui.add_circle.clicked.connect(self.add_actor)
+        self.ui.remove_grid.clicked.connect(self.remove_grid)
+        self.ui.show_grid.clicked.connect(self.show_grid)
+        self.ui.visibility_on_button.clicked.connect(self.visibility_on)
+        self.ui.visibility_off_button.clicked.connect(self.visibility_off)
 
     @property
     def renderer(self):
@@ -82,7 +86,7 @@ class VisualizationWindow(QMainWindow):
             self.remove_actor(actor_name=actor_name)
 
     def remove_actor(self, signal=False, actor_name="sphere"):
-        self.renderer.remove_actor(actor_name)
+        self.plotter.remove_actor(actor_name)
         print("removed actor", actor_name)
 
     def add_actor(self):
@@ -90,6 +94,25 @@ class VisualizationWindow(QMainWindow):
         actor_name = "sphere"
         self.plotter.add_mesh(actor, render_points_as_spheres=True, name=actor_name, reset_camera=False)
         print("added actor", actor, actor_name)
+
+    def remove_grid(self):
+        self.plotter.remove_bounds_axes()
+
+    def show_grid(self):
+        self.plotter.show_grid()
+
+    def visibility_off(self):
+        actor_name = "sphere"
+        actor = self.actors.get(actor_name)
+        if actor is not None:
+            actor.SetVisibility(False)
+
+    def visibility_on(self):
+        actor_name = "sphere"
+        actor = self.actors.get(actor_name)
+        if actor is not None:
+            actor.SetVisibility(True)
+
 
 if __name__ == "__main__":
 

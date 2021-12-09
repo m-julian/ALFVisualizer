@@ -1,8 +1,8 @@
 import itertools as it
 from typing import Optional, Sequence, Union
 import numpy as np
-from atom import Atom
-from connectivity_calculator import ConnectivityCalculator
+from alfvis_core.atom import Atom
+from alfvis_core.connectivity_calculator import ConnectivityCalculator
 
 
 class AtomNotFound(Exception):

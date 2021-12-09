@@ -1,8 +1,8 @@
 import itertools as it
 import numpy as np
-from feature_calculator import FeatureCalculator
-from constants import ang2bohr
-from units import AtomicDistance
+from alfvis_core.feature_calculator import FeatureCalculator
+from alfvis_core.constants import ang2bohr
+from alfvis_core.units import AtomicDistance
 
 feature_unit = AtomicDistance.Bohr
 

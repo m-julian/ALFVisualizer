@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1100</width>
-    <height>607</height>
+    <width>1582</width>
+    <height>926</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,6 +30,12 @@
        <enum>Qt::Horizontal</enum>
       </property>
       <widget class="QWidget" name="user_interaction_part" native="true">
+       <property name="maximumSize">
+        <size>
+         <width>550</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QTabWidget" name="tabWidget">
@@ -37,8 +43,14 @@
            <number>0</number>
           </property>
           <widget class="QWidget" name="tab">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
            <attribute name="title">
-            <string>Tab 1</string>
+            <string>ALFVis Settings</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
@@ -49,110 +61,238 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
-              <layout class="QGridLayout" name="gridLayout_3">
-               <item row="1" column="6">
-                <widget class="QLabel" name="energy">
-                 <property name="text">
-                  <string>none</string>
+              <layout class="QVBoxLayout" name="verticalLayout_6">
+               <item>
+                <widget class="QGroupBox" name="central_atom_settings_groupbox">
+                 <property name="title">
+                  <string>Atom Center and Property Settings</string>
                  </property>
+                 <layout class="QGridLayout" name="gridLayout_5">
+                  <item row="1" column="1">
+                   <widget class="QComboBox" name="properties_cmap_combo_box"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="current_property_textbox">
+                    <property name="text">
+                     <string>Property</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2" alignment="Qt::AlignHCenter">
+                   <widget class="QLabel" name="atomic_local_frame_label">
+                    <property name="layoutDirection">
+                     <enum>Qt::LeftToRight</enum>
+                    </property>
+                    <property name="autoFillBackground">
+                     <bool>false</bool>
+                    </property>
+                    <property name="text">
+                     <string>Calculated ALF:</string>
+                    </property>
+                    <property name="scaledContents">
+                     <bool>false</bool>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="3" alignment="Qt::AlignLeft">
+                   <widget class="QLabel" name="atomic_local_frame">
+                    <property name="styleSheet">
+                     <string notr="true">background-color : white;
+color : blue;
+border-style: solid;
+border-color:black;
+border-width:2px</string>
+                    </property>
+                    <property name="text">
+                     <string>none</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QComboBox" name="atom_names_combo"/>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="central_alf_atom_label">
+                    <property name="text">
+                     <string>Central Atom</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </widget>
                </item>
-               <item row="2" column="1" colspan="2">
-                <widget class="QCheckBox" name="plot_individual_point_checkbox">
-                 <property name="text">
-                  <string>Plot Individual Points</string>
+               <item>
+                <widget class="QGroupBox" name="plotting_settings_groupbox">
+                 <property name="title">
+                  <string> Plotting Settings</string>
                  </property>
+                 <layout class="QGridLayout" name="gridLayout_3">
+                  <item row="0" column="0">
+                   <widget class="QCheckBox" name="show_grid_checkbox">
+                    <property name="text">
+                     <string>Show Grid</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QGroupBox" name="groupBox">
+                    <property name="title">
+                     <string>Coloring Settings</string>
+                    </property>
+                    <layout class="QVBoxLayout" name="verticalLayout_8">
+                     <item>
+                      <widget class="QRadioButton" name="random_colors_radio">
+                       <property name="text">
+                        <string>Random Colors</string>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                       <attribute name="buttonGroup">
+                        <string notr="true">atom_colors_group</string>
+                       </attribute>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QRadioButton" name="default_atom_colors_radio">
+                       <property name="text">
+                        <string>Default Atom Colors</string>
+                       </property>
+                       <attribute name="buttonGroup">
+                        <string notr="true">atom_colors_group</string>
+                       </attribute>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QRadioButton" name="cmap_radio">
+                       <property name="text">
+                        <string>Cmap for Selected Property</string>
+                       </property>
+                       <attribute name="buttonGroup">
+                        <string notr="true">atom_colors_group</string>
+                       </attribute>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item row="4" column="0" rowspan="2">
+                   <widget class="QGroupBox" name="individual_point_settings_groupbox">
+                    <property name="enabled">
+                     <bool>true</bool>
+                    </property>
+                    <property name="title">
+                     <string>Point Settings</string>
+                    </property>
+                    <layout class="QGridLayout" name="gridLayout_6">
+                     <item row="2" column="0">
+                      <widget class="QWidget" name="individual_points_widget" native="true">
+                       <layout class="QGridLayout" name="gridLayout_4">
+                        <item row="1" column="0" alignment="Qt::AlignRight">
+                         <widget class="QLabel" name="error_for_current_point_label">
+                          <property name="text">
+                           <string>Error for this Point:      </string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item row="0" column="0">
+                         <widget class="QSlider" name="individual_point_slider">
+                          <property name="minimumSize">
+                           <size>
+                            <width>200</width>
+                            <height>0</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>300</width>
+                            <height>16777215</height>
+                           </size>
+                          </property>
+                          <property name="orientation">
+                           <enum>Qt::Horizontal</enum>
+                          </property>
+                         </widget>
+                        </item>
+                        <item row="0" column="1">
+                         <widget class="QLineEdit" name="individual_point_box">
+                          <property name="minimumSize">
+                           <size>
+                            <width>100</width>
+                            <height>0</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>100</width>
+                            <height>16777215</height>
+                           </size>
+                          </property>
+                         </widget>
+                        </item>
+                        <item row="1" column="1">
+                         <widget class="QLabel" name="error_for_current_point">
+                          <property name="maximumSize">
+                           <size>
+                            <width>150</width>
+                            <height>16777215</height>
+                           </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">background-color : white;
+color : blue;
+border-style: solid;
+border-color:black;
+border-width:2px</string>
+                          </property>
+                          <property name="text">
+                           <string>Data Has Not been read in yet</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                     <item row="0" column="0">
+                      <widget class="QRadioButton" name="plot_all_points_radio">
+                       <property name="text">
+                        <string>Plot All Points</string>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                       <property name="autoExclusive">
+                        <bool>false</bool>
+                       </property>
+                       <attribute name="buttonGroup">
+                        <string notr="true">all_or_individual_points_group</string>
+                       </attribute>
+                      </widget>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QRadioButton" name="plot_individual_point_radio">
+                       <property name="text">
+                        <string>Plot Individual Points</string>
+                       </property>
+                       <attribute name="buttonGroup">
+                        <string notr="true">all_or_individual_points_group</string>
+                       </attribute>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
                 </widget>
-               </item>
-               <item row="0" column="5">
-                <widget class="QLabel" name="atomic_local_frame_label">
-                 <property name="layoutDirection">
-                  <enum>Qt::LeftToRight</enum>
-                 </property>
-                 <property name="autoFillBackground">
-                  <bool>false</bool>
-                 </property>
-                 <property name="text">
-                  <string>ALF</string>
-                 </property>
-                 <property name="scaledContents">
-                  <bool>false</bool>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="3">
-                <widget class="QCheckBox" name="default_atom_colors_checkbox">
-                 <property name="text">
-                  <string>Default Colors</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="5">
-                <widget class="QLabel" name="energy_label">
-                 <property name="text">
-                  <string>Error for Point</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QLabel" name="current_property_textbox">
-                 <property name="text">
-                  <string>Property</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="4" column="1">
-                <widget class="QCheckBox" name="show_grid_checkbox">
-                 <property name="text">
-                  <string>Show Grid</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="6">
-                <widget class="QLabel" name="atomic_local_frame">
-                 <property name="text">
-                  <string>none</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="5">
-                <widget class="QLineEdit" name="individual_point_box"/>
-               </item>
-               <item row="2" column="3">
-                <widget class="QSlider" name="individual_point_slider">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="3">
-                <widget class="QComboBox" name="properties_cmap_combo_box"/>
-               </item>
-               <item row="4" column="5">
-                <widget class="QCheckBox" name="energy_cmap_checkbox">
-                 <property name="text">
-                  <string>Plot Energy Cmap</string>
-                 </property>
-                 <property name="autoExclusive">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QLabel" name="central_alf_atom_label">
-                 <property name="text">
-                  <string>Central Atom</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="3">
-                <widget class="QComboBox" name="atom_names_combo"/>
                </item>
               </layout>
              </widget>
@@ -167,6 +307,13 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_3">
                <item>
+                <widget class="QPushButton" name="remove_all_plotted_atoms">
+                 <property name="text">
+                  <string>Remove All Plotted Atoms</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QLabel" name="atoms_to_plot_label">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -175,14 +322,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Select atoms</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="remove_all_plotted_atoms">
-                 <property name="text">
-                  <string>Remove All Plotted Atoms</string>
+                  <string>Plotted Atoms</string>
                  </property>
                 </widget>
                </item>
@@ -202,8 +342,8 @@
                    <rect>
                     <x>0</x>
                     <y>0</y>
-                    <width>415</width>
-                    <height>165</height>
+                    <width>488</width>
+                    <height>181</height>
                    </rect>
                   </property>
                   <layout class="QGridLayout" name="gridLayout"/>
@@ -222,7 +362,7 @@
                      </sizepolicy>
                     </property>
                     <property name="text">
-                     <string>Atom colors</string>
+                     <string>Atom Colors</string>
                     </property>
                    </widget>
                   </item>
@@ -242,8 +382,8 @@
                       <rect>
                        <x>0</x>
                        <y>0</y>
-                       <width>397</width>
-                       <height>128</height>
+                       <width>470</width>
+                       <height>143</height>
                       </rect>
                      </property>
                      <layout class="QGridLayout" name="gridLayout_2"/>
@@ -258,23 +398,11 @@
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tab_2">
+          <widget class="QWidget" name="training_data_loading_tab">
            <attribute name="title">
-            <string>Tab 2</string>
+            <string>Training Data Loader</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>You can optionally give a training set .xyz file here in order to plot it in the same window as the validation set. This can be useful to see where points in the training set were. You can either give one .xyz file or a directory which contains .xyz files.
- 
- Note that the training set .xyz file has to begin with the atom name, eg. O1, H2, etc. because each atom can have its own training set. </string>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
             <item>
              <widget class="QFrame" name="frame">
               <property name="frameShape">
@@ -283,27 +411,88 @@
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
               </property>
-              <layout class="QGridLayout" name="gridLayout_4">
-               <item row="0" column="0">
+              <layout class="QVBoxLayout" name="verticalLayout_7">
+               <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+                <widget class="QLabel" name="label_3">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>LOAD IN TRAINING DATASET</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="label">
+                 <property name="text">
+                  <string>You can optionally give a training set .xyz file here in order to plot it in the same window as the validation set. This can be useful to see where points in the training set were. You can either give one .xyz file or a directory which contains .xyz files.
+ 
+ Note that the training set .xyz file has to begin with the atom name, eg. O1, H2, etc. because each atom can have its own training set. </string>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item alignment="Qt::AlignHCenter">
                 <widget class="QLabel" name="label_2">
+                 <property name="styleSheet">
+                  <string notr="true">color: rgb(30, 200, 0);
+font: 16pt &quot;Times New Roman&quot;;</string>
+                 </property>
                  <property name="text">
-                  <string>XYZ File or Directory</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Choose an XYZ File or Directory&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                 </widget>
                </item>
-               <item row="1" column="0">
-                <widget class="QLineEdit" name="lineEdit"/>
-               </item>
-               <item row="1" column="1">
+               <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
                 <widget class="QPushButton" name="pushButton">
+                 <property name="minimumSize">
+                  <size>
+                   <width>200</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>600</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
                  <property name="text">
-                  <string>Load</string>
+                  <string>Open</string>
                  </property>
                 </widget>
+               </item>
+               <item>
+                <spacer name="verticalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
                </item>
               </layout>
              </widget>
             </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="log_tab_page">
+           <attribute name="title">
+            <string>Log</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
             <item>
              <widget class="QTextEdit" name="textEdit">
               <property name="styleSheet">
@@ -324,19 +513,6 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
-            </item>
-            <item>
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </widget>
@@ -360,7 +536,6 @@ p, li { white-space: pre-wrap; }
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
           </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_3"/>
          </widget>
         </item>
        </layout>
@@ -377,4 +552,8 @@ p, li { white-space: pre-wrap; }
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="atom_colors_group"/>
+  <buttongroup name="all_or_individual_points_group"/>
+ </buttongroups>
 </ui>

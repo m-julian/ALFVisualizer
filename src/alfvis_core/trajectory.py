@@ -2,10 +2,10 @@ import re
 from pathlib import Path
 from typing import List
 import numpy as np
-from list_of_atoms import ListOfAtoms
-from atoms import Atoms
-from atom import Atom
-from file_state import FileState
+from alfvis_core.list_of_atoms import ListOfAtoms
+from alfvis_core.atoms import Atoms
+from alfvis_core.atom import Atom
+from alfvis_core.file_state import FileState
 import ast
 
 
@@ -28,9 +28,9 @@ class Trajectory(ListOfAtoms):
                     natoms = int(line)
                     continue
                 # this is the comment line that can contain extra info
-                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*energy", line):
-                    energy = line.split("=")[-1].strip()
-                    atoms.energy = ast.literal_eval(energy)
+                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*properties", line):
+                    properties_error = line.split("=")[-1].strip()
+                    atoms.properties_error = ast.literal_eval(properties_error)
                 while len(atoms) < natoms:
                     line = next(f)
                     if re.match(
@@ -82,11 +82,11 @@ class Trajectory(ListOfAtoms):
         return [ref.rmsd(point) for point in self]
 
     @property
-    def energy(self) -> List:
+    def properties_error(self) -> List:
         """returns a list of energies as read in from the .xyz file comment line.
         This is used to plot colormaps of the whole trajectory to see any points which produce poor results."""
-        if hasattr(self[0], 'energy'):
-            return [timesteps.energy for timesteps in self]
+        if hasattr(self[0], 'properties_error'):
+            return [timesteps.properties_error for timesteps in self]
         # if no energy/errors have been read in this needs to return None because it is used in the GUI class __int__
         else:
             return None
