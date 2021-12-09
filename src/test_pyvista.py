@@ -199,25 +199,10 @@ class VisualizationWindow(QMainWindow):
         self.errors_for_properties = errors_for_properties
         self.cmap_properties = errors_for_properties[0].keys() if errors_for_properties is not None else None
 
-        #################################################
-        # initialize stuff to plot
-        #################################################
-
         # current colors used for atoms
         self.current_atom_colors = dict(zip(atom_names, random_colors))
         # a saved list (in case the default colors was used and then reverted)
         self.saved_atom_colors = dict(zip(atom_names, random_colors))
-
-        # getting the number of timesteps from one of the atoms
-        self.n_timesteps = self.all_noncentral_data[self.current_noncentral_atom_names[0]].shape[0]
-        
-        self.current_noncentral_data = self.all_noncentral_data
-
-        # used in initializing values for slider, atom selecter, and atom color parts, and grid
-        self.checkboxes = []
-        self.current_checked_atoms = []
-        self.color_buttons = []
-        self.color_button_labels = []
 
         ################################################
         # start user interface
@@ -226,7 +211,21 @@ class VisualizationWindow(QMainWindow):
         Ui_MainWindow, _ = uic.loadUiType(ui_path)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self._start_alf_vis_ui()
+        self._initialize_alf_vis_ui()
+
+        #################################################
+        # initialize stuff to plot
+        #################################################
+
+        self.current_noncentral_data = self.all_noncentral_data
+        # getting the number of timesteps from one of the atoms
+        self.n_timesteps = self.all_noncentral_data[self.current_noncentral_atom_names[0]].shape[0]
+
+        # used in initializing values for slider, atom selecter, and atom color parts, and grid
+        self.checkboxes = []
+        self.current_checked_atoms = []
+        self.color_buttons = []
+        self.color_button_labels = []
 
     def calculate_all_atom_dictionary(self, all_atom_features):
         """Returns a dictionary of dictonaries, with outer keys being the names of a central atom, eg. C1, H2, etc. The value corresponding to that outer key
@@ -265,12 +264,8 @@ class VisualizationWindow(QMainWindow):
 
     @property
     def current_central_atom_name(self) -> str:
-        """ returns the name of the current central atom"""
+        """ returns the name of the current central atom. Need try except in case ui is not launched yet"""
         return self.ui.atom_names_combo.currentText()
-
-    @property
-    def current_alf_str(self) -> str:
-        return ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
 
     @property
     def current_noncentral_atom_names(self) -> list:
@@ -278,16 +273,21 @@ class VisualizationWindow(QMainWindow):
         return [name for name in self.atom_names if name != self.current_central_atom_name]
 
     @property
+    def current_alf_str(self) -> str:
+        return ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
+
+    @property
     def current_selected_property(self) -> Union[str, None]:
         """ returns the name of the current selected property or `None` if no properties were read in from the xyz file."""
         if self.cmap_properties:
             return self.ui.properties_cmap_combo_box.currentText()
-        else:
-            return
 
     @property
     def current_errors_list(self) -> list:
-        return [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_properties]
+
+        if self.errors_for_properties:
+            return [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_properties]
+        return
 
     @property
     def center(self) -> np.ndarray:
@@ -365,19 +365,12 @@ class VisualizationWindow(QMainWindow):
         """ Show the grid """
         self.plotter.show_grid()
 
-    def _start_alf_vis_ui(self):
+    def _initialize_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed
         Methods starting with _ only called here"""
         self._start_combo_central_atom_names()
-        self._start_individual_point_checkbox()
-        self._start_individual_point_slider()
-        self._start_individual_point_textbox()
+        self._start_properties_combo()
         self._start_grid_checkbox()
-        self._start_default_color_checkbox()
-        self._start_energy_cmap_checkbox()
-        self._start_property_cmap_combo_box()
-        self._start_individual_energy_box()
-        self._start_remove_all_atoms_button()
         self._start_pyvista_plotter()
         # called here to initialize the plot
         self.update_central_atom_and_plot()
@@ -389,18 +382,12 @@ class VisualizationWindow(QMainWindow):
         well as updates non central atom data.
         """
         self.update_central_atom_data()
-        self.update_selected_property()
-        self.update_checkboxes_widget()
         self.update_individual_point_slider_status_and_box()
-        self.update_checked_atoms()
-        self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
     def update_noncentral_atoms_and_plot(self):
         """ updates noncentral atom data and colors to be plotted. Called by methods that do not change the current atom. The checkboxes do not need to be
         updated when data is changed but the central atom remains the same."""
-        self.update_checked_atoms()
-        self.update_atom_color_box_buttons()
         self.plot_updated_data()
 
     #####################################################
@@ -460,7 +447,7 @@ class VisualizationWindow(QMainWindow):
         """ method to initialize pyvista plot"""
         self.plotter = QtInteractor(self.ui.pyvista_frame)
         self.plotter.set_background("royalblue", top="aliceblue")
-        self.ui.horizontalLayout_3.addWidget(self.plotter.interactor)
+        self.ui.horizontalLayout_2.addWidget(self.plotter.interactor)
 
     ####################################################################
     # COLORING
@@ -515,7 +502,7 @@ class VisualizationWindow(QMainWindow):
         for atom in self.all_noncentral_data.keys():
             self.current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
 
-        if self.errors_for_each_timestep:
+        if self.current_errors_list:
             # get a list of integers for the current atom and property that are selected in combo boxes
             self.ui.property_value_for_current_point.setText(f"{self.current_errors_list[current_point]:.8f}")
         else:
@@ -576,16 +563,12 @@ class VisualizationWindow(QMainWindow):
 
         color = QtWidgets.QColorDialog.getColor()  # this opens up a color dialog box and returns a QColor Object
         # if the user has pressed cancel, this is set to False and does not run
-        if QtGui.QColor.isValid(color) is True:
+        if QtGui.QColor.isValid(color):
 
-            # find which button called this method and change its color as needed
-            for push_button in self.color_buttons:
-                if push_button == QtCore.QObject.sender(self):
-
-                    push_button.setStyleSheet("")
-                    push_button.setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
-                    self.current_atom_colors[f"{push_button.text()}"] = color.name()
-                    self.saved_atom_colors[f"{push_button.text()}"] = color.name()
+            self.sender().setStyleSheet("")
+            self.sender().setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
+            self.current_atom_colors[f"{self.sender().text()}"] = color.name()
+            self.saved_atom_colors[f"{self.sender().text()}"] = color.name()
 
             self.update_noncentral_atoms_and_plot()
 
@@ -595,18 +578,18 @@ class VisualizationWindow(QMainWindow):
         center = pv.PolyData(self.center)
         self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True)
 
-        if self.ui.energy_cmap_checkbox.isChecked() is False:
+        if not self.ui.cmap_radio.isChecked() is False:
             self.current_datablock = pv.MultiBlock(self.current_noncentral_data)
             for block in self.current_datablock.keys():
                 if block in self.current_checked_atoms:
                     self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True)
 
-        elif self.ui.energy_cmap_checkbox.isChecked() is True:
+        elif self.ui.cmap_radio.isChecked():
             self.current_datablock = pv.MultiBlock(self.all_noncentral_data)  # cmap plots all data every time
             for block in self.current_datablock.keys():
                 if block in self.current_checked_atoms:
-                    self.current_datablock[block]["energies"] = self.energies
-                    self.plotter.add_mesh(self.current_datablock[block], scalars="energies", cmap="jet", point_size=15, render_points_as_spheres=True)
+                    self.current_datablock[block]["current_property"] = self.current_errors_list
+                    self.plotter.add_mesh(self.current_datablock[block], scalars="current_property", cmap="jet", point_size=15, render_points_as_spheres=True)
 
 
 def open_file_dialog(name="Select a file", default_folder=str(Path.cwd()), files_to_look_for="All Files (*);;XYZ files (*.xyz)"):
