@@ -307,7 +307,7 @@ border-width:2px</string>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_3">
                <item>
-                <widget class="QPushButton" name="remove_all_plotted_atoms">
+                <widget class="QPushButton" name="hide_all_plotted_atoms_button">
                  <property name="text">
                   <string>Remove All Plotted Atoms</string>
                  </property>
