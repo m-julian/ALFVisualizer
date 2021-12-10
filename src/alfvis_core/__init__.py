@@ -1,3 +1,3 @@
-from .trajectory import Trajectory
+from .trajectory.trajectory import Trajectory
 
 __all__ = ["Trajectory"]

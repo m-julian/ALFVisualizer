@@ -1,6 +1,6 @@
 import itertools as it
 import numpy as np
-from alfvis_core.feature_calculator import FeatureCalculator
+from alfvis_core.trajectory.feature_calculator import FeatureCalculator
 from alfvis_core.constants import ang2bohr
 from alfvis_core.units import AtomicDistance
 

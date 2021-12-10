@@ -62,7 +62,7 @@ class VisualizationWindow(QMainWindow):
         print(dir(self.plotter))
         self.ui.horizontalLayout_3.addWidget(self.plotter)
 
-        self.plotter.add_mesh(pv.Sphere(), render_points_as_spheres=True, name="sphere")
+        self.plotter.add_mesh(pv.Sphere(), render_points_as_spheres=True, name="sphere", color="blue")
         self.plotter.add_mesh(pv.Pyramid(), render_points_as_spheres=True, name="pyramid")
 
         self.ui.remove_all.clicked.connect(self.remove_all_actors)
@@ -72,6 +72,7 @@ class VisualizationWindow(QMainWindow):
         self.ui.show_grid.clicked.connect(self.show_grid)
         self.ui.visibility_on_button.clicked.connect(self.visibility_on)
         self.ui.visibility_off_button.clicked.connect(self.visibility_off)
+        self.ui.change_sphere_color.clicked.connect(self.change_actor_color)
 
     @property
     def renderer(self):
@@ -92,7 +93,7 @@ class VisualizationWindow(QMainWindow):
     def add_actor(self):
         actor = pv.Sphere()
         actor_name = "sphere"
-        self.plotter.add_mesh(actor, render_points_as_spheres=True, name=actor_name, reset_camera=False)
+        self.plotter.add_mesh(actor, render_points_as_spheres=True, name=actor_name, reset_camera=False, color="blue")
         print("added actor", actor, actor_name)
 
     def remove_grid(self):
@@ -112,6 +113,17 @@ class VisualizationWindow(QMainWindow):
         actor = self.actors.get(actor_name)
         if actor is not None:
             actor.SetVisibility(True)
+
+    def change_actor_color(self, signal, actor_name="sphere", color="red"):
+        from useful_funcs import change_actor_color, string_to_rgb
+        print(self.actors)
+        print(color)
+        change_actor_color(self.plotter, self.actors[actor_name], color=color)
+        print(self.actors[actor_name].GetProperty())
+        # color_rgb = string_to_rgb(color)
+        # print(color_rgb)
+        # self.actors[actor_name].GetProperty().SetColor(color_rgb)
+        # print(dir(self.actors[actor_name]))
 
 
 if __name__ == "__main__":

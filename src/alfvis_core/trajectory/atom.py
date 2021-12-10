@@ -1,7 +1,7 @@
 from typing import Optional, Union
 import numpy as np
 import alfvis_core.constants as constants
-from alfvis_core.alf_feature_calculator import ALFFeatureCalculator
+from .alf_feature_calculator import ALFFeatureCalculator
 from alfvis_core.units import AtomicDistance
 
 

@@ -2,10 +2,10 @@ import re
 from pathlib import Path
 from typing import List
 import numpy as np
-from alfvis_core.list_of_atoms import ListOfAtoms
-from alfvis_core.atoms import Atoms
-from alfvis_core.atom import Atom
-from alfvis_core.file_state import FileState
+from .list_of_atoms import ListOfAtoms
+from .atoms import Atoms
+from .atom import Atom
+from .file_state import FileState
 import ast
 
 
