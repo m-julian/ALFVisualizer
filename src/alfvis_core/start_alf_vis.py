@@ -49,6 +49,9 @@ def _start_points_settings(self):
     # plot all data that has been loaded in for the current central atom
     self._current_noncentral_data = self.all_noncentral_data
 
+    self.ui.plot_all_points_radio.toggle()
+    self.ui.plot_all_points_radio.toggled.connect(self.plot_all_points)
+
     # set up slider values by which to index the dataset
     self.ui.individual_point_slider.setMinimum(0)  # 0 is the first timestep
     self.ui.individual_point_slider.setMaximum(self.n_timesteps - 1)  # need to index starting at 0, so subtract 1

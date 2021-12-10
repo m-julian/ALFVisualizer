@@ -390,6 +390,12 @@ class VisualizationWindow(QMainWindow):
         self.update_individual_point_slider_status_and_box()
         self.plot_updated_data()
 
+    def update_noncentral_data_and_plot(self):
+        """ updates noncentral atom data and colors to be plotted. Called by methods that do not change the current atom. The checkboxes do not need to be
+        updated when data is changed but the central atom remains the same."""
+
+        self.plot_updated_data()
+
     ####################################################################
     # COLORING
     ####################################################################
@@ -415,6 +421,10 @@ class VisualizationWindow(QMainWindow):
         self.toggle_all_points_radiobutton()
         self.disable_plot_individual_points()
         self.ui.atom_color_scroll_area.setEnabled(False)
+        self.current_datablock = pv.MultiBlock(self.all_noncentral_data)  # cmap plots all data every time
+        for block in self.current_datablock.keys():
+            self.current_datablock[block]["current_property"] = self.current_errors_list
+            self.plotter.add_mesh(self.current_datablock[block], scalars="current_property", cmap="jet", point_size=15, render_points_as_spheres=True, name=block)
 
     def update_central_atom_data(self):
         """ method used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
@@ -424,6 +434,10 @@ class VisualizationWindow(QMainWindow):
     def toggle_all_points_radiobutton(self):
         self.ui.plot_all_points_radio.toggle()
         self.disable_plot_individual_points()
+
+    def plot_all_points(self):
+        self._current_noncentral_data = self.all_noncentral_data
+        self.update_noncentral_data_and_plot()
 
     def disable_plot_individual_points(self):
         self.ui.individual_points_widget.setEnabled(False)
@@ -577,7 +591,6 @@ class VisualizationWindow(QMainWindow):
     def change_atom_color_color_dialog(self):
         """ opens up color dialog and lets user select a new color for a particular atom.
         GUI is automatically frozen until user closes the color dialog box."""
-
         from alfvis_core.useful_funcs import hex_to_rgb
 
         # this opens up a color dialog box and returns a QColor Object
@@ -609,12 +622,6 @@ class VisualizationWindow(QMainWindow):
             self.current_datablock = pv.MultiBlock(self._current_noncentral_data)
             for block in self.current_datablock.keys():
                 self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True, name=block)
-
-        elif self.ui.cmap_radio.isChecked():
-            self.current_datablock = pv.MultiBlock(self.all_noncentral_data)  # cmap plots all data every time
-            for block in self.current_datablock.keys():
-                self.current_datablock[block]["current_property"] = self.current_errors_list
-                self.plotter.add_mesh(self.current_datablock[block], scalars="current_property", cmap="jet", point_size=15, render_points_as_spheres=True, name=block)
 
 
 def open_file_dialog(name="Select a file", default_folder=str(Path.cwd()), files_to_look_for="All Files (*);;XYZ files (*.xyz)"):
