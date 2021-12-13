@@ -27,6 +27,7 @@ def _start_atom_center_and_property_settings(self):
     # initializing the property names for which cmap can be plotted
     if self.cmap_properties:
         self.ui.properties_cmap_combo_box.addItems(self.cmap_properties)
+        self.ui.properties_cmap_combo_box.currentIndexChanged.connect(self.update_property_and_plot)
     else:
         self.ui.properties_cmap_combo_box.setEnabled(False)
         self.ui.properties_cmap_combo_box.setToolTip("Energies were not read in.")

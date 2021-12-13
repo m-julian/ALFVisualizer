@@ -377,7 +377,6 @@ class VisualizationWindow(QMainWindow):
         well as updates non central atom data.
         """
         self.remove_all_plotted_atoms()
-
         self.update_central_atom_data()
         self.update_checkboxes_box()
         self.update_colors_buttons_box()
@@ -385,6 +384,10 @@ class VisualizationWindow(QMainWindow):
         # self.ui.random_colors_radio.toggle()
         # self.ui.plot_all_points_radio.toggle()
 
+        self.plot_updated_data()
+
+    def update_property_and_plot(self):
+        """ Plots updated data if property is changed."""
         self.plot_updated_data()
 
     ####################################################################
