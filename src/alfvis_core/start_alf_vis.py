@@ -33,7 +33,13 @@ def _start_atom_center_and_property_settings(self):
 
 
 def _start_coloring_settings(self):
-    """ Connect the color radio buttons to their corresponding methods. Also, initialize the colors to random"""
+    """ Connect the color radio buttons to their corresponding methods. Also, initialize the colors to random
+
+    .. note::
+        `clicked` is used instead of `toggled`. `clicked` only calls the connected slot when there is user input in the gui (so if the button's check state
+        is changed in code, the connected method will not run automatically). However, `clicked` is used because `toggled` causes the connected method
+        to be ran even if the button is unchecked (since these are mutually exclusive buttons)
+    """
 
     # use clicked instead of toggled because we only want to do this when the button is clicked
     self.ui.random_colors_radio.clicked.connect(self.use_random_colors)
@@ -43,7 +49,13 @@ def _start_coloring_settings(self):
 
 def _start_points_settings(self):
     """method that initializes the state of the individual atom checkbox. If the checkbox is enabled, only one point is plotted at a time.
-    If it is disabled, all points are plotted at the same time. This is useful to have when you want to focus on a specific point."""
+    If it is disabled, all points are plotted at the same time. This is useful to have when you want to focus on a specific point.
+
+    .. note::
+        `clicked` is used instead of `toggled`. `clicked` only calls the connected slot when there is user input in the gui (so if the button's check state
+        is changed in code, the connected method will not run automatically). However, `clicked` is used because `toggled` causes the connected method
+        to be ran even if the button is unchecked (since these are mutually exclusive buttons)
+    """
 
     # plot all data that has been loaded in for the current central atom
     self._current_noncentral_data = self.all_noncentral_data

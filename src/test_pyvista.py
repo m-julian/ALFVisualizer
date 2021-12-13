@@ -392,48 +392,56 @@ class VisualizationWindow(QMainWindow):
     ####################################################################
 
     def use_random_colors(self):
-        """sets random colors for atoms"""
-        from alfvis_core.useful_funcs import string_to_rgb
+        """sets random colors for atoms and plots updated data"""
+        # from alfvis_core.useful_funcs import string_to_rgb
 
         # enable color area (if previous selected option was cmap)
         self.ui.atom_color_scroll_area.setEnabled(True)
 
+        # use saved atom colors here if user has changed colors
         self.current_atom_colors = self.saved_atom_colors
-        for atom in self.atom_names:
-            atom_color = self.current_atom_colors[atom]
-            rgb_color = string_to_rgb(atom_color)
-            self.actors[atom].GetProperty().SetColor(rgb_color)
+
+        # `plot_updated_data` needs to be called here, so the current actors will be overwirtten anyway.
+        # for atom in self.atom_names:
+        #     atom_color = self.current_atom_colors[atom]
+        #     rgb_color = string_to_rgb(atom_color)
+        #     self.actors[atom].GetProperty().SetColor(rgb_color)
+        # set the color button colors
         for atom_name, button in self.color_buttons_dict.items():
             button.setStyleSheet(f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};")
 
         self.plot_updated_data()
 
     def use_default_colors(self):
-        """ sets default colors for atoms"""
-        from alfvis_core.useful_funcs import string_to_rgb
+        """ sets default colors for atoms and plots updated data"""
+
+        # from alfvis_core.useful_funcs import string_to_rgb
 
         self.ui.atom_color_scroll_area.setEnabled(True)
         self.current_atom_colors = self.default_atom_colors
-        for atom in self.atom_names:
-            atom_color = self.current_atom_colors[atom]
-            rgb_color = string_to_rgb(atom_color)
-            self.actors[atom].GetProperty().SetColor(rgb_color)
+
+        # `plot_updated_data` needs to be called here, so the current actors will be overwirtten anyway.
+        # for atom in self.atom_names:
+        #     atom_color = self.current_atom_colors[atom]
+        #     rgb_color = string_to_rgb(atom_color)
+        #     self.actors[atom].GetProperty().SetColor(rgb_color)
         for atom_name, button in self.color_buttons_dict.items():
             button.setStyleSheet(f"background-color : {self.default_atom_colors[atom_name]}; color: {self.default_atom_colors[atom_name]};")
 
         self.plot_updated_data()
 
     def use_cmap(self):
-        """ Used to remove other checkboxes that cannot be used at the same time, as well as to plot the cmap."""
+        """ Plots all points (because we plot cmap for all points) and enables cmap with cmap bar."""
         # enable the plot all points radiobutton, because we are using `clicked`, this will not call `plot_all_points` automatically
         self.ui.plot_all_points_radio.setChecked(True)
+        # plot_all_points calls plot_updated_data
         self.plot_all_points()
         self.ui.atom_color_scroll_area.setEnabled(False)
         # using cmap needs to make new actors and plot them, so it is not directly updating vtk objects.
         # possibly a way to apply a colormap directly to current vtk objects without making new ones, but that will be a lot of work and little reward
 
     def update_central_atom_data(self):
-        """ method used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
+        """ Used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
         self._current_noncentral_data = self.all_noncentral_data
         self.ui.atomic_local_frame.setText(self.current_alf_str)
 
@@ -450,15 +458,16 @@ class VisualizationWindow(QMainWindow):
         self.renderer.camera.azimuth = 0
 
     def disable_plot_individual_points(self):
-        """ disable plot individual points"""
+        """ Disable plot individual points"""
         self.ui.individual_points_widget.setEnabled(False)
 
     def enable_plot_individual_points(self):
-        """ enable plot individual points """
+        """ Enable plot individual points widget and also sets colors to default"""
 
+        # `checked` method is used to connect to slot, but `checked` does not call the connected method automatically (since it requires user input to call it)
         self.ui.default_atom_colors_radio.setChecked(True)
         self.use_default_colors()
-
+        # enable individual point widget and plot individual point data
         self.ui.individual_points_widget.setEnabled(True)
         self.update_individual_point_slider_status_and_box()
 
