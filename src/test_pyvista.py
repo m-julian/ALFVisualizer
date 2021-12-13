@@ -644,11 +644,6 @@ class VisualizationWindow(QMainWindow):
             self.saved_atom_colors[f"{self.sender().text()}"] = color.name()
 
             rbg_val = hex_to_rgb(color.name())
-            # self.actors[f"{self.sender().text()}"].GetProperty().SetColor(rbg_val)
-            # prop = _vtk.vtkProperty()
-            # self.actors[f"{self.sender().text()}"].SetProperty(prop)
-            # prop.SetRenderPointsAsSpheres(True)
-            # prop.SetColor(rbg_val)
             self.actors[f"{self.sender().text()}"].GetProperty().SetColor(rbg_val)
             self.renderer.Modified()
 
