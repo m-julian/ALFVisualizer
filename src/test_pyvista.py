@@ -349,25 +349,24 @@ class VisualizationWindow(QMainWindow):
         """ Remove the actor. This deletes it from the self.actors dict"""
         self.plotter.remove_actor(actor_name)
 
-    def remove_all_actors(self):
-        """ Clear the whole pyvista screen of any actors and remove grid. Only leaves empty background. """
+    def remove_all_plotted_atoms(self):
+        """ Clear the whole pyvista screen of any actors, but leaves grid and background."""
         for actor_name in list(self.actors):
-            self.remove_actor(actor_name=actor_name)
+            if actor_name in self.atom_names:
+                self.remove_actor(actor_name=actor_name)
 
     def remove_grid(self):
-        """ Remove the grid"""
+        """ Remove the grid. """
         self.plotter.remove_bounds_axes()
 
     def show_grid(self):
-        """ Show the grid """
+        """ Add the grid actor and show it."""
         self.plotter.show_grid()
 
     def _initialize_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed
         Methods starting with _ only called here"""
-
         _start_alf_vis_ui(self)
-
         # called here to initialize the plot
         self.update_central_atom_and_plot()
 
@@ -377,22 +376,14 @@ class VisualizationWindow(QMainWindow):
         Updates central atom (always at 0,0,0 but can update color if different atom) as
         well as updates non central atom data.
         """
-        self.remove_all_actors()
+        self.remove_all_plotted_atoms()
 
         self.update_central_atom_data()
-        self.grid_status()
         self.update_checkboxes_box()
         self.update_colors_buttons_box()
 
-        self.ui.random_colors_radio.toggle()
-        self.ui.plot_all_points_radio.toggle()
-
-        self.update_individual_point_slider_status_and_box()
-        self.plot_updated_data()
-
-    def update_noncentral_data_and_plot(self):
-        """ updates noncentral atom data and colors to be plotted. Called by methods that do not change the current atom. The checkboxes do not need to be
-        updated when data is changed but the central atom remains the same."""
+        # self.ui.random_colors_radio.toggle()
+        # self.ui.plot_all_points_radio.toggle()
 
         self.plot_updated_data()
 
@@ -402,48 +393,74 @@ class VisualizationWindow(QMainWindow):
 
     def use_random_colors(self):
         """sets random colors for atoms"""
+        from alfvis_core.useful_funcs import string_to_rgb
 
-        self.ui.individual_points_widget.setEnabled(True)
-        self.ui.plot_individual_point_radio.setEnabled(True)
+        # enable color area (if previous selected option was cmap)
         self.ui.atom_color_scroll_area.setEnabled(True)
+
         self.current_atom_colors = self.saved_atom_colors
+        for atom in self.atom_names:
+            atom_color = self.current_atom_colors[atom]
+            rgb_color = string_to_rgb(atom_color)
+            self.actors[atom].GetProperty().SetColor(rgb_color)
+        for atom_name, button in self.color_buttons_dict.items():
+            button.setStyleSheet(f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};")
+
+        self.plot_updated_data()
 
     def use_default_colors(self):
         """ sets default colors for atoms"""
+        from alfvis_core.useful_funcs import string_to_rgb
 
-        self.ui.individual_points_widget.setEnabled(True)
-        self.ui.plot_individual_point_radio.setEnabled(True)
         self.ui.atom_color_scroll_area.setEnabled(True)
         self.current_atom_colors = self.default_atom_colors
+        for atom in self.atom_names:
+            atom_color = self.current_atom_colors[atom]
+            rgb_color = string_to_rgb(atom_color)
+            self.actors[atom].GetProperty().SetColor(rgb_color)
+        for atom_name, button in self.color_buttons_dict.items():
+            button.setStyleSheet(f"background-color : {self.default_atom_colors[atom_name]}; color: {self.default_atom_colors[atom_name]};")
+
+        self.plot_updated_data()
 
     def use_cmap(self):
         """ Used to remove other checkboxes that cannot be used at the same time, as well as to plot the cmap."""
-        self.toggle_all_points_radiobutton()
-        self.disable_plot_individual_points()
+        # enable the plot all points radiobutton, because we are using `clicked`, this will not call `plot_all_points` automatically
+        self.ui.plot_all_points_radio.setChecked(True)
+        self.plot_all_points()
         self.ui.atom_color_scroll_area.setEnabled(False)
-        self.current_datablock = pv.MultiBlock(self.all_noncentral_data)  # cmap plots all data every time
-        for block in self.current_datablock.keys():
-            self.current_datablock[block]["current_property"] = self.current_errors_list
-            self.plotter.add_mesh(self.current_datablock[block], scalars="current_property", cmap="jet", point_size=15, render_points_as_spheres=True, name=block)
+        # using cmap needs to make new actors and plot them, so it is not directly updating vtk objects.
+        # possibly a way to apply a colormap directly to current vtk objects without making new ones, but that will be a lot of work and little reward
 
     def update_central_atom_data(self):
         """ method used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
         self._current_noncentral_data = self.all_noncentral_data
         self.ui.atomic_local_frame.setText(self.current_alf_str)
 
-    def toggle_all_points_radiobutton(self):
-        self.ui.plot_all_points_radio.toggle()
-        self.disable_plot_individual_points()
-
     def plot_all_points(self):
+        """ Plots data for all non-central atoms and disables the individual points widget."""
+
         self._current_noncentral_data = self.all_noncentral_data
-        self.update_noncentral_data_and_plot()
+        # disable individual points widget so individual points cannot be plotted.
+        self.disable_plot_individual_points()
+        # need to plot updated data now, so needs to be called
+        self.plot_updated_data()
+        # self.renderer.camera_position = "yz"
+        self.renderer.camera.elevation = 0
+        self.renderer.camera.azimuth = 0
 
     def disable_plot_individual_points(self):
+        """ disable plot individual points"""
         self.ui.individual_points_widget.setEnabled(False)
 
     def enable_plot_individual_points(self):
+        """ enable plot individual points """
+
+        self.ui.default_atom_colors_radio.setChecked(True)
+        self.use_default_colors()
+
         self.ui.individual_points_widget.setEnabled(True)
+        self.update_individual_point_slider_status_and_box()
 
     def update_individual_point_slider_status_and_box(self):
         """
@@ -465,6 +482,15 @@ class VisualizationWindow(QMainWindow):
             self.ui.property_value_for_current_point.setText(f"{self.current_errors_list[current_point]:.8f}")
         else:
             self.ui.property_value_for_current_point.setText("Not read in.")
+
+        self.plot_updated_data()
+        # resets camera to view across xz plane, see also self.renderer.reset_camera()
+        # self.renderer.view_yz()
+        # self.renderer.camera_position = "yz"
+        # self.renderer.camera.azimuth = 45
+        self.renderer.camera.elevation = 0
+        self.renderer.camera.azimuth = 0
+        self.renderer.Modified()
 
     def update_individual_point_slider_value_with_box(self):
         """ Updates the slider value based on the value of the individual point text box. The slider is updates, so the data is also automatically
@@ -517,8 +543,8 @@ class VisualizationWindow(QMainWindow):
         checkboxes are ticked in the checkbox widget."""
 
         # clear color buttons and labels if central atom is changed
-        if self.color_labels_dict:
-            for button in self.color_labels_dict.values():
+        if self.color_buttons_dict:
+            for button in self.color_buttons_dict.values():
                 self.ui.gridLayout.removeWidget(button)
                 button.deleteLater()
                 button.deleteLater()
@@ -582,6 +608,11 @@ class VisualizationWindow(QMainWindow):
         for checkbox in self.checkboxes:
             checkbox.setCheckState(QtCore.Qt.Unchecked)
 
+    def show_all_atoms(self):
+        """ Shows all atoms by recursively checking all checkboxes (when a checkbox is checked the `self.show_or_hide_atom` method is called.)"""
+        for checkbox in self.checkboxes:
+            checkbox.setCheckState(QtCore.Qt.Checked)
+
     def show_colorbutton(self, sender_checkbox_text):
         self.color_buttons_dict[sender_checkbox_text].show()
 
@@ -618,15 +649,23 @@ class VisualizationWindow(QMainWindow):
         center = pv.PolyData(self.center)
         self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True, name=self.current_central_atom_name)
 
+        current_datablock = pv.MultiBlock(self._current_noncentral_data)
+
         if not self.ui.cmap_radio.isChecked():
-            self.current_datablock = pv.MultiBlock(self._current_noncentral_data)
-            for block in self.current_datablock.keys():
-                self.plotter.add_mesh(self.current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True, name=block)
+            for block in current_datablock.keys():
+                self.plotter.add_mesh(current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True, name=block)
+
+        elif self.ui.cmap_radio.isChecked():
+            prop = self.current_selected_property
+            for block in current_datablock.keys():
+                current_datablock[block][prop] = self.current_errors_list
+                self.plotter.add_mesh(current_datablock[block], scalars=prop, cmap="jet", point_size=15, render_points_as_spheres=True, name=block)
 
 
 def open_file_dialog(name="Select a file", default_folder=str(Path.cwd()), files_to_look_for="All Files (*);;XYZ files (*.xyz)"):
     xyz_file, _ = QtWidgets.QFileDialog.getOpenFileName(None, name, default_folder, files_to_look_for)
     return xyz_file
+
 
 if __name__ == "__main__":
 

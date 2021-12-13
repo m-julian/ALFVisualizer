@@ -1,8 +1,6 @@
 #####################################################
 # Initial Setup and Connect QObjects signals to slots
 #####################################################
-
-from PyQt5.QtWidgets import QWidget
 from pyvistaqt import QtInteractor
 
 
@@ -36,10 +34,11 @@ def _start_atom_center_and_property_settings(self):
 
 def _start_coloring_settings(self):
     """ Connect the color radio buttons to their corresponding methods. Also, initialize the colors to random"""
-    self.ui.random_colors_radio.toggled.connect(self.use_random_colors)
-    self.ui.default_atom_colors_radio.toggled.connect(self.use_default_colors)
-    self.ui.cmap_radio.toggled.connect(self.use_cmap)
-    self.use_random_colors()
+
+    # use clicked instead of toggled because we only want to do this when the button is clicked
+    self.ui.random_colors_radio.clicked.connect(self.use_random_colors)
+    self.ui.default_atom_colors_radio.clicked.connect(self.use_default_colors)
+    self.ui.cmap_radio.clicked.connect(self.use_cmap)
 
 
 def _start_points_settings(self):
@@ -49,22 +48,22 @@ def _start_points_settings(self):
     # plot all data that has been loaded in for the current central atom
     self._current_noncentral_data = self.all_noncentral_data
 
-    self.ui.plot_all_points_radio.toggle()
-    self.ui.plot_all_points_radio.toggled.connect(self.plot_all_points)
+    # use clicked instead of toggled because we only want to do this when the radio button is clicked
+    # otherwise, because these two radio buttons are mutually exclusive, using toggle will also call the method connected to the other button (that is being deselected)
+    self.ui.plot_all_points_radio.clicked.connect(self.plot_all_points)
 
     # set up slider values by which to index the dataset
     self.ui.individual_point_slider.setMinimum(0)  # 0 is the first timestep
     self.ui.individual_point_slider.setMaximum(self.n_timesteps - 1)  # need to index starting at 0, so subtract 1
-
-    self.ui.plot_individual_point_radio.toggled.connect(self.enable_plot_individual_points)
+    # set up the box that shows what index we are currently on
+    self.ui.individual_point_box.setText(f"{self.ui.individual_point_slider.value()}")
+    # on editing the value of this box, we can update the slider (which then updates the individual point that is plotted)
+    self.ui.plot_individual_point_radio.clicked.connect(self.enable_plot_individual_points)
+    self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
     self.ui.individual_point_slider.valueChanged.connect(self.update_individual_point_slider_status_and_box)
 
     # by default the individual point widget is disabled (as the default radio button is the Plot All Points instead of Individual Point)
     self.ui.individual_points_widget.setEnabled(False)
-    # set up the box that shows what index we are currently on
-    self.ui.individual_point_box.setText(f"{self.ui.individual_point_slider.value()}")
-    # on editing the value of this box, we can update the slider (which then updates the individual point that is plotted)
-    self.ui.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
 
     # if property data has not been read in
     if not self.cmap_properties:
@@ -77,6 +76,7 @@ def _start_points_settings(self):
 
 def _start_hide_all_atoms_button(self):
     """ button that unticks all noncentral atoms"""
+    self.ui.show_all_plotted_atoms_button.clicked.connect(self.show_all_atoms)
     self.ui.hide_all_plotted_atoms_button.clicked.connect(self.hide_all_atoms)
 
 
