@@ -36,10 +36,16 @@ class VisualizationWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # if the + button is pressed, then launch a new tab
         self.ui.tabWidget.currentChanged.connect(self.add_tab)
+        # set the current index to 0 (as there are two tabs to begin and the 1st tab is the + button)
         self.ui.tabWidget.setCurrentIndex(0)
+        
+        # show x that closes tabs
         self.ui.tabWidget.setTabsClosable(True)
-        self.ui.tabWidget.tabBar().tabButton(1, QtWidgets.QTabBar.RightSide).resize(0, 0)
+        # set a zero-sized widget on the + tab, so that the x is removed on it
+        self.ui.tabWidget.tabBar().setTabButton(1, QtWidgets.QTabBar.RightSide, QtWidgets.QWidget().resize(0, 0))
+        self.ui.tabWidget.tabBar().setTabButton(1, QtWidgets.QTabBar.LeftSide, QtWidgets.QWidget().resize(0, 0))
 
     def add_tab(self):
 
