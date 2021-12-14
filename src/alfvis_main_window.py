@@ -192,5 +192,7 @@ if __name__ == "__main__":
     if xyz_file_list:
         main_window.insert_new_datasets(xyz_file_list)
     # continue showing the app without blocking python thread
-    main_window.show()
-    app.exec_()
+        main_window.show()
+        app.exec_()
+    else:
+        print("no .xyz files were given.")
