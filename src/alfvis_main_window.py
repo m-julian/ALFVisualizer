@@ -58,6 +58,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_grid_checkbox.stateChanged.connect(self.grid_status)
         self.grid_status()
 
+        # connect axes checkbox and initialize
+        self.show_axes_checkbox.stateChanged.connect(self.axes_status)
+        self.axes_status()
+
     @property
     def n_tabs(self):
         """ Returns the number of opened tabs"""
@@ -93,6 +97,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tab_widget.currentWidget().setLayout(layout)
 
     def tab_bar_clicked(self, current_tab_index: int):
+        """ Runs when some tab on the tab bar is clicked. This is used to check if the last tab is clicked as the last tab is used
+        to open new datasts. It also checks which tab is clicked and updates the central sphere which is plotted to get the color
+        the same as the color of the central atom for that tab."""
 
         # if "+" tab is clicked, insert a new tab (with new dataset)
         if current_tab_index == self.last_tab_index:
@@ -109,7 +116,8 @@ class MainWindow(QtWidgets.QMainWindow):
             widget.plotter.add_mesh(center, color=widget.current_central_atom_color, point_size=32, render_points_as_spheres=True, name=central_atom_name_with_uuid)
 
     def close_tab(self, index: int):
-        """ Closes a given tab, or if the final tab is being closed, close the application.
+        """ Closes a given tab, or if the final tab is being closed, close the application. Make sure to clear the plot of actors that were
+        added by that tab.
 
         :param index: The index of the tab to be closed.
         """
@@ -126,6 +134,20 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.tab_widget.currentIndex() == self.last_tab_index:
                 self.tab_widget.setCurrentIndex(self.last_tab_index-1)
 
+    def grid_status(self):
+        """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
+        if self.show_grid_checkbox.isChecked():
+            self.show_grid()
+        elif not self.show_grid_checkbox.isChecked():
+            self.remove_grid()
+
+    def axes_status(self):
+        """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
+        if self.show_axes_checkbox.isChecked():
+            self.show_axes()
+        elif not self.show_axes_checkbox.isChecked():
+            self.hide_axes()
+
     def remove_grid(self):
         """ Remove the grid. """
         self.plotter.remove_bounds_axes()
@@ -134,13 +156,13 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Add the grid actor and show it."""
         self.plotter.show_grid()
 
-    def grid_status(self):
-        """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
-        if self.show_grid_checkbox.isChecked():
-            self.show_grid()
-        elif not self.show_grid_checkbox.isChecked():
-            self.remove_grid()
+    def show_axes(self):
+        """ Show the orientation axes"""
+        self.plotter.show_axes_all()
 
+    def hide_axes(self):
+        """ Hide the orientation axes"""
+        self.plotter.hide_axes_all()
 
 if __name__ == "__main__":
 
