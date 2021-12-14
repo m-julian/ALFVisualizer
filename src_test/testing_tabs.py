@@ -32,30 +32,38 @@ class VisualizationWindow(QMainWindow):
 
         # Setup for ui
         ui_path = os.path.join(".", "testing_tabs.ui")
-        Ui_MainWindow, _ = uic.loadUiType(ui_path)
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        uic.loadUi(ui_path, self)
 
         # if the + button is pressed, then launch a new tab
-        self.ui.tabWidget.currentChanged.connect(self.add_tab)
+        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.tabBarClicked.connect(self.tab_clicked)
         # set the current index to 0 (as there are two tabs to begin and the 1st tab is the + button)
-        self.ui.tabWidget.setCurrentIndex(0)
-        
+
         # show x that closes tabs
-        self.ui.tabWidget.setTabsClosable(True)
+        self.tabWidget.setTabsClosable(True)
         # set a zero-sized widget on the + tab, so that the x is removed on it
-        self.ui.tabWidget.tabBar().setTabButton(1, QtWidgets.QTabBar.RightSide, QtWidgets.QWidget().resize(0, 0))
-        self.ui.tabWidget.tabBar().setTabButton(1, QtWidgets.QTabBar.LeftSide, QtWidgets.QWidget().resize(0, 0))
+        self.tabWidget.tabBar().setTabButton(1, QtWidgets.QTabBar.RightSide, QtWidgets.QWidget().resize(0, 0))
+        self.tabWidget.tabBar().setTabButton(1, QtWidgets.QTabBar.LeftSide, QtWidgets.QWidget().resize(0, 0))
+        self.tabWidget.tabCloseRequested.connect(self.close_tab)
 
-    def add_tab(self):
+    def tab_clicked(self, current_tab):
 
-        current_tab = self.sender().currentIndex()
         if current_tab == self.sender().count()-1:
-            self.ui.tabWidget.insertTab(current_tab, QtWidgets.QWidget(), f"test{current_tab}")
-            self.ui.tabWidget.setCurrentIndex(current_tab)
+            self.tabWidget.insertTab(current_tab, QtWidgets.QWidget(), f"test{current_tab}")
+            self.tabWidget.setCurrentIndex(current_tab)
             layout = QtWidgets.QVBoxLayout()
             layout.addWidget(Button(str(current_tab)))
-            self.ui.tabWidget.currentWidget().setLayout(layout)
+            self.tabWidget.currentWidget().setLayout(layout)
+
+    def close_tab(self, index):
+
+        # TODO: remove atoms associated with tab from plotter before closing
+        # if only one tab and the + tab are left, then close the main window
+        if self.sender().count() == 2:
+            self.close()
+        # otherwise only close the tab
+        else:
+            self.tabWidget.removeTab(index)
 
 
 if __name__ == "__main__":
