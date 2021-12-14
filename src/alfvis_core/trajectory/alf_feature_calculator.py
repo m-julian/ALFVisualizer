@@ -1,6 +1,10 @@
 import itertools as it
+from typing import List, Optional, Union
+
 import numpy as np
-from alfvis_core.trajectory.feature_calculator import FeatureCalculator
+
+from alfvis_core.trajectory.feature_calculator import \
+    FeatureCalculator
 from alfvis_core.constants import ang2bohr
 from alfvis_core.units import AtomicDistance
 
@@ -8,18 +12,17 @@ feature_unit = AtomicDistance.Bohr
 
 
 class ALFFeatureCalculator(FeatureCalculator):
-    _alf = None
+    _alf = {}
 
     @classmethod
-    def calculate_alf(cls, atom) -> list:
-        """
-        Returns the Atomic Local Frame (ALF) of the specified atom. The ALF consists of 3 Atom instances,
+    def calculate_alf(cls, atom: "Atom") -> list:
+        """Returns the Atomic Local Frame (ALF) of the specified atom. The ALF consists of 3 Atom instances,
         the central atom, the x-axis atom, and the xy-plane atom. These are later used to calculate the C rotation
         matrix and features.
 
         Args:
-            :param: `cls` the class ALFFeatureCalculator
-            :param: `atom` an instance of the `Atom` class
+            :param: `cls` the class ALFFeatureCalculator:
+            :param: `atom` an instance of the `Atom` class:
                 This atom is the central atom for which we want to calculate the ALF.
 
         Returns:
@@ -28,7 +31,7 @@ class ALFFeatureCalculator(FeatureCalculator):
                 the 1st element is the x-axis Atom instance, and the 2nd element is the xy-plane Atom instance.
         """
 
-        def _priority_by_mass(atoms) -> float:
+        def _priority_by_mass(atoms: List["Atom"]) -> float:
             """Returns the sum of masses of a list of Atom instances
 
             Args:
@@ -40,7 +43,7 @@ class ALFFeatureCalculator(FeatureCalculator):
             """
             return sum([a.mass for a in atoms])
 
-        def _get_priority(atom, level):
+        def _get_priority(atom: "Atom", level: int):
             """Returns the priority of atoms on a given level."""
             atoms = [atom]
             for _ in range(level):
@@ -54,7 +57,7 @@ class ALFFeatureCalculator(FeatureCalculator):
 
             return _priority_by_mass(atoms)
 
-        def _max_priority(atoms: list):
+        def _max_priority(atoms: List["Atom"]):
             """Returns the Atom instance that has the highest priority in the given list.
 
              Args:
@@ -78,13 +81,14 @@ class ALFFeatureCalculator(FeatureCalculator):
                     prev_priorities = priorities
             return atoms[priorities.index(max(priorities))]
 
-        def _calculate_alf(atom) -> list:
+        def _calculate_alf(atom) -> List["Atom"]:
             """Returns a list consisting of the x-axis and xy-plane Atom instances, which
             correspond to the atoms of first and second highest priorty as determined by the
             Cahn-Ingold-Prelog rules."""
             alf = [atom]
-            # we need to get 2 atoms - one for x-axis and one for xy-plane
-            for _ in range(2):
+            # we need to get 2 atoms - one for x-axis and one for xy-plane. If the molecule is 2d (like HCl), then we only need 1 atom.
+            n_atoms_in_alf = 2 if len(atom.parent) > 2 else 1
+            for _ in range(n_atoms_in_alf):
                 # make a list of atoms to which the central atom is bonded to that are not in alf
                 queue = [a for a in atom.bonded_atoms if a not in alf]
                 # if queue is empty, then we add the bonded atoms of the atoms that the atom of interest is connected to
@@ -100,17 +104,27 @@ class ALFFeatureCalculator(FeatureCalculator):
                 alf.append(max_priority_atom)
             return alf
 
-        # add the atom of interest to the x_axis and xy_plane atoms, thus this returns a list of 3 Atom instances.
-        if cls._alf is None:
-            cls._alf = [None for _ in range(len(atom.parent))]
-        if cls._alf[atom.index - 1] is None:
-            cls._alf[atom.index - 1] = [
-                a.index - 1 for a in _calculate_alf(atom)
-            ]
-        return cls._alf[atom.index - 1]
+        # since the systems we are working on are not isomers we assume that the connectivity of the atoms remains the same
+        # if connectivity changes but the atoms remain the same (i.e. it is a different configuration), then this code might not work
+        # we use a dictionary where we store a key = hash (a string with all the atom names) and value = a list of alfs for the whole system
+        system_hash = atom.parent.hash
+        if system_hash not in cls._alf.keys():
+            # make an empty list to fill with the alfs for the system
+            cls._alf[system_hash] = []
+            # calculate the alf for every atom in the system and add to the list above
+            for atm in atom.parent:
+                alf = _calculate_alf(atm)
+                cls._alf[system_hash].append([a.i for a in alf])
+
+        # return a list of the index (starts at 0 because we use this alf to index lists) of central atom, the x_axis and xy_plane atoms
+        return cls._alf[system_hash][atom.i]
 
     @classmethod
-    def calculate_x_axis_atom(cls, atom):
+    def calculate_x_axis_atom(
+        cls,
+        atom: "Atom",
+        alf: Optional[Union[List[int], List["Atom"], np.ndarray]] = None,
+    ):
         """Returns the Atom instance that is used as the x-axis of the ALF
 
         Args:
@@ -122,13 +136,24 @@ class ALFFeatureCalculator(FeatureCalculator):
             :type: `Atom` instance
                 The Atom instance which corresponds to the x-axis atom
         """
-        # print(cls.calculate_alf(atom))
-        # print(cls._alf)
-        # quit()
-        return atom.parent[cls.calculate_alf(atom)[1]]
+        if alf is None:
+            return atom.parent[cls.calculate_alf(atom)[1]]
+        elif isinstance(alf, list):
+            from alfvis_core.trajectory.atom import Atom
+
+            if isinstance(alf[1], int):
+                return atom.parent[alf[1] - 1]
+            elif isinstance(alf[1], Atom):
+                return atom.parent[alf[1].i]
+        elif isinstance(alf, np.ndarray):
+            return atom.parent[alf[1]]
 
     @classmethod
-    def calculate_xy_plane_atom(cls, atom):
+    def calculate_xy_plane_atom(
+        cls,
+        atom: "Atom",
+        alf: Optional[Union[List[int], List["Atom"], np.ndarray]] = None,
+    ):
         """Returns the Atom instance that is used as the x-axis of the ALF
 
         Args:
@@ -140,10 +165,24 @@ class ALFFeatureCalculator(FeatureCalculator):
             :type: `Atom` instance
                 The Atom instance which corresponds to the xy-plane atom
         """
-        return atom.parent[cls.calculate_alf(atom)[2]]
+        if alf is None:
+            return atom.parent[cls.calculate_alf(atom)[2]]
+        elif isinstance(alf, list):
+            from alfvis_core.trajectory.atom import Atom
+
+            if isinstance(alf[2], int):
+                return atom.parent[alf[2] - 1]
+            elif isinstance(alf[2], Atom):
+                return atom.parent[alf[2].i]
+        elif isinstance(alf, np.ndarray):
+            return atom.parent[alf[2]]
 
     @classmethod
-    def calculate_c_matrix(cls, atom) -> np.ndarray:
+    def calculate_c_matrix(
+        cls,
+        atom: "Atom",
+        alf: Optional[Union[List[int], List["Atom"], np.ndarray]] = None,
+    ) -> np.ndarray:
         """Retruns the C rotation matrix that relates the global Cartesian coordinates to the ALF Cartesian Coordinates.
         See https://pubs.acs.org/doi/pdf/10.1021/ct500565g , Section 3.3 for the derivations. This matrix has 3 unit
         vectors.
@@ -159,8 +198,8 @@ class ALFFeatureCalculator(FeatureCalculator):
         """
         c_matrix = np.empty((3, 3))
 
-        x_axis_atom = cls.calculate_x_axis_atom(atom)
-        xy_plane_atom = cls.calculate_xy_plane_atom(atom)
+        x_axis_atom = cls.calculate_x_axis_atom(atom, alf)
+        xy_plane_atom = cls.calculate_xy_plane_atom(atom, alf)
 
         # first row
         row1 = (x_axis_atom.coordinates - atom.coordinates) / np.linalg.norm(
@@ -189,7 +228,11 @@ class ALFFeatureCalculator(FeatureCalculator):
         return c_matrix
 
     @classmethod
-    def calculate_features(cls, atom):
+    def calculate_features(
+        cls,
+        atom: "Atom",
+        alf: Optional[Union[List[int], List["Atom"], np.ndarray]] = None,
+    ):
         """Calculates the features for the given central atom.
 
         Args:
@@ -201,26 +244,46 @@ class ALFFeatureCalculator(FeatureCalculator):
             :type: `np.ndarray`
                 A 1D numpy array of shape 3N-6, where N is the number of atoms in the system which `atom` is a part of.
         """
-        feature_array = np.empty(3 * len(atom.parent) - 6)
 
-        # Feature calculation assumes units are in angstroms
+        if len(atom.parent) == 2:
+            feature_array = np.empty(
+                1
+            )  # if only 2 atoms are in parent, there are only 2 atoms in the system so there is only 1 feature - distance.
+        elif len(atom.parent) > 2:
+            feature_array = np.empty(
+                3 * len(atom.parent) - 6
+            )  # most systems have more than 2 atoms
+        else:
+            raise ValueError(
+                "atom.parent needs to have more than 1 atom in order to calculate features."
+            )
+
+        # Convert to angstroms to make sure units are in angstroms
+        # For not features are calculated in bohr, so the unit_conversion is ang2bohr
         atom.to_angstroms()
         atom.parent.to_angstroms()
         unit_conversion = (
             1.0 if feature_unit is AtomicDistance.Angstroms else ang2bohr
         )
 
-        x_axis_atom = cls.calculate_x_axis_atom(atom)
-        xy_plane_atom = cls.calculate_xy_plane_atom(atom)
-
+        x_axis_atom = cls.calculate_x_axis_atom(atom, alf)
         x_axis_vect = unit_conversion * (
             x_axis_atom.coordinates - atom.coordinates
         )
+        x_bond_norm = np.linalg.norm(x_axis_vect)
+
+        if len(atom.parent) == 2:
+
+            feature_array[0] = x_bond_norm
+            return feature_array
+
+        # this code is only needed if atom.parent is more than 2 atoms (so it has 3N-6 features)
+        xy_plane_atom = cls.calculate_xy_plane_atom(atom, alf)
+
         xy_plane_vect = unit_conversion * (
             xy_plane_atom.coordinates - atom.coordinates
         )
 
-        x_bond_norm = np.linalg.norm(x_axis_vect)
         xy_bond_norm = np.linalg.norm(xy_plane_vect)
 
         angle = np.arccos(
@@ -234,15 +297,15 @@ class ALFFeatureCalculator(FeatureCalculator):
         c_matrix = cls.calculate_c_matrix(atom)
 
         # the rest of the atoms are described as 3 features each: distance(r), polar angle(theta), and azimuthal angle(phi) - physics convention
-        # theta is between 0 and pi (not cyclic), phi is between 0 and 2pi (cyclic)
+        # theta is between 0 and pi (not cyclic), phi is between -pi and pi (cyclic)
 
         if len(atom._parent) > 3:
             i_feat = 3
             for jatom in atom._parent:
                 if (
-                    (jatom is x_axis_atom)
-                    or (jatom is xy_plane_atom)
-                    or (jatom is atom)
+                    (jatom.name == x_axis_atom.name)
+                    or (jatom.name == xy_plane_atom.name)
+                    or (jatom.name == atom.name)
                 ):
                     continue
 
@@ -262,4 +325,5 @@ class ALFFeatureCalculator(FeatureCalculator):
                 feature_array[i_feat] = np.arctan2(zeta[1], zeta[0])
 
                 i_feat += 1
+
         return feature_array

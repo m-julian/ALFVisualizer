@@ -3,7 +3,7 @@ import numpy as np
 
 class ConnectivityCalculator:
 
-    connectivity = None
+    connectivity = {}
 
     @classmethod
     def calculate_connectivity(cls, atoms):
@@ -24,22 +24,17 @@ class ConnectivityCalculator:
             timesteps in a trajectory.
         """
 
-        if cls.connectivity is None:
-
+        system_hash = atoms.hash
+        if system_hash not in cls.connectivity.keys():
             connectivity = np.zeros((len(atoms), len(atoms)))
 
             for i, iatom in enumerate(atoms):
                 for j, jatom in enumerate(atoms):
                     if iatom != jatom:
                         max_dist = 1.2 * (iatom.radius + jatom.radius)
-                        if (
-                            np.linalg.norm(
-                                iatom.coordinates - jatom.coordinates
-                            )
-                            < max_dist
-                        ):
+
+                        if iatom.dist(jatom) < max_dist:
                             connectivity[i, j] = 1
+            cls.connectivity[system_hash] = connectivity
 
-            cls.connectivity = connectivity
-
-        return cls.connectivity
+        return cls.connectivity[system_hash]
