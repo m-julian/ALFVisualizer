@@ -91,6 +91,15 @@ class Atom:
         """Returns the type (i.e. element) of the Atom instance."""
         return self.type
 
+    def dist(self, other: "Atom") -> float:
+        """
+        Calculated the distance between self and other
+        :param other: atom to calculate the distance to
+        :return: the distance between self and other as a float
+        """
+        d = self.coordinates - other.coordinates
+        return np.sqrt(d.dot(d))
+
     @property
     def atom_number(self) -> int:
         """Returns the integer assigned to the atom, calculated from the trajectory file. Indeces start at 1.
