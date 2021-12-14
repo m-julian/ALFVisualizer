@@ -169,7 +169,7 @@ class XYZArrays:
 #########################################################################
 
 
-class NewDatasetWidget(QWidget):
+class DatasetWidget(QWidget):
     """ handles GUI and connects user commands with what to plot on pyvista plot
     see https://www.youtube.com/channel/UCj7i-mmOjLV17YTPIrCPkog videos for info on using Qt with python """
 
@@ -207,7 +207,9 @@ class NewDatasetWidget(QWidget):
         self.color_buttons_dict = None
         self.color_labels_dict = None
 
+        # give this widget access to the plotter, so the plotter can be modified from each instance separately
         self.plotter = plotter
+        # give each instance a unique id, so that each widget has its own associated data
         self.uuid = str(uuid4())
 
         # load in ui
@@ -250,6 +252,13 @@ class NewDatasetWidget(QWidget):
             xyz_dict = {}
 
         return total_dict
+
+    def get_atom_name_with_uuid(self, atom_name: str):
+        return self.uuid + "-" + atom_name
+
+    @property
+    def atom_names_with_uuid(self):
+        return [self.uuid + "-" + atom_name for atom_name in self.atom_names]
 
     @property
     def current_central_atom_name(self) -> str:
@@ -321,42 +330,31 @@ class NewDatasetWidget(QWidget):
         """ Returns a dictionary of actor names as keys and VTK objects as values (these are the things that are plotted)"""
         return self.renderer.actors
 
-    def show_actor(self, actor_name):
+    def show_actor(self, actor_name: str):
         """ Show the actor to screen """
         actor = self.actors.get(actor_name)
         if actor:
             actor.SetVisibility(True)
 
-    def hide_actor(self, actor_name):
+    def hide_actor(self, actor_name: str):
         """ Hide the actor."""
         actor = self.actors.get(actor_name)
         if actor:
             actor.SetVisibility(False)
 
-    def add_actor(self, actor, actor_name):
+    def add_actor(self, actor, actor_name: str):
         """ Add an actor. This adds it to the self.actors dict"""
         self.plotter.add_mesh(actor, render_points_as_spheres=True, name=actor_name, reset_camera=False)
 
-    def remove_actor(self, actor_name):
+    def remove_actor(self, actor_name: str):
         """ Remove the actor. This deletes it from the self.actors dict"""
         self.plotter.remove_actor(actor_name)
 
     def remove_all_plotted_atoms(self):
-        # TODO: make such button for the main window
         """ Clear the whole pyvista screen of any actors, but leaves grid and background."""
         for actor_name in list(self.actors):
-            if actor_name in self.atom_names:
+            if actor_name in self.atom_names_with_uuid:
                 self.remove_actor(actor_name=actor_name)
-
-    def remove_grid(self):
-        # TODO: move to global settings
-        """ Remove the grid. """
-        self.plotter.remove_bounds_axes()
-
-    def show_grid(self):
-        # TODO: move to global settings
-        """ Add the grid actor and show it."""
-        self.plotter.show_grid()
 
     def _initialize_alf_vis_ui(self):
         """ Initializes pyvista plot and user ui, with first atom ALF displayed
@@ -492,14 +490,6 @@ class NewDatasetWidget(QWidget):
         current_box_val = int(val)
         self.individual_point_slider.setValue(current_box_val)  # self.update_data_and_plot() called here
 
-    def grid_status(self):
-        # TODO: move to global settings for main window
-        """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
-        if self.show_grid_checkbox.isChecked():
-            self.show_grid()
-        elif not self.show_grid_checkbox.isChecked():
-            self.remove_grid()
-
     def update_checkboxes_box(self):
         """ Used to dynamically generate the non-central atom checkboxes.
         They can be used to plot individual noncentral atoms instead of all noncentral atoms."""
@@ -582,15 +572,16 @@ class NewDatasetWidget(QWidget):
         name is shown, otherwise the data is hidden."""
 
         sender_checkbox_text = self.sender().text()
+        text_with_uuid = self.get_atom_name_with_uuid(sender_checkbox_text)
 
         if self.sender().isChecked():
             # show actor
-            self.show_actor(sender_checkbox_text)
+            self.show_actor(text_with_uuid)
             # show colorbox
             self.show_colorbutton(sender_checkbox_text)
         else:
             # hide actor
-            self.hide_actor(sender_checkbox_text)
+            self.hide_actor(text_with_uuid)
             # hide colorbox
             self.hide_colorbutton(sender_checkbox_text)
 
@@ -626,7 +617,7 @@ class NewDatasetWidget(QWidget):
             self.saved_atom_colors[f"{self.sender().text()}"] = color.name()
 
             rbg_val = hex_to_rgb(color.name())
-            self.actors[f"{self.sender().text()}"].GetProperty().SetColor(rbg_val)
+            self.actors[self.get_atom_name_with_uuid(self.sender().text())].GetProperty().SetColor(rbg_val)
             self.renderer.Modified()
 
     def plot_updated_data(self):

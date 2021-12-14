@@ -61,8 +61,17 @@
         </item>
         <item>
          <widget class="QTabWidget" name="tab_widget">
+          <property name="tabPosition">
+           <enum>QTabWidget::North</enum>
+          </property>
+          <property name="tabShape">
+           <enum>QTabWidget::Rounded</enum>
+          </property>
           <property name="currentIndex">
            <number>0</number>
+          </property>
+          <property name="tabsClosable">
+           <bool>true</bool>
           </property>
           <widget class="QWidget" name="plus_tab">
            <attribute name="title">
