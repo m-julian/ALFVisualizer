@@ -19,15 +19,15 @@ class Atoms(list):
     of the Atoms instances will hold 6 instances of the Atom class.
     """
 
-    def __init__(self, atoms: Optional[Sequence[Atom]] = None, energy=None):
+    def __init__(self, atoms: Optional[Sequence[Atom]] = None, properties_error=None):
         super().__init__()
         self._centred = False
         self._counter = it.count(1)
         if atoms is not None:
             self.add(atoms)
 
-        if energy is not None:
-            self.energy = energy
+        if properties_error is not None:
+            self.properties_error = properties_error
 
     def add(self, atom: Atom):
         """

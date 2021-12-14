@@ -2,13 +2,6 @@
 # Initial Setup and Connect QObjects signals to slots
 #####################################################
 
-# def _start_global_settings(self):
-#     """ Initialize checkbox that is used to show or remove grid, as well as initialize the grid (which can then be controlled by the grid checkbox).
-#     Any global settings which must be set for all datasets are going to be initialized here."""
-#     self.show_grid_checkbox.stateChanged.connect(self.grid_status)
-#     self.grid_status()  # initialize grid here
-
-
 def _start_atom_center_and_property_settings(self):
     """ Sets up the atom center and property combo boxes in the Atom Center and Property Settings GroupBox. These define what data is going to be
     available for plotting, so they must be initialized before everything else relating to plotting."""
@@ -21,6 +14,7 @@ def _start_atom_center_and_property_settings(self):
         self.properties_cmap_combo_box.currentIndexChanged.connect(self.update_property_and_plot)
     else:
         self.properties_cmap_combo_box.setEnabled(False)
+        self.cmap_radio.setEnabled(False)
         self.properties_cmap_combo_box.setToolTip("Energies were not read in.")
 
 
@@ -37,6 +31,7 @@ def _start_coloring_settings(self):
     self.random_colors_radio.clicked.connect(self.use_random_colors)
     self.default_atom_colors_radio.clicked.connect(self.use_default_colors)
     self.cmap_radio.clicked.connect(self.use_cmap)
+    self.central_atom_color_for_all_radio.clicked.connect(self.central_atom_color_for_all)
 
 
 def _start_points_settings(self):
@@ -86,7 +81,6 @@ def _start_show_hide_all_atoms_button(self):
 
 def _start_alf_vis_ui(self):
 
-    # _start_global_settings(self)
     _start_atom_center_and_property_settings(self)
     _start_coloring_settings(self)
     _start_points_settings(self)

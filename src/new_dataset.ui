@@ -178,6 +178,9 @@ border-width:2px</string>
               <property name="autoExclusive">
                <bool>false</bool>
               </property>
+              <attribute name="buttonGroup">
+               <string notr="true">point_settings_button_group</string>
+              </attribute>
              </widget>
             </item>
             <item row="1" column="0">
@@ -185,6 +188,9 @@ border-width:2px</string>
               <property name="text">
                <string>Plot Individual Points</string>
               </property>
+              <attribute name="buttonGroup">
+               <string notr="true">point_settings_button_group</string>
+              </attribute>
              </widget>
             </item>
            </layout>
@@ -204,6 +210,9 @@ border-width:2px</string>
               <property name="checked">
                <bool>true</bool>
               </property>
+              <attribute name="buttonGroup">
+               <string notr="true">color_settings_button_group</string>
+              </attribute>
              </widget>
             </item>
             <item>
@@ -211,6 +220,9 @@ border-width:2px</string>
               <property name="text">
                <string>Default Atom Colors</string>
               </property>
+              <attribute name="buttonGroup">
+               <string notr="true">color_settings_button_group</string>
+              </attribute>
              </widget>
             </item>
             <item>
@@ -218,6 +230,19 @@ border-width:2px</string>
               <property name="text">
                <string>Cmap for Selected Property</string>
               </property>
+              <attribute name="buttonGroup">
+               <string notr="true">color_settings_button_group</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="central_atom_color_for_all_radio">
+              <property name="text">
+               <string>Central Atom Color for All</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">color_settings_button_group</string>
+              </attribute>
              </widget>
             </item>
            </layout>
@@ -271,7 +296,7 @@ border-width:2px</string>
               <x>0</x>
               <y>0</y>
               <width>981</width>
-              <height>226</height>
+              <height>215</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_27"/>
@@ -340,7 +365,7 @@ border-width:2px</string>
               <x>0</x>
               <y>0</y>
               <width>981</width>
-              <height>226</height>
+              <height>214</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_28"/>
@@ -357,4 +382,8 @@ border-width:2px</string>
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="color_settings_button_group"/>
+  <buttongroup name="point_settings_button_group"/>
+ </buttongroups>
 </ui>

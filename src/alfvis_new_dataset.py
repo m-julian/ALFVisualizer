@@ -419,6 +419,18 @@ class DatasetWidget(QWidget):
         # using cmap needs to make new actors and plot them, so it is not directly updating vtk objects.
         # possibly a way to apply a colormap directly to current vtk objects without making new ones, but that will be a lot of work and little reward
 
+    def central_atom_color_for_all(self):
+
+        self.atom_color_scroll_area.setEnabled(True)
+
+        for atom_name in list(self.current_atom_colors.keys()):
+            self.current_atom_colors[atom_name] = self.current_central_atom_color
+
+        for atom_name, button in self.color_buttons_dict.items():
+            button.setStyleSheet(f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};")
+
+        self.plot_updated_data()
+
     def update_central_atom_data(self):
         """ Used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
         self._current_noncentral_data = self.all_noncentral_data
@@ -624,7 +636,8 @@ class DatasetWidget(QWidget):
         """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
 
         center = pv.PolyData(self.center)
-        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True, name=self.current_central_atom_name)
+        central_atom_name_with_uuid = self.get_atom_name_with_uuid(self.current_central_atom_name)
+        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True, name=central_atom_name_with_uuid)
 
         current_datablock = pv.MultiBlock(self._current_noncentral_data)
 

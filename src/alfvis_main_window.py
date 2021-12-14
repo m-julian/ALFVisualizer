@@ -7,6 +7,8 @@ from qtpy import uic
 from pyvistaqt import QtInteractor
 from alfvis_new_dataset import DatasetWidget
 from typing import List
+from alfvis_core.useful_funcs import parse_color
+import pyvista as pv
 
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
@@ -45,15 +47,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.pyvista_part.layout().addWidget(self.plotter.interactor)
 
         # initialize tab widget to 0th tab and connect tab clicked to slot
-        self.tab_widget.tabBarClicked.connect(self.new_tab_clicked)
+        self.tab_widget.tabBarClicked.connect(self.tab_bar_clicked)
         # tabs are closable (set in .ui file), but remove close button from the "+" tab by adding two 0-sized widgets on either side
         self.tab_widget.tabBar().setTabButton(0, QtWidgets.QTabBar.RightSide, QtWidgets.QWidget().resize(0, 0))
         self.tab_widget.tabBar().setTabButton(0, QtWidgets.QTabBar.LeftSide, QtWidgets.QWidget().resize(0, 0))
         # connect close signal to slot
         self.tab_widget.tabCloseRequested.connect(self.close_tab)
 
-        self.show_grid_checkbox.connect()
-
+        # connect grid checkbox and initialize
+        self.show_grid_checkbox.stateChanged.connect(self.grid_status)
+        self.grid_status()
 
     @property
     def n_tabs(self):
@@ -83,6 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # make an instance of the new dataset widget and store it, so it can be accessed by main window
         new_dataset_widget = DatasetWidget(dataset_path, self.plotter)
         # self._datasets[new_dataset_widget.uuid] = new_dataset_widget
+        print(new_dataset_widget.current_errors_list)
 
         self.tab_widget.insertTab(index, QtWidgets.QWidget(), dataset_path.stem)
         self.tab_widget.setCurrentIndex(index)
@@ -90,14 +94,21 @@ class MainWindow(QtWidgets.QMainWindow):
         layout.addWidget(new_dataset_widget)
         self.tab_widget.currentWidget().setLayout(layout)
 
-    def new_tab_clicked(self, current_tab):
+    def tab_bar_clicked(self, current_tab_index: int):
 
         # if "+" tab is clicked, insert a new tab (with new dataset)
-        if current_tab == self.last_tab_index:
+        if current_tab_index == self.last_tab_index:
 
             xyz_file_list = open_file_dialog()
             if xyz_file_list:
                 self.insert_new_datasets(xyz_file_list)
+
+        # if some other tab was clicked, we need to update the color of the central atom that is being plotted (as they overlap)
+        else:
+            widget = self.tab_widget.widget(current_tab_index).findChild(DatasetWidget)
+            center = pv.PolyData(widget.center)
+            central_atom_name_with_uuid = widget.get_atom_name_with_uuid(widget.current_central_atom_name)
+            widget.plotter.add_mesh(center, color=widget.current_central_atom_color, point_size=32, render_points_as_spheres=True, name=central_atom_name_with_uuid)
 
     def close_tab(self, index: int):
         """ Closes a given tab, or if the final tab is being closed, close the application.
@@ -114,6 +125,8 @@ class MainWindow(QtWidgets.QMainWindow):
             widget = self.tab_widget.widget(index).findChild(DatasetWidget)
             widget.remove_all_plotted_atoms()
             self.tab_widget.removeTab(index)
+            if self.tab_widget.currentIndex() == self.last_tab_index:
+                self.tab_widget.setCurrentIndex(self.last_tab_index-1)
 
     def remove_grid(self):
         """ Remove the grid. """
@@ -124,7 +137,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plotter.show_grid()
 
     def grid_status(self):
-        # TODO: move to global settings for main window
         """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
         if self.show_grid_checkbox.isChecked():
             self.show_grid()
