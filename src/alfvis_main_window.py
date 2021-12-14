@@ -40,8 +40,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         super().__init__()
 
-        self._datasets = {}
-
         # load in ui to be able to access attributes (open .ui file in QtDesigner for names)
         ui_path = Path.cwd() / "main_window.ui"
         uic.loadUi(ui_path.absolute(), self)
@@ -63,21 +61,21 @@ class MainWindow(QtWidgets.QMainWindow):
         # connect close signal to slot
         self.tab_widget.tabCloseRequested.connect(self.close_tab)
 
+        # Global setttings for plotting
         # connect grid checkbox and initialize
         self.show_grid_checkbox.stateChanged.connect(self.grid_status)
         self.grid_status()
-
         # connect axes checkbox and initialize
         self.show_axes_checkbox.stateChanged.connect(self.axes_status)
         self.axes_status()
 
     @property
-    def n_tabs(self):
+    def n_tabs(self) -> int:
         """ Returns the number of opened tabs"""
         return self.tab_widget.count()
 
     @property
-    def last_tab_index(self):
+    def last_tab_index(self) -> int:
         """ Gives the index of the last widget (which is always the `add new tab` tab). Tab indexing starts at 0."""
         return self.n_tabs - 1
 
@@ -108,7 +106,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def tab_bar_clicked(self, current_tab_index: int):
         """ Runs when some tab on the tab bar is clicked. This is used to check if the last tab is clicked as the last tab is used
         to open new datasts. It also checks which tab is clicked and updates the central sphere which is plotted to get the color
-        the same as the color of the central atom for that tab."""
+        the same as the color of the central atom for that tab.
+
+        :param current_tab_index: tab index that was clicked
+        """
 
         # if "+" tab is clicked, insert a new tab (with new dataset)
         if current_tab_index == self.last_tab_index:
