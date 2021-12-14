@@ -53,6 +53,10 @@ class Atoms(list):
         return [atom.name for atom in self]
 
     @property
+    def hash(self):
+        return ",".join(self.atom_names)
+
+    @property
     def types(self) -> list:
         """Returns the atom elements for atoms, removes duplicates"""
         return list({atom.type for atom in self})
