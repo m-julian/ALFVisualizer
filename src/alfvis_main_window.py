@@ -85,8 +85,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # make an instance of the new dataset widget and store it, so it can be accessed by main window
         new_dataset_widget = DatasetWidget(dataset_path, self.plotter)
-        # self._datasets[new_dataset_widget.uuid] = new_dataset_widget
-        print(new_dataset_widget.current_errors_list)
 
         self.tab_widget.insertTab(index, QtWidgets.QWidget(), dataset_path.stem)
         self.tab_widget.setCurrentIndex(index)
