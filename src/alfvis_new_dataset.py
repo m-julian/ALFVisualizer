@@ -540,12 +540,10 @@ class DatasetWidget(QWidget):
             for button in self.color_buttons_dict.values():
                 self.atom_color_scroll_area_grid.layout().removeWidget(button)
                 button.deleteLater()
-                button.deleteLater()
                 button = None
         if self.color_labels_dict:
             for label in self.color_labels_dict.values():
                 self.atom_color_scroll_area_grid.layout().removeWidget(label)
-                label.deleteLater()
                 label.deleteLater()
                 label = None
 
