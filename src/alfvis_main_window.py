@@ -1,11 +1,10 @@
-from qtpy import QtCore, QtGui, QtWidgets
+from qtpy import QtWidgets
 import os
 import sys
 from pathlib import Path
 from qtpy import uic
 from pyvistaqt import QtInteractor
-import pyvista as pv
-from new_dataset import NewDatasetWidget
+from alfvis_new_dataset import NewDatasetWidget
 
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
