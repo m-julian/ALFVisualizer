@@ -33,17 +33,30 @@ def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict
     atom_names = trajectory[0].atom_names
     numbered_priorities = trajectory.priorities
     # map the numbered priorities to actual names of atoms
-    atom_name_priorities = [list(map(lambda i: atom_names[i], prio)) for prio in numbered_priorities]
+    atom_name_priorities = [
+        list(map(lambda i: atom_names[i], prio)) for prio in numbered_priorities
+    ]
     for atom_name_prio in atom_name_priorities:
-        del atom_name_prio[0]  # removing central atom which is not going to be present in the 3D xyz array used in plotting
+        del atom_name_prio[
+            0
+        ]  # removing central atom which is not going to be present in the 3D xyz array used in plotting
         # only non-central atoms are in this array in order x_axis atom, xyz_plane atom, followed by atoms that were in spherical polar coords
 
     # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
     atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
 
-    errors_for_properties = trajectory.properties_error  # dictionary of errors for each property
+    errors_for_properties = (
+        trajectory.properties_error
+    )  # dictionary of errors for each property
 
-    return features, atom_names, atom_name_priorities, atomic_local_frame_dict, errors_for_properties
+    return (
+        features,
+        atom_names,
+        atom_name_priorities,
+        atomic_local_frame_dict,
+        errors_for_properties,
+    )
+
 
 ##############################################################################################
 #                     CREATING 4D ARRAY TO PLOT, SHAPE shape (N_atoms, N_atoms-1, N_points, 3)
@@ -92,7 +105,9 @@ class XYZArrays:
                 # so now we stack these matrices into one 3D array that is the xyz coordinates
                 # for all atoms OTHER than the atom on which the ALF is centered,
                 # shape ((2+N_remaining_atoms),N_points,3)
-                one_atom_total_array = np.concatenate((xy_atom_3d_array, polar_atoms_3d_array), axis=0)
+                one_atom_total_array = np.concatenate(
+                    (xy_atom_3d_array, polar_atoms_3d_array), axis=0
+                )
                 all_other_atom_3D_arrays.append(one_atom_total_array)
             else:
                 one_atom_total_array = xy_atom_3d_array
@@ -152,7 +167,9 @@ class XYZArrays:
             xx = np.multiply(np.multiply(r_data, np.sin(theta_data)), np.cos(phi_data))
             yy = np.multiply(np.multiply(r_data, np.sin(theta_data)), np.sin(phi_data))
             zz = np.multiply(r_data, np.cos(theta_data))
-            xyz_atom = np.concatenate((xx, yy, zz), axis=1)  # an N_pointsx3 matrix (storing xyz info for one atom)
+            xyz_atom = np.concatenate(
+                (xx, yy, zz), axis=1
+            )  # an N_pointsx3 matrix (storing xyz info for one atom)
             # polar_atoms_xyz = np.dstack((polar_atoms_xyz, xyz_atom), axis=2)
             xyz_atoms_list.append(xyz_atom)
 
@@ -163,6 +180,7 @@ class XYZArrays:
         polar_atoms_xyz_matrix = np.stack([i for i in xyz_atoms_list])
 
         return polar_atoms_xyz_matrix
+
 
 #########################################################################
 #                       PYVISTA/ QT PLOTTING TOOL
@@ -178,7 +196,13 @@ class DatasetWidget(QWidget):
         super().__init__()
 
         # errors_for_properties could be None in case no per-property data is read in from xyz comment line
-        all_atom_features, atom_names, atoms_names_priorities, atomic_local_frame_dict, errors_for_properties = features_and_atom_names(xyz_file)
+        (
+            all_atom_features,
+            atom_names,
+            atoms_names_priorities,
+            atomic_local_frame_dict,
+            errors_for_properties,
+        ) = features_and_atom_names(xyz_file)
 
         # list of atom names
         self.atom_names: list = atom_names
@@ -195,7 +219,11 @@ class DatasetWidget(QWidget):
 
         # errors_for_properties is a list of dictionaries. Each dictionary contains property errors for each atom. Could be None if data is not in xyz.
         self.errors_for_properties = errors_for_properties
-        self.cmap_properties = errors_for_properties[0].keys() if errors_for_properties is not None else None
+        self.cmap_properties = (
+            errors_for_properties[0].keys()
+            if errors_for_properties is not None
+            else None
+        )
 
         # current colors used for atoms
         self.current_atom_colors = dict(zip(atom_names, random_colors))
@@ -230,18 +258,26 @@ class DatasetWidget(QWidget):
 
         system_as_xyz = XYZArrays(all_atom_features)  # gives 4D numpy array
 
-        total_dict = {}  # dictionary of dictionaries, ordered as {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....},
+        total_dict = (
+            {}
+        )  # dictionary of dictionaries, ordered as {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....},
         # "H2": {"C1":xyz_array, "O3":xyz_array.......}........,"H6":{"O3":xyz_array, "C1":xyz_array}
         # the ordering is {central_atom1: {x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array ..... },
         #  central_atom2:{x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array, ..... }....}
         # this was done to keep track of colors (which cannot really be done using np arrays)
 
-        xyz_dict = {}  # this dict keeps inner dictionaries from the total_array such as {"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
+        xyz_dict = (
+            {}
+        )  # this dict keeps inner dictionaries from the total_array such as {"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
         # it gets reset after every iteration of the loop to move onto the next atom center
 
         # iterate over central atoms, their respective 3D array of other atoms as xyz coords, as well as the priorities of these xyz atoms
         # (i.e which is x axis, which is xy plane etc.)
-        for center_atom, center_atom_xyzs, atom_names_prio in zip(self.atom_names, system_as_xyz.all_atom_4d_array, self.atoms_names_priorities):
+        for center_atom, center_atom_xyzs, atom_names_prio in zip(
+            self.atom_names,
+            system_as_xyz.all_atom_4d_array,
+            self.atoms_names_priorities,
+        ):
             # C1  #C1 non central atom 3D array # O3, H2, H4, H5, H6 # 2, 1, 3, 4, 5
             for idx, atom_name_prio in enumerate(atom_names_prio):
                 #  0 O3, 1 H2, etc. used to get out the individual 2d arrays which are ordered as:
@@ -258,7 +294,9 @@ class DatasetWidget(QWidget):
 
     @property
     def atom_names_with_uuid(self):
-        return [self.get_atom_name_with_uuid(atom_name) for atom_name in self.atom_names]
+        return [
+            self.get_atom_name_with_uuid(atom_name) for atom_name in self.atom_names
+        ]
 
     @property
     def current_central_atom_name(self) -> str:
@@ -268,11 +306,13 @@ class DatasetWidget(QWidget):
     @property
     def current_noncentral_atom_names(self) -> list:
         """ Returns the non central atom names as a list"""
-        return [name for name in self.atom_names if name != self.current_central_atom_name]
+        return [
+            name for name in self.atom_names if name != self.current_central_atom_name
+        ]
 
     @property
     def current_alf_str(self) -> str:
-        return ', '.join(str(x) for x in self.alf_dict[self.current_central_atom_name])
+        return ", ".join(str(x) for x in self.alf_dict[self.current_central_atom_name])
 
     @property
     def current_selected_property(self) -> Union[str, None]:
@@ -284,7 +324,10 @@ class DatasetWidget(QWidget):
     def current_errors_list(self) -> list:
 
         if self.errors_for_properties:
-            return [timestep[self.current_selected_property][self.current_central_atom_name] for timestep in self.errors_for_properties]
+            return [
+                timestep[self.current_selected_property][self.current_central_atom_name]
+                for timestep in self.errors_for_properties
+            ]
         return
 
     @property
@@ -344,7 +387,9 @@ class DatasetWidget(QWidget):
 
     def add_actor(self, actor, actor_name: str):
         """ Add an actor. This adds it to the self.actors dict"""
-        self.plotter.add_mesh(actor, render_points_as_spheres=True, name=actor_name, reset_camera=False)
+        self.plotter.add_mesh(
+            actor, render_points_as_spheres=True, name=actor_name, reset_camera=False
+        )
 
     def remove_actor(self, actor_name: str):
         """ Remove the actor. This deletes it from the self.actors dict"""
@@ -393,7 +438,9 @@ class DatasetWidget(QWidget):
         self.current_atom_colors = self.saved_atom_colors
 
         for atom_name, button in self.color_buttons_dict.items():
-            button.setStyleSheet(f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};")
+            button.setStyleSheet(
+                f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};"
+            )
 
         self.plot_updated_data()
 
@@ -405,7 +452,9 @@ class DatasetWidget(QWidget):
         self.current_atom_colors = self.default_atom_colors
 
         for atom_name, button in self.color_buttons_dict.items():
-            button.setStyleSheet(f"background-color : {self.default_atom_colors[atom_name]}; color: {self.default_atom_colors[atom_name]};")
+            button.setStyleSheet(
+                f"background-color : {self.default_atom_colors[atom_name]}; color: {self.default_atom_colors[atom_name]};"
+            )
 
         self.plot_updated_data()
 
@@ -427,7 +476,9 @@ class DatasetWidget(QWidget):
             self.current_atom_colors[atom_name] = self.current_central_atom_color
 
         for atom_name, button in self.color_buttons_dict.items():
-            button.setStyleSheet(f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};")
+            button.setStyleSheet(
+                f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};"
+            )
 
         self.plot_updated_data()
 
@@ -475,11 +526,15 @@ class DatasetWidget(QWidget):
         # only get one point in the trajectory corresponding to the timestep selected by the slider/box
         self._current_noncentral_data = {}
         for atom in self.all_noncentral_data.keys():
-            self._current_noncentral_data[atom] = self.all_noncentral_data[atom][current_point]
+            self._current_noncentral_data[atom] = self.all_noncentral_data[atom][
+                current_point
+            ]
 
         if self.current_errors_list:
             # get a list of integers for the current atom and property that are selected in combo boxes
-            self.property_value_for_current_point.setText(f"{self.current_errors_list[current_point]:.8f}")
+            self.property_value_for_current_point.setText(
+                f"{self.current_errors_list[current_point]:.8f}"
+            )
         else:
             self.property_value_for_current_point.setText("Not read in.")
 
@@ -500,7 +555,9 @@ class DatasetWidget(QWidget):
         if not val:
             val = 0
         current_box_val = int(val)
-        self.individual_point_slider.setValue(current_box_val)  # self.update_data_and_plot() called here
+        self.individual_point_slider.setValue(
+            current_box_val
+        )  # self.update_data_and_plot() called here
 
     def update_checkboxes_box(self):
         """ Used to dynamically generate the non-central atom checkboxes.
@@ -557,7 +614,9 @@ class DatasetWidget(QWidget):
         for atom_name in self.atom_names:
 
             push_button = QtWidgets.QPushButton(atom_name)
-            push_button.setStyleSheet(f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};")
+            push_button.setStyleSheet(
+                f"background-color : {self.current_atom_colors[atom_name]}; color: {self.current_atom_colors[atom_name]};"
+            )
             push_button.clicked.connect(self.change_atom_color_color_dialog)
 
             push_button_label = QtWidgets.QLabel(atom_name)
@@ -565,8 +624,12 @@ class DatasetWidget(QWidget):
             self.color_buttons_dict[atom_name] = push_button
             self.color_labels_dict[atom_name] = push_button_label
 
-            self.atom_color_scroll_area_grid.layout().addWidget(push_button, row, column_button)
-            self.atom_color_scroll_area_grid.layout().addWidget(push_button_label, row, column_label)
+            self.atom_color_scroll_area_grid.layout().addWidget(
+                push_button, row, column_button
+            )
+            self.atom_color_scroll_area_grid.layout().addWidget(
+                push_button_label, row, column_label
+            )
 
             column_button += 2
             column_label += 2
@@ -622,21 +685,33 @@ class DatasetWidget(QWidget):
         if QtGui.QColor.isValid(color):
 
             self.sender().setStyleSheet("")
-            self.sender().setStyleSheet(f"background-color : {color.name()}; color: {color.name()};")
+            self.sender().setStyleSheet(
+                f"background-color : {color.name()}; color: {color.name()};"
+            )
             self.current_atom_colors[f"{self.sender().text()}"] = color.name()
             self.saved_atom_colors[f"{self.sender().text()}"] = color.name()
 
             # can call self.plot_updated data here instead as well
             rbg_val = hex_to_rgb(color.name())
-            self.actors[self.get_atom_name_with_uuid(self.sender().text())].GetProperty().SetColor(rbg_val)
+            self.actors[
+                self.get_atom_name_with_uuid(self.sender().text())
+            ].GetProperty().SetColor(rbg_val)
             self.renderer.Modified()
 
     def plot_updated_data(self):
         """ plots all the data after all the checkboxes/sliders/colors etc. have been processed"""
 
         center = pv.PolyData(self.center)
-        central_atom_name_with_uuid = self.get_atom_name_with_uuid(self.current_central_atom_name)
-        self.plotter.add_mesh(center, color=self.current_central_atom_color, point_size=32, render_points_as_spheres=True, name=central_atom_name_with_uuid)
+        central_atom_name_with_uuid = self.get_atom_name_with_uuid(
+            self.current_central_atom_name
+        )
+        self.plotter.add_mesh(
+            center,
+            color=self.current_central_atom_color,
+            point_size=32,
+            render_points_as_spheres=True,
+            name=central_atom_name_with_uuid,
+        )
 
         current_datablock = pv.MultiBlock(self._current_noncentral_data)
 
@@ -652,11 +727,24 @@ class DatasetWidget(QWidget):
             for block in current_datablock.keys():
                 # append uuid to atom name, so that each tab has unique actor names
                 block_with_uuid = self.get_atom_name_with_uuid(block)
-                self.plotter.add_mesh(current_datablock[block], color=self.current_atom_colors[block], point_size=point_size, render_points_as_spheres = True, name=block_with_uuid)
+                self.plotter.add_mesh(
+                    current_datablock[block],
+                    color=self.current_atom_colors[block],
+                    point_size=point_size,
+                    render_points_as_spheres=True,
+                    name=block_with_uuid,
+                )
 
         elif self.cmap_radio.isChecked():
             prop = self.current_selected_property
             for block in current_datablock.keys():
                 block_with_uuid = self.get_atom_name_with_uuid(block)
                 current_datablock[block][prop] = self.current_errors_list
-                self.plotter.add_mesh(current_datablock[block], scalars=prop, cmap="jet", point_size=point_size, render_points_as_spheres=True, name = block_with_uuid)
+                self.plotter.add_mesh(
+                    current_datablock[block],
+                    scalars=prop,
+                    cmap="jet",
+                    point_size=point_size,
+                    render_points_as_spheres=True,
+                    name=block_with_uuid,
+                )

@@ -16,10 +16,16 @@ import pyvista as pv
 os.environ["QT_API"] = "pyqt5"
 
 
-def open_file_dialog(name="Select xyz file", default_folder=str(Path.cwd()), files_to_look_for="All Files (*);;XYZ files (*.xyz)"):
+def open_file_dialog(
+    name="Select xyz file",
+    default_folder=str(Path.cwd()),
+    files_to_look_for="All Files (*);;XYZ files (*.xyz)",
+):
 
     # can select multiple names
-    file_list, _ = QtWidgets.QFileDialog.getOpenFileNames(None, name, default_folder, files_to_look_for)
+    file_list, _ = QtWidgets.QFileDialog.getOpenFileNames(
+        None, name, default_folder, files_to_look_for
+    )
 
     # if there were files selected and list if not empty
     if file_list:
@@ -30,7 +36,6 @@ def open_file_dialog(name="Select xyz file", default_folder=str(Path.cwd()), fil
 
 
 class MainWindow(QtWidgets.QMainWindow):
-
     def __init__(self):
 
         super().__init__()
@@ -49,8 +54,12 @@ class MainWindow(QtWidgets.QMainWindow):
         # initialize tab widget to 0th tab and connect tab clicked to slot
         self.tab_widget.tabBarClicked.connect(self.tab_bar_clicked)
         # tabs are closable (set in .ui file), but remove close button from the "+" tab by adding two 0-sized widgets on either side
-        self.tab_widget.tabBar().setTabButton(0, QtWidgets.QTabBar.RightSide, QtWidgets.QWidget().resize(0, 0))
-        self.tab_widget.tabBar().setTabButton(0, QtWidgets.QTabBar.LeftSide, QtWidgets.QWidget().resize(0, 0))
+        self.tab_widget.tabBar().setTabButton(
+            0, QtWidgets.QTabBar.RightSide, QtWidgets.QWidget().resize(0, 0)
+        )
+        self.tab_widget.tabBar().setTabButton(
+            0, QtWidgets.QTabBar.LeftSide, QtWidgets.QWidget().resize(0, 0)
+        )
         # connect close signal to slot
         self.tab_widget.tabCloseRequested.connect(self.close_tab)
 
@@ -112,8 +121,16 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             widget = self.tab_widget.widget(current_tab_index).findChild(DatasetWidget)
             center = pv.PolyData(widget.center)
-            central_atom_name_with_uuid = widget.get_atom_name_with_uuid(widget.current_central_atom_name)
-            widget.plotter.add_mesh(center, color=widget.current_central_atom_color, point_size=32, render_points_as_spheres=True, name=central_atom_name_with_uuid)
+            central_atom_name_with_uuid = widget.get_atom_name_with_uuid(
+                widget.current_central_atom_name
+            )
+            widget.plotter.add_mesh(
+                center,
+                color=widget.current_central_atom_color,
+                point_size=32,
+                render_points_as_spheres=True,
+                name=central_atom_name_with_uuid,
+            )
 
     def close_tab(self, index: int):
         """ Closes a given tab, or if the final tab is being closed, close the application. Make sure to clear the plot of actors that were
@@ -132,7 +149,7 @@ class MainWindow(QtWidgets.QMainWindow):
             widget.remove_all_plotted_atoms()
             self.tab_widget.removeTab(index)
             if self.tab_widget.currentIndex() == self.last_tab_index:
-                self.tab_widget.setCurrentIndex(self.last_tab_index-1)
+                self.tab_widget.setCurrentIndex(self.last_tab_index - 1)
 
     def grid_status(self):
         """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""

@@ -2,6 +2,7 @@
 # Initial Setup and Connect QObjects signals to slots
 #####################################################
 
+
 def _start_atom_center_and_property_settings(self):
     """ Sets up the atom center and property combo boxes in the Atom Center and Property Settings GroupBox. These define what data is going to be
     available for plotting, so they must be initialized before everything else relating to plotting."""
@@ -11,7 +12,9 @@ def _start_atom_center_and_property_settings(self):
     # initializing the property names for which cmap can be plotted
     if self.cmap_properties:
         self.properties_cmap_combo_box.addItems(self.cmap_properties)
-        self.properties_cmap_combo_box.currentIndexChanged.connect(self.update_property_and_plot)
+        self.properties_cmap_combo_box.currentIndexChanged.connect(
+            self.update_property_and_plot
+        )
     else:
         self.properties_cmap_combo_box.setEnabled(False)
         self.cmap_radio.setEnabled(False)
@@ -31,7 +34,9 @@ def _start_coloring_settings(self):
     self.random_colors_radio.clicked.connect(self.use_random_colors)
     self.default_atom_colors_radio.clicked.connect(self.use_default_colors)
     self.cmap_radio.clicked.connect(self.use_cmap)
-    self.central_atom_color_for_all_radio.clicked.connect(self.central_atom_color_for_all)
+    self.central_atom_color_for_all_radio.clicked.connect(
+        self.central_atom_color_for_all
+    )
 
 
 def _start_points_settings(self):
@@ -53,13 +58,19 @@ def _start_points_settings(self):
 
     # set up slider values by which to index the dataset
     self.individual_point_slider.setMinimum(0)  # 0 is the first timestep
-    self.individual_point_slider.setMaximum(self.n_timesteps - 1)  # need to index starting at 0, so subtract 1
+    self.individual_point_slider.setMaximum(
+        self.n_timesteps - 1
+    )  # need to index starting at 0, so subtract 1
     # set up the box that shows what index we are currently on
     self.individual_point_box.setText(f"{self.individual_point_slider.value()}")
     # on editing the value of this box, we can update the slider (which then updates the individual point that is plotted)
     self.plot_individual_point_radio.clicked.connect(self.enable_plot_individual_points)
-    self.individual_point_box.editingFinished.connect(self.update_individual_point_slider_value_with_box)
-    self.individual_point_slider.valueChanged.connect(self.update_individual_point_slider_status_and_box)
+    self.individual_point_box.editingFinished.connect(
+        self.update_individual_point_slider_value_with_box
+    )
+    self.individual_point_slider.valueChanged.connect(
+        self.update_individual_point_slider_status_and_box
+    )
 
     # by default the individual point widget is disabled (as the default radio button is the Plot All Points instead of Individual Point)
     self.individual_points_widget.setEnabled(False)

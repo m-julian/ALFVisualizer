@@ -33,13 +33,9 @@ class Trajectory(ListOfAtoms):
                     atoms.properties_error = ast.literal_eval(properties_error)
                 while len(atoms) < natoms:
                     line = next(f)
-                    if re.match(
-                        r"\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line
-                    ):
+                    if re.match(r"\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line):
                         atom_type, x, y, z = line.split()
-                        atoms.add(
-                            Atom(atom_type, float(x), float(y), float(z))
-                        )
+                        atoms.add(Atom(atom_type, float(x), float(y), float(z)))
                 self.add(atoms)
                 atoms = Atoms()
 
@@ -85,7 +81,7 @@ class Trajectory(ListOfAtoms):
     def properties_error(self) -> List:
         """returns a list of energies as read in from the .xyz file comment line.
         This is used to plot colormaps of the whole trajectory to see any points which produce poor results."""
-        if hasattr(self[0], 'properties_error'):
+        if hasattr(self[0], "properties_error"):
             return [timesteps.properties_error for timesteps in self]
         # if no energy/errors have been read in this needs to return None because it is used in the GUI class __int__
         else:

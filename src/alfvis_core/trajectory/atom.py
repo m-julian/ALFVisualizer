@@ -189,7 +189,7 @@ class Atom:
     def alf_index(self):
         """Returns a list containing the index of the central atom, the x-axis atom, and the xy-plane atom.
         These indeces are what are used in python lists (as they start at 0)."""
-        return [i+1 for i in self.alf]
+        return [i + 1 for i in self.alf]
 
     @property
     def features(self) -> np.ndarray:
