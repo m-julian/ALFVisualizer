@@ -456,8 +456,8 @@ class DatasetWidget(QWidget):
         """ Enable plot individual points widget and also sets colors to default"""
 
         # `checked` method is used to connect to slot, but `checked` does not call the connected method automatically (since it requires user input to call it)
-        self.default_atom_colors_radio.setChecked(True)
-        self.use_default_colors()
+        # self.default_atom_colors_radio.setChecked(True)
+        # self.use_default_colors()
         # enable individual point widget and plot individual point data
         self.individual_points_widget.setEnabled(True)
         self.update_individual_point_slider_status_and_box()
@@ -639,15 +639,23 @@ class DatasetWidget(QWidget):
 
         current_datablock = pv.MultiBlock(self._current_noncentral_data)
 
+        # default point size
+        point_size = 12
+
         if not self.cmap_radio.isChecked():
+
+            # make points larger for individual points to see easier against other datasets
+            if self.plot_individual_point_radio.isChecked():
+                point_size = 18
+
             for block in current_datablock.keys():
                 # append uuid to atom name, so that each tab has unique actor names
                 block_with_uuid = self.uuid + "-" + block
-                self.plotter.add_mesh(current_datablock[block], color=self.current_atom_colors[block], point_size=12, render_points_as_spheres=True, name=block_with_uuid)
+                self.plotter.add_mesh(current_datablock[block], color=self.current_atom_colors[block], point_size=point_size, render_points_as_spheres=True, name=block_with_uuid)
 
         elif self.cmap_radio.isChecked():
             prop = self.current_selected_property
             for block in current_datablock.keys():
                 block_with_uuid = self.uuid + "-" + block
                 current_datablock[block][prop] = self.current_errors_list
-                self.plotter.add_mesh(current_datablock[block], scalars=prop, cmap="jet", point_size=15, render_points_as_spheres=True, name=block_with_uuid)
+                self.plotter.add_mesh(current_datablock[block], scalars=prop, cmap="jet", point_size=point_size, render_points_as_spheres=True, name=block_with_uuid)

@@ -164,6 +164,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Hide the orientation axes"""
         self.plotter.hide_axes_all()
 
+
 if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
