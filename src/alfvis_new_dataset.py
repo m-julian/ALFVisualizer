@@ -258,7 +258,7 @@ class DatasetWidget(QWidget):
 
     @property
     def atom_names_with_uuid(self):
-        return [self.uuid + "-" + atom_name for atom_name in self.atom_names]
+        return [self.get_atom_name_with_uuid(atom_name) for atom_name in self.atom_names]
 
     @property
     def current_central_atom_name(self) -> str:
@@ -626,6 +626,7 @@ class DatasetWidget(QWidget):
             self.current_atom_colors[f"{self.sender().text()}"] = color.name()
             self.saved_atom_colors[f"{self.sender().text()}"] = color.name()
 
+            # can call self.plot_updated data here instead as well
             rbg_val = hex_to_rgb(color.name())
             self.actors[self.get_atom_name_with_uuid(self.sender().text())].GetProperty().SetColor(rbg_val)
             self.renderer.Modified()
@@ -646,16 +647,16 @@ class DatasetWidget(QWidget):
 
             # make points larger for individual points to see easier against other datasets
             if self.plot_individual_point_radio.isChecked():
-                point_size = 18
+                point_size = 20
 
             for block in current_datablock.keys():
                 # append uuid to atom name, so that each tab has unique actor names
-                block_with_uuid = self.uuid + "-" + block
-                self.plotter.add_mesh(current_datablock[block], color=self.current_atom_colors[block], point_size=point_size, render_points_as_spheres=True, name=block_with_uuid)
+                block_with_uuid = self.get_atom_name_with_uuid(block)
+                self.plotter.add_mesh(current_datablock[block], color=self.current_atom_colors[block], point_size=point_size, render_points_as_spheres = True, name=block_with_uuid)
 
         elif self.cmap_radio.isChecked():
             prop = self.current_selected_property
             for block in current_datablock.keys():
-                block_with_uuid = self.uuid + "-" + block
+                block_with_uuid = self.get_atom_name_with_uuid(block)
                 current_datablock[block][prop] = self.current_errors_list
-                self.plotter.add_mesh(current_datablock[block], scalars=prop, cmap="jet", point_size=point_size, render_points_as_spheres=True, name=block_with_uuid)
+                self.plotter.add_mesh(current_datablock[block], scalars=prop, cmap="jet", point_size=point_size, render_points_as_spheres=True, name = block_with_uuid)
