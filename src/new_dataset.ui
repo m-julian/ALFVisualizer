@@ -226,9 +226,9 @@ border-width:2px</string>
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="cmap_radio">
+             <widget class="QRadioButton" name="central_atom_color_for_all_radio">
               <property name="text">
-               <string>Cmap for Selected Property</string>
+               <string>Central Atom Color for All</string>
               </property>
               <attribute name="buttonGroup">
                <string notr="true">color_settings_button_group</string>
@@ -236,9 +236,9 @@ border-width:2px</string>
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="central_atom_color_for_all_radio">
+             <widget class="QRadioButton" name="cmap_radio">
               <property name="text">
-               <string>Central Atom Color for All</string>
+               <string>Cmap for Selected Property</string>
               </property>
               <attribute name="buttonGroup">
                <string notr="true">color_settings_button_group</string>
