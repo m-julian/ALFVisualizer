@@ -6,8 +6,8 @@ Make sure to run the script when you are in the src directory because it uses re
 
 Energies can also be read in from the comment line in the xyz file. If they are read in, a cmap checkbox can be ticked which displays a colormap of the enrgies.
 
-# The main files are ALFVisualizer.py and ALFVisualizer.ui
-The python code to calculate features and use pyvista is in the .py file and the actual ui is in the .ui file. The .ui file can be opened with Qt Designer.
+# The main files are alfvis_main_window.py, alfvis_new_dataset.py, main_window.ui, new_dataset.ui
+The python code to calculate features and use pyvista is in the .py files and the actual ui is in the .ui file. The .ui file can be opened with Qt Designer.
 The .ui file can also be converted to a python file if needed for some reason (currently it is loaded as the .ui file directly). This .ui file should ***not** be
 changed manually, it is much easier to do it in Qt Designer.
 
@@ -34,39 +34,47 @@ Make sure the .xyz file you are reading in is in the form like
   H        -2.5634208124        2.9987283195       -0.3349821297
 ```
 
-If you want energies to be read in, add them to the comment line as floats. This enables the cmap checkbox.
+If you want energies to be read in, add them to the comment line. This enables the cmap checkbox. ICHOR. can be used to produce these.
 
 ```
-       6
- i =        0        energy = 2.143
-  C        -2.2784429253        0.3764716548        0.0613600732
-  H        -1.1673363228        0.3433523315        0.0589783963
-  O        -2.7413739998        1.2129700870       -0.9589752442
-  H        -2.6620523911        0.7204890516        1.0463251752
-  H        -2.6560170817       -0.6512416081       -0.1176831528
-  H        -2.3804869890        2.1150657510       -0.7572121286
-       6
- i =        1   energy = 2.675
-  C        -2.2863781387        0.3834087333        0.0531928455
-  H        -1.1942737791        0.3301522963        0.0224285724
-  O        -2.7366005255        1.2110852658       -0.9560297206
-  H        -2.6062423767        0.7046732375        1.0558981292
-  H        -2.6462066446       -0.6636062224       -0.0697004711
-  H        -2.3946286419        2.1003419571       -0.7288986971
-       6
- i =        2   energy = 2.9035
-  C        -2.2939466970        0.3894321047        0.0456932982
-  H        -1.2146859241        0.3150121443       -0.0104391934
-  O        -2.7315553621        1.2091993502       -0.9540227847
-  H        -2.5510984567        0.6896104431        1.0693639362
-  H        -2.6378315944       -0.6723766313       -0.0245673363
-  H        -2.4098627840        2.0863041759       -0.7030934029
+    6
+i = 0 energy = {'iqa': {'H3': 0.48027911613971774, 'H5': 0.47734247998413054, 'O1': 0.29983578701175284, 'H6': 0.09937493248939769, 'O4': 0.07082311741183128, 'H2': 0.22618446822119234}}
+O       0.00000000       0.00000000       0.00000000
+H       0.96866215       0.00000000       0.00000000
+H      -0.21396297       0.95285364       0.00000000
+O       2.37921807      -1.16204804       2.04465958
+H       2.95606298      -0.43589128       1.73318650
+H       2.52677782      -0.91462853       2.97013203
+    6
+i = 1 energy = {'iqa': {'H3': 0.4198285614026961, 'H5': 0.05832058887803903, 'O1': 0.22788361203798477, 'H6': 0.5002542116818383, 'O4': 0.23284171959681865, 'H2': 0.22398961267328132}}
+O       0.00000000       0.00000000       0.00000000
+H       0.95381396       0.00000000       0.00000000
+H      -0.19592956       0.97745489       0.00000000
+O      -1.89713263      -0.36202378      -2.39431016
+H      -1.94689270       0.11818630      -3.26952905
+H      -1.15816150       0.14088836      -1.97281205
+    6
+i = 2 energy = {'iqa': {'H3': 0.28074079927317536, 'H5': 0.4820170993604812, 'O1': 1.4112608315118447, 'H6': 0.006834997985553248, 'O4': 0.4913517298278406, 'H2': 0.7228575583622224}}
+O       0.00000000       0.00000000       0.00000000
+H       0.98006036       0.00000000       0.00000000
+H      -0.30104042       0.90913852       0.00000000
+O       2.56651027      -1.12459474       0.96314789
+H       2.02373754      -0.60403459       1.55577750
+H       2.75109967      -1.85091601       1.56052776
 ```
+
+# Loading in Data
+Data can either be loaded when `alfvis_main_window.py` is launched or once the application is launched, a new tab can be opened with the `+` tab and a new
+dataset can be selected.
 
 # Options
-- Default Colors: Plot atoms with default colors, can still change individual atom colors using color box. Useful to have in cause you want to highlight a specific atom.
+- Random Colors: Plot atoms with random colors
+- Default Colors: Plot atoms with default colors
 - Plot Cmap: If energies are read in from the .xyz file, this makes a cmap of all the plotted points (so can be used to plot energies/multipoles or model predictions).
 - Plot Individual Point: Only 1 points is displayed at a time. Use the slider or write in box to go to specific point. Starts from 0. This cannot be used with cmap.
+Note that the color boxes can be used to change the color of the separate atoms, however these will **not** be saved if you choose another color setting.
+- Remove/show some atoms using checkboxes for every atom.
+- Ability to load in multiple datasets at once (which will be shown overlapping on one pyvista plot).
 
 # Installation
 if you are not making an enviroment with the requirements.txt file packages, you can instead run
@@ -81,3 +89,6 @@ after which
 ```
 
 This installs all the needed packages (such as pyqt and Qt5).
+
+# Developer
+Yulian Manchev, yulian.manchev@postgrad.manchester.ac.uk
