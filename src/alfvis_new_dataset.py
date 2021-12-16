@@ -11,6 +11,7 @@ from alfvis_core.constants import random_colors, default_atom_colors
 from alfvis_core.start_alf_vis import _start_alf_vis_ui
 from pathlib import Path
 from uuid import uuid4
+import random
 
 # ##############################################################################
 #                               XYZ FILE PARSING
@@ -225,10 +226,8 @@ class DatasetWidget(QWidget):
             else None
         )
 
-        # current colors used for atoms
-        self.current_atom_colors = dict(zip(atom_names, random_colors))
-        # a saved list (in case the default colors was used and then reverted)
-        self.saved_atom_colors = dict(zip(atom_names, random_colors))
+        # start random colors for atoms
+        self.current_atom_colors = dict(zip(atom_names, random.choices(random_colors, k=self.n_atoms)))
 
         # used in initializing values for slider, atom selecter, and atom color parts, and grid
         self.checkboxes = None
@@ -297,6 +296,10 @@ class DatasetWidget(QWidget):
         return [
             self.get_atom_name_with_uuid(atom_name) for atom_name in self.atom_names
         ]
+
+    @property
+    def n_atoms(self):
+        return len(self.atom_names)
 
     @property
     def current_central_atom_name(self) -> str:
@@ -434,8 +437,8 @@ class DatasetWidget(QWidget):
 
         # enable color area (if previous selected option was cmap)
         self.atom_color_scroll_area.setEnabled(True)
-        # use saved atom colors here if user has changed colors
-        self.current_atom_colors = self.saved_atom_colors
+
+        self.current_atom_colors = dict(zip(self.atom_names, random.choices(random_colors, k=self.n_atoms)))
 
         for atom_name, button in self.color_buttons_dict.items():
             button.setStyleSheet(
@@ -689,7 +692,6 @@ class DatasetWidget(QWidget):
                 f"background-color : {color.name()}; color: {color.name()};"
             )
             self.current_atom_colors[f"{self.sender().text()}"] = color.name()
-            self.saved_atom_colors[f"{self.sender().text()}"] = color.name()
 
             # can call self.plot_updated data here instead as well
             rbg_val = hex_to_rgb(color.name())
