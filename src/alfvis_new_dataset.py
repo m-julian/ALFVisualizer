@@ -227,7 +227,9 @@ class DatasetWidget(QWidget):
         )
 
         # start random colors for atoms
-        self.current_atom_colors = dict(zip(atom_names, random.choices(random_colors, k=self.n_atoms)))
+        self.current_atom_colors = dict(
+            zip(atom_names, random.choices(random_colors, k=self.n_atoms))
+        )
 
         # used in initializing values for slider, atom selecter, and atom color parts, and grid
         self.checkboxes = None
@@ -438,7 +440,9 @@ class DatasetWidget(QWidget):
         # enable color area (if previous selected option was cmap)
         self.atom_color_scroll_area.setEnabled(True)
 
-        self.current_atom_colors = dict(zip(self.atom_names, random.choices(random_colors, k=self.n_atoms)))
+        self.current_atom_colors = dict(
+            zip(self.atom_names, random.choices(random_colors, k=self.n_atoms))
+        )
 
         for atom_name, button in self.color_buttons_dict.items():
             button.setStyleSheet(
