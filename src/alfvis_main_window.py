@@ -1,19 +1,21 @@
-from PyQt5.QtWidgets import QWidget
+from qtpy.QtGui import QIcon
 from qtpy import QtWidgets
+from qtpy import uic
+from pyvistaqt import QtInteractor
 import os
 import sys
 from pathlib import Path
-from qtpy import uic
-from pyvistaqt import QtInteractor
 from alfvis_new_dataset import DatasetWidget
 from typing import List
-from alfvis_core.useful_funcs import parse_color
 import pyvista as pv
 
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
 # http://qtdocs.pyvista.org/usage.html
 os.environ["QT_API"] = "pyqt5"
+
+APPNAME = "ALF Visualizer V2"
+APPICON = str((Path(__file__).parent / "alf_vis_water.png").absolute())
 
 
 def open_file_dialog(
@@ -41,8 +43,11 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
 
         # load in ui to be able to access attributes (open .ui file in QtDesigner for names)
-        ui_path = Path.cwd() / "main_window.ui"
+        ui_path = Path(__file__).parent.absolute() / "main_window.ui"
         uic.loadUi(ui_path.absolute(), self)
+
+        self.setWindowIcon(QIcon(APPICON))
+        self.setWindowTitle(APPNAME)
 
         # add the pyvista interactor into the pyvista part of the GUI
         self.plotter = QtInteractor(self.pyvista_part)
@@ -186,6 +191,7 @@ class MainWindow(QtWidgets.QMainWindow):
 if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
+
     xyz_file_list = open_file_dialog()
     # make instance of main window to be shown
     main_window = MainWindow()
