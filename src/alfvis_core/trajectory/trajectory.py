@@ -28,7 +28,7 @@ class Trajectory(ListOfAtoms):
                     natoms = int(line)
                     continue
                 # this is the comment line that can contain extra info
-                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*energy", line):
+                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*properties_error", line):
                     properties_error = line.split("=")[-1].strip()
                     atoms.properties_error = ast.literal_eval(properties_error)
                 while len(atoms) < natoms:
