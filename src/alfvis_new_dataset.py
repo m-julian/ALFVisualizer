@@ -240,7 +240,7 @@ class DatasetWidget(QWidget):
         self.uuid = str(uuid4())
 
         # load in ui
-        ui_path = Path.cwd() / "new_dataset.ui"
+        ui_path = Path(__file__).parent.absolute() / "new_dataset.ui"
         uic.loadUi(ui_path, self)
         # initialize what is being plotted
         self._initialize_alf_vis_ui()
