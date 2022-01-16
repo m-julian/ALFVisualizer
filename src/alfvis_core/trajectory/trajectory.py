@@ -22,6 +22,7 @@ class Trajectory(ListOfAtoms):
         with open(self.path, "r") as f:
             atoms = Atoms()
             for line in f:
+                # print(f"for loop line, {line.rstrip()}")
                 if not line.strip():
                     continue
                 elif re.match(r"^\s*\d+$", line):
@@ -31,11 +32,13 @@ class Trajectory(ListOfAtoms):
                 elif re.match(r"^\s*?i\s*?=\s*?\d+\s*properties_error", line):
                     properties_error = line.split("=")[-1].strip()
                     atoms.properties_error = ast.literal_eval(properties_error)
-                while len(atoms) < natoms:
-                    line = next(f)
-                    if re.match(r"\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line):
+                    continue
+                for _ in range(natoms):
+                    if re.match(r"^\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line):
                         atom_type, x, y, z = line.split()
                         atoms.add(Atom(atom_type, float(x), float(y), float(z)))
+                    # add a default return value so StopIteration is not raised here at the end of a file
+                    line = next(f, "")
                 self.add(atoms)
                 atoms = Atoms()
 
