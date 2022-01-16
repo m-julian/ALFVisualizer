@@ -437,6 +437,9 @@ class DatasetWidget(QWidget):
     def use_random_colors(self):
         """sets random colors for atoms and plots updated data"""
 
+        # enable individual points if cmap was used previously
+        self.plot_individual_point_radio.setEnabled(True)
+
         # enable color area (if previous selected option was cmap)
         self.atom_color_scroll_area.setEnabled(True)
 
@@ -454,6 +457,9 @@ class DatasetWidget(QWidget):
     def use_default_colors(self):
         """ sets default colors for atoms and plots updated data"""
 
+        # enable individual points if cmap was used previously
+        self.plot_individual_point_radio.setEnabled(True)
+
         # enable color area (if previous selected option was cmap)
         self.atom_color_scroll_area.setEnabled(True)
         self.current_atom_colors = self.default_atom_colors
@@ -469,6 +475,8 @@ class DatasetWidget(QWidget):
         """ Plots all points (because we plot cmap for all points) and enables cmap with cmap bar."""
         # enable the plot all points radiobutton, because we are using `clicked`, this will not call `plot_all_points` automatically
         self.plot_all_points_radio.setChecked(True)
+        # disable the individual points as they cannot be plotted when using cmap
+        self.plot_individual_point_radio.setEnabled(False)
         # plot_all_points calls plot_updated_data
         self.plot_all_points()
         self.atom_color_scroll_area.setEnabled(False)
@@ -477,7 +485,10 @@ class DatasetWidget(QWidget):
 
     def central_atom_color_for_all(self):
 
+        # enable the atom color area if that was disabled previously with cmap
         self.atom_color_scroll_area.setEnabled(True)
+        # enable individual points if cmap was used previously
+        self.plot_individual_point_radio.setEnabled(True)
 
         for atom_name in list(self.current_atom_colors.keys()):
             self.current_atom_colors[atom_name] = self.current_central_atom_color
