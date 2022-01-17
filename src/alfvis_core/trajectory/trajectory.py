@@ -8,7 +8,7 @@ from .atom import Atom
 from .file_state import FileState
 import ast
 
-
+# TODO: perhaps add the File and PathObject classes from ichor to here, but it is not necessary
 class Trajectory(ListOfAtoms):
     """Handles .xyz files that have multiple timesteps, with each timestep giving the x y z coordinates of the
     atoms."""
@@ -19,30 +19,39 @@ class Trajectory(ListOfAtoms):
         self.path = path
 
     def _read_file(self):
-        with open(self.path, "r") as f:
-            atoms = Atoms()
-            for line in f:
-                # print(f"for loop line, {line.rstrip()}")
-                if not line.strip():
-                    continue
-                elif re.match(r"^\s*\d+$", line):
-                    natoms = int(line)
-                    continue
-                # this is the comment line that can contain extra info
-                elif re.match(r"^\s*?i\s*?=\s*?\d+\s*properties_error", line):
-                    properties_error = line.split("=")[-1].strip()
-                    atoms.properties_error = ast.literal_eval(properties_error)
-                    continue
-                for _ in range(natoms):
-                    if re.match(r"^\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line):
-                        atom_type, x, y, z = line.split()
-                        atoms.add(Atom(atom_type, float(x), float(y), float(z)))
-                    # add a default return value so StopIteration is not raised here at the end of a file
-                    line = next(f, "")
-                self.add(atoms)
-                atoms = Atoms()
 
-        self.state = FileState.Read
+        with open(self.path, "r") as f:
+
+            # make empty Atoms instance in which to store one timestep
+            atoms = Atoms()
+
+            for line in f:
+
+                # match the line containing the number of atoms in timestep
+                if re.match(r"^\s*\d+$", line):
+                    natoms = int(line)
+
+                    # this is the comment line of xyz files. It can be empty or contain some useful information that can be stored.
+                    line = next(f)
+
+                    # if the comment line properties errors, we can store these
+                    if re.match(r"^\s*?i\s*?=\s*?\d+\s*properties_error", line):
+                        properties_error = line.split("=")[-1].strip()
+                        atoms.properties_error = ast.literal_eval(properties_error)
+
+                    # the next line after the comment line is where coordinates begin
+                    for _ in range(natoms):
+                        line = next(f)
+                        if re.match(r"^\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line):
+                            atom_type, x, y, z = line.split()
+                            atoms.add(Atom(atom_type, float(x), float(y), float(z)))
+
+                    # add the Atoms instance to the Trajectory instance
+                    self.add(atoms)
+                    # make new Atoms instance where next timestep can be stored
+                    atoms = Atoms()
+
+            self.state = FileState.Read
 
     @property
     def filetype(self) -> str:
@@ -158,3 +167,13 @@ class Trajectory(ListOfAtoms):
         if self.state is not FileState.Read:
             self._read_file()
         return super().__len__()
+
+    def __repr__(self) -> str:
+        """ Make a repr otherwise doing print(trajectory_instance) will print out an empty list if the trajectory attributes have not been accessed yet,
+        due to how how the files are being parsed using PathObject/File classes."""
+        return (
+            f"class {self.__class__}\n"
+            f"xyz_file: {self.path or None}\n"
+            f"atom_names: {self.atom_names}\n"
+            f"trajectory_coordinates_shape (n_timesteps, n_atoms, 3): {self.coordinates.shape}\n"
+        )
