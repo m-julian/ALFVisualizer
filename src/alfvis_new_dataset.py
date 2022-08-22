@@ -3,185 +3,17 @@ from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtWidgets import QWidget
 import pyvista as pv
 from qtpy import uic
-from alfvis_core import Trajectory
+from alfvis_core.trajectory import ALFVisTrajectory
 from typing import List, Tuple, Dict, Union
 import numpy as np
 import string
 from alfvis_core.constants import random_colors, default_atom_colors
 from alfvis_core.start_alf_vis import _start_alf_vis_ui
+from ichor.core.calculators import calculate_alf_atom_sequence, calculate_alf_features, alf_features_to_coordinates
+from ichor.core.atoms import ALF
 from pathlib import Path
 from uuid import uuid4
 import random
-
-# ##############################################################################
-#                               XYZ FILE PARSING
-# TAKES .XYZ TRAJECTORY FILE AND CALCULATES FEATURES OF EACH ATOM IN EACH POINT
-###############################################################################
-
-
-def features_and_atom_names(xyz_file: str) -> Tuple[np.ndarray, List, List, Dict]:
-    """ Returns features as 3D array, [atom][point][feature]
-    Example: 10 points water xyz file would have shape (3, 10, 3) where 3 is the number of atoms,
-    10 is the number of points, and 3 is the number of features
-
-    :param xyz_file: An xyz file format file that contain trajectory information
-    """
-
-    trajectory = Trajectory(xyz_file)
-    features = trajectory.features  # features[point][atom][feature]
-    features = np.swapaxes(features, 0, 1)  # features[atom][point][feature]
-
-    atom_names = trajectory[0].atom_names
-    numbered_priorities = trajectory.priorities
-    # map the numbered priorities to actual names of atoms
-    atom_name_priorities = [
-        list(map(lambda i: atom_names[i], prio)) for prio in numbered_priorities
-    ]
-    for atom_name_prio in atom_name_priorities:
-        del atom_name_prio[
-            0
-        ]  # removing central atom which is not going to be present in the 3D xyz array used in plotting
-        # only non-central atoms are in this array in order x_axis atom, xyz_plane atom, followed by atoms that were in spherical polar coords
-
-    # Indeces of this ALF start from 1 (as in the actual atom names, i.e. C1, H2, etc.). It DOES NOT start at 0.
-    atomic_local_frame_dict = dict(zip(atom_names, trajectory.alf_index.tolist()))
-
-    errors_for_properties = (
-        trajectory.properties_error
-    )  # dictionary of errors for each property
-
-    return (
-        features,
-        atom_names,
-        atom_name_priorities,
-        atomic_local_frame_dict,
-        errors_for_properties,
-    )
-
-
-##############################################################################################
-#                     CREATING 4D ARRAY TO PLOT, SHAPE shape (N_atoms, N_atoms-1, N_points, 3)
-#
-##############################################################################################
-
-
-class XYZArrays:
-
-    """ Class for converting to Cartesian space.
-    Creates a 3D array for each atom on which the ALF is centered (1 4D array total). Each 2D array in the 3D array
-    consists of N_pointsx3 (because each point has x,y,z coords in 3D space) matrices, where each matrix contains
-    the xyz coordinates of every atom that is NOT the atom on which the ALF is centered."""
-
-    def __init__(self, all_atom_features: np.ndarray):
-
-        self.n_atoms, self.n_points, self.n_features = all_atom_features.shape
-        self.all_atom_4d_array = self.stack_one_atom_xyz_3D_arrays(all_atom_features)
-
-    def stack_one_atom_xyz_3D_arrays(self, all_atom_features):
-        """Iterates over all the atoms in the molecule. Every atom can be used as center for ALF.
-        Stacks together 3D array for xy plane atoms, as well as 3D array that defines rest of atoms
-        in xyz coordinates.
-
-        Returns all_atom_4D_array , a 4D array of shape (N_atoms, N_atoms-1, N_points, 3)
-        If an atom is the ALF center, all other atoms have to be represented as xyz coordinates (thus the N_atoms-1)
-        Every point for all other atoms has x, y, and z coordinates (so this is there the 3 comes in)
-
-        Example: Methanol has 6 atoms, when an atom is used as the ALF center only 5 atoms remain to be expressed
-        as xyz coordinates. These atoms have n number of points (number of timesteps in trajectory .xyz file), with
-        each point having x,y,z coordinates."""
-
-        all_other_atom_3D_arrays = []
-
-        for one_atom_features in all_atom_features:
-
-            # xy_atom_3d_array, and polar_atoms_3d_array are both 3D atom arrays
-            # (xy_atom_matrix is 2xN_pointsx3, and polar atom matrix
-            # is of shape N_remaining_atomsxN_pointsx3 where N remaining atoms is N_atoms-3)
-
-            xy_atom_3d_array = self.get_xy_plane_atom_3d_array(one_atom_features)
-
-            # only add polar atoms if there are over 3 atoms in system
-            if self.n_atoms > 3:
-                polar_atoms_3d_array = self.get_polar_atom_3d_array(one_atom_features)
-                # so now we stack these matrices into one 3D array that is the xyz coordinates
-                # for all atoms OTHER than the atom on which the ALF is centered,
-                # shape ((2+N_remaining_atoms),N_points,3)
-                one_atom_total_array = np.concatenate(
-                    (xy_atom_3d_array, polar_atoms_3d_array), axis=0
-                )
-                all_other_atom_3D_arrays.append(one_atom_total_array)
-            else:
-                one_atom_total_array = xy_atom_3d_array
-                all_other_atom_3D_arrays.append(one_atom_total_array)
-
-        # finally we can stack these 3D arrays into one 4D array, which will contain all the info needed
-        # for plotting every atom as the ALF center. This 4D array will be stored and then if can be used
-        # to quickly remove/add atoms in the visualization
-        all_atom_4d_array = np.stack([i for i in all_other_atom_3D_arrays])
-
-        return all_atom_4d_array
-
-    def get_xy_plane_atom_3d_array(self, one_atom):
-
-        """ Input: Takes in one atom feature matrix.
-        Takes first three features for one atom and gives xyz coordinates of the two atoms used to define the x-axis, and the
-        xy plane respectively
-        """
-
-        # gives an n_pointx1 vector of bond 1 lengths, need to convert to matrix with xyz coordinates (n_pointsx3)
-        # y and z dimension are always 0s
-        tmp_bond1 = one_atom[:, [0]]
-        z = np.zeros((tmp_bond1.shape[0], 2), dtype=tmp_bond1.dtype)
-        bond1 = np.concatenate((tmp_bond1, z), axis=1)
-
-        tmp_bond2 = one_atom[:, [1]]  # bond 2 length from features (n_pointsx1)
-        angle12 = one_atom[:, [2]]  # angle between bond1 and bond2 (n_pontsx1)
-        x_bond2 = np.multiply(np.cos(angle12), tmp_bond2)
-        y_bond2 = np.multiply(np.sin(angle12), tmp_bond2)
-        # z direction is always 0
-        z_bond2 = np.zeros((tmp_bond2.shape[0], 1), dtype=tmp_bond2.dtype)
-        bond2 = np.concatenate((x_bond2, y_bond2, z_bond2), axis=1)
-
-        bond1_bond2_matrix = np.stack((bond1, bond2), axis=0)
-
-        return bond1_bond2_matrix
-
-    def get_polar_atom_3d_array(self, one_atom):
-
-        """ Input: Takes in one atom feature matrix.
-        Every three features (after the first three features that define the xy plane) have a radius, theta, and
-        phi component that defines where an atom is in xyz coordinates
-        This method will return a 3D array of shape n_remaining_atoms, n_points, 3, wher 3 is because x,y,z coordinate
-        """
-
-        # firist three features account for 3 atoms (central atom, atom that defines x axis, and atom that defines
-        # xy plane. Therefore do not have to iterate over them)
-        n_remaining_atoms = self.n_atoms - 3
-        i, j, k = 3, 4, 5
-        xyz_atoms_list = []
-
-        for _ in range(n_remaining_atoms):
-
-            r_data = one_atom[:, [i]]  # vector of r distances (n_pointsx1)
-            theta_data = one_atom[:, [j]]  # vector of thetas (n_pointsx1)
-            phi_data = one_atom[:, [k]]  # vector of phis (n_pointsx1)
-            xx = np.multiply(np.multiply(r_data, np.sin(theta_data)), np.cos(phi_data))
-            yy = np.multiply(np.multiply(r_data, np.sin(theta_data)), np.sin(phi_data))
-            zz = np.multiply(r_data, np.cos(theta_data))
-            xyz_atom = np.concatenate(
-                (xx, yy, zz), axis=1
-            )  # an N_pointsx3 matrix (storing xyz info for one atom)
-            # polar_atoms_xyz = np.dstack((polar_atoms_xyz, xyz_atom), axis=2)
-            xyz_atoms_list.append(xyz_atom)
-
-            i += 3
-            j += 3
-            k += 3
-
-        polar_atoms_xyz_matrix = np.stack([i for i in xyz_atoms_list])
-
-        return polar_atoms_xyz_matrix
-
 
 #########################################################################
 #                       PYVISTA/ QT PLOTTING TOOL
@@ -196,39 +28,22 @@ class DatasetWidget(QWidget):
 
         super().__init__()
 
-        # errors_for_properties could be None in case no per-property data is read in from xyz comment line
-        (
-            all_atom_features,
-            atom_names,
-            atoms_names_priorities,
-            atomic_local_frame_dict,
-            errors_for_properties,
-        ) = features_and_atom_names(xyz_file)
-
+        # store xyz file from which features can be calculated
+        self.trajectory = ALFVisTrajectory(xyz_file)
+        # initialize alf
+        self.initial_alf_dict = self.trajectory.alf_dict(calculate_alf_atom_sequence)
         # list of atom names
-        self.atom_names: list = atom_names
-        # a list of lists which gives the full ALF of every atom (not just the central, x, xy atoms)
-        self.atoms_names_priorities: List[list] = atoms_names_priorities
-        # dict of key: central atom, val: list of ALF indeces
-        self.alf_dict: dict = atomic_local_frame_dict
-
-        # dictionary of dictionaries, ordered as  eg. {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
-        self.all_atom_dict = self.calculate_all_atom_dictionary(all_atom_features)
-
-        self.n_timesteps = all_atom_features.shape[1]
-        self._current_noncentral_data = self.all_atom_dict[atom_names[0]]
-
+        self.atom_names: list = self.trajectory.atom_names
         # errors_for_properties is a list of dictionaries. Each dictionary contains property errors for each atom. Could be None if data is not in xyz.
-        self.errors_for_properties = errors_for_properties
+        self.properties = self.trajectory.properties
         self.cmap_properties = (
-            errors_for_properties[0].keys()
-            if errors_for_properties is not None
+            self.properties.keys()
+            if self.properties is not None
             else None
         )
-
         # start random colors for atoms
         self.current_atom_colors = dict(
-            zip(atom_names, random.choices(random_colors, k=self.n_atoms))
+            zip(self.atom_names, random.choices(random_colors, k=self.n_atoms))
         )
 
         # used in initializing values for slider, atom selecter, and atom color parts, and grid
@@ -247,52 +62,6 @@ class DatasetWidget(QWidget):
         # initialize what is being plotted
         self._initialize_alf_vis_ui()
 
-    def calculate_all_atom_dictionary(self, all_atom_features):
-        """Returns a dictionary of dictonaries, with outer keys being the names of a central atom, eg. C1, H2, etc. The value corresponding to that outer key
-        is another dictionary containing the xyz coordinates of every non-central atom that needs to be plotted. The values of the inner dictionary is a 2d-array
-        of the positions of the non-central atoms for every timestep (shape n_timesteps x 3)
-
-        :param all_atom_features: numpy array of shape n_atoms x n_timesteps x n_features
-        :return: a dictonary of dictionaries containing the corresponding non-central data to plot for every central atom
-        :rtype: dict
-        """
-
-        system_as_xyz = XYZArrays(all_atom_features)  # gives 4D numpy array
-
-        total_dict = (
-            {}
-        )  # dictionary of dictionaries, ordered as {"C1":{"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....},
-        # "H2": {"C1":xyz_array, "O3":xyz_array.......}........,"H6":{"O3":xyz_array, "C1":xyz_array}
-        # the ordering is {central_atom1: {x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array ..... },
-        #  central_atom2:{x_axis_atom:xyz_array, xy_plane_atom:xyz_array, polar_atom:xyz_array, ..... }....}
-        # this was done to keep track of colors (which cannot really be done using np arrays)
-
-        xyz_dict = (
-            {}
-        )  # this dict keeps inner dictionaries from the total_array such as {"O3":xyz_array, "H2":xyz_array, "H4":xyz_array ....}
-        # it gets reset after every iteration of the loop to move onto the next atom center
-
-        # iterate over central atoms, their respective 3D array of other atoms as xyz coords, as well as the priorities of these xyz atoms
-        # (i.e which is x axis, which is xy plane etc.)
-        for center_atom, center_atom_xyzs, atom_names_prio in zip(
-            self.atom_names,
-            system_as_xyz.all_atom_4d_array,
-            self.atoms_names_priorities,
-        ):
-            # C1  #C1 non central atom 3D array # O3, H2, H4, H5, H6 # 2, 1, 3, 4, 5
-            for idx, atom_name_prio in enumerate(atom_names_prio):
-                #  0 O3, 1 H2, etc. used to get out the individual 2d arrays which are ordered as:
-                # x axis, xy plane, and then all atoms in polar coords
-                xyz_dict[atom_name_prio] = center_atom_xyzs[idx]
-
-            total_dict[center_atom] = xyz_dict
-            xyz_dict = {}
-
-        return total_dict
-
-    def get_atom_name_with_uuid(self, atom_name: str):
-        return self.uuid + "-" + atom_name
-
     @property
     def atom_names_with_uuid(self):
         return [
@@ -302,6 +71,10 @@ class DatasetWidget(QWidget):
     @property
     def n_atoms(self):
         return len(self.atom_names)
+
+    @property
+    def n_timesteps(self):
+        return len(self.trajectory)
 
     @property
     def current_central_atom_name(self) -> str:
@@ -316,8 +89,14 @@ class DatasetWidget(QWidget):
         ]
 
     @property
-    def current_alf_str(self) -> str:
-        return ", ".join(str(x) for x in self.alf_dict[self.current_central_atom_name])
+    def current_x_axis_atom_name(self) -> str:
+        """ returns the name of the current central atom. Need try except in case ui is not launched yet"""
+        return self.x_axis_atom_combo_box.currentText()
+
+    @property
+    def current_xy_plane_atom_name(self) -> str:
+        """ returns the name of the current central atom. Need try except in case ui is not launched yet"""
+        return self.xy_plane_atom_combo_box.currentText()
 
     @property
     def current_selected_property(self) -> Union[str, None]:
@@ -326,23 +105,17 @@ class DatasetWidget(QWidget):
             return self.properties_cmap_combo_box.currentText()
 
     @property
-    def current_errors_list(self) -> list:
+    def current_properties_list(self) -> list:
 
-        if self.errors_for_properties:
+        if self.properties:
             return [
                 timestep[self.current_selected_property][self.current_central_atom_name]
-                for timestep in self.errors_for_properties
+                for timestep in self.properties
             ]
-        return
 
     @property
     def center(self) -> np.ndarray:
         return np.array([0, 0, 0])
-
-    @property
-    def all_noncentral_data(self) -> dict:
-        """A dictonary of non central data to plot for the current central atom."""
-        return self.all_atom_dict[self.current_central_atom_name]
 
     @property
     def default_atom_colors(self) -> dict:
@@ -377,6 +150,66 @@ class DatasetWidget(QWidget):
     def actors(self) -> dict:
         """ Returns a dictionary of actor names as keys and VTK objects as values (these are the things that are plotted)"""
         return self.renderer.actors
+
+    def all_noncentral_data(self, central_atom_alf, central_atom_features) -> dict:
+        """A dictionary of non central data to plot for the current central atom."""
+        return self.calculate_non_central_dictionary(central_atom_alf, central_atom_features)
+
+    def calculate_non_central_dictionary(self, central_atom_alf: ALF, central_atom_features: np.ndarray) -> dict:
+        """Returns a dictionary of key: atom name, val: np array. The np array contains the xyz coordinates of every non-central atom that needs to be plotted. The values of the inner dictionary is a 2d-array
+        of the positions of the non-central atoms for every timestep (shape n_timesteps x 3)
+
+        :param central_atom_alf: The alf that is being used for the central atom
+        :param central_atom_features: numpy array of shape n_timesteps x n_features
+            these are the features for the current central atom
+        :param central atom name: The 
+        :return: a dictonary of dictionaries containing the corresponding non-central data to plot for every central atom
+        :rtype: dict
+        """
+
+        # before, ordering is 0,1,2,3,4,5,...,etc.
+        # after calculating the features and converting back, the order is going to be
+        # central atom idx, x-axis atom index, xy-plane atom index, rest of atom indices
+        # therefore, need to change the ordering of the atoms in the new xyz array to match the atom names
+
+        # gives 3D numpy array of shape n_timesteps x n_atoms x 3
+        xyz_centered_on_central_atom = alf_features_to_coordinates(central_atom_features)
+        previous_atom_ordering = list(range(self.n_atoms))
+        current_atom_ordering = list(central_atom_alf) + [i for i in range(self.n_atoms) if i not in central_atom_alf]
+        # this will get the index that the atom was moved to after reordering.
+        reverse_alf_ordering = [
+            current_atom_ordering.index(num) for num in range(self.n_atoms)
+        ]
+        # reverse the ordering, so that the rows are the same as before
+        # can now use the atom names as they were read in in initial Trajectory/PointsDirectory instance.
+        xyz_centered_on_central_atom[:, previous_atom_ordering, :] = xyz_centered_on_central_atom[
+            :, reverse_alf_ordering, :
+        ]
+
+        # get array of shape n_atoms x n_timesteps x 3 instead of n_timesteps x n_atoms x 3
+        xyz_centered_on_central_atom = np.swapaxes(xyz_centered_on_central_atom, 0, 1)
+
+        # use a dictionary to store atom names and their coordinates key:atom_name, val: np array of shape n_timesteps x 3
+        xyz_dict = {atom_name: atom_coords for atom_name, atom_coords in zip(self.atom_names, xyz_centered_on_central_atom)}
+
+        # delete the dictionary for the central atom as that is always 0,0,0 for every timestep
+        del xyz_dict[self.current_central_atom_name]
+
+        return xyz_dict
+
+    def get_alf_and_features_for_central_atom(self) -> tuple:
+        current_central_atom_idx = int(self.current_central_atom_name.strip(string.ascii_letters)) - 1
+        currrent_x_axis_idx = int(self.current_x_axis_atom_name.strip(string.ascii_letters))  - 1
+        currrent_xy_plane_idx = int(self.current_xy_plane_atom_name.strip(string.ascii_letters)) - 1
+
+        alf = ALF(current_central_atom_idx, currrent_x_axis_idx, currrent_xy_plane_idx)
+        central_atom_features = self.trajectory[self.current_central_atom_name].features(calculate_alf_features, alf)
+
+        return alf, central_atom_features
+
+    def get_atom_name_with_uuid(self, atom_name: str):
+        """ Add the uuid to the atom name"""
+        return self.uuid + "-" + atom_name
 
     def show_actor(self, actor_name: str):
         """ Show the actor to screen """
@@ -429,6 +262,18 @@ class DatasetWidget(QWidget):
     def update_property_and_plot(self):
         """ Plots updated data if property is changed."""
         self.plot_updated_data()
+
+    def update_atom_name_combo_boxes(self):
+
+        self.x_axis_atom_combo_box.clear()
+        self.xy_plane_atom_combo_box.clear()
+        self.x_axis_atom_combo_box.addItems([name for name in self.atom_names if name != self.current_central_atom_name])
+        self.xy_plane_atom_combo_box.addItems([name for name in self.atom_names if name != self.current_central_atom_name and name != self.current_x_axis_atom_name])
+
+    def update_xy_plane_atom_name_combo_boxe(self):
+
+        self.xy_plane_atom_combo_box.clear()
+        self.xy_plane_atom_combo_box.addItems([name for name in self.atom_names if name != self.current_central_atom_name and name != self.current_x_axis_atom_name])
 
     ####################################################################
     # COLORING
@@ -502,13 +347,16 @@ class DatasetWidget(QWidget):
 
     def update_central_atom_data(self):
         """ Used to update the central ALF atom and the noncentral data associated with it, depending on selected atom in combo box"""
-        self._current_noncentral_data = self.all_noncentral_data
-        self.atomic_local_frame.setText(self.current_alf_str)
+
+        alf, feats = self.get_alf_and_features_for_central_atom()
+        self._current_noncentral_data = self.all_noncentral_data(alf, feats)
 
     def plot_all_points(self):
         """ Plots data for all non-central atoms and disables the individual points widget."""
 
-        self._current_noncentral_data = self.all_noncentral_data
+        alf, feats = self.get_alf_and_features_for_central_atom()
+
+        self._current_noncentral_data = self.all_noncentral_data(alf, feats)
         # disable individual points widget so individual points cannot be plotted.
         self.disable_plot_individual_points()
         # need to plot updated data now, so needs to be called
@@ -543,15 +391,17 @@ class DatasetWidget(QWidget):
 
         # only get one point in the trajectory corresponding to the timestep selected by the slider/box
         self._current_noncentral_data = {}
-        for atom in self.all_noncentral_data.keys():
-            self._current_noncentral_data[atom] = self.all_noncentral_data[atom][
-                current_point
-            ]
 
-        if self.current_errors_list:
+        alf, feats = self.get_alf_and_features_for_central_atom()
+        all_noncentral_data = self.all_noncentral_data(alf, feats)
+
+        for atom in all_noncentral_data.keys():
+            self._current_noncentral_data[atom] = all_noncentral_data[atom][current_point]
+
+        if self.current_properties_list:
             # get a list of integers for the current atom and property that are selected in combo boxes
             self.property_value_for_current_point.setText(
-                f"{self.current_errors_list[current_point]:.8f}"
+                f"{self.current_properties_list[current_point]:.8f}"
             )
         else:
             self.property_value_for_current_point.setText("Not read in.")
@@ -756,7 +606,7 @@ class DatasetWidget(QWidget):
             prop = self.current_selected_property
             for block in current_datablock.keys():
                 block_with_uuid = self.get_atom_name_with_uuid(block)
-                current_datablock[block][prop] = self.current_errors_list
+                current_datablock[block][prop] = self.current_properties_list
                 self.plotter.add_mesh(
                     current_datablock[block],
                     scalars=prop,

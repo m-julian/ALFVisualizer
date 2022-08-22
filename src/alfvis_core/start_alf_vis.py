@@ -8,7 +8,12 @@ def _start_atom_center_and_property_settings(self):
     available for plotting, so they must be initialized before everything else relating to plotting."""
     # initializing atom names combo box from list of atom names
     self.atom_names_combo.addItems(self.atom_names)
-    self.atom_names_combo.currentIndexChanged.connect(self.update_central_atom_and_plot)
+    self.update_atom_name_combo_boxes()
+    self.atom_names_combo.currentIndexChanged.connect(self.update_atom_name_combo_boxes)
+    self.x_axis_atom_combo_box.currentIndexChanged.connect(self.update_xy_plane_atom_name_combo_boxe)
+
+    self.calculate_geometries_button.clicked.connect(self.update_central_atom_and_plot)
+
     # initializing the property names for which cmap can be plotted
     if self.cmap_properties:
         self.properties_cmap_combo_box.addItems(self.cmap_properties)

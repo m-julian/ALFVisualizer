@@ -1,3 +1,1 @@
-from .trajectory.trajectory import Trajectory
-
-__all__ = ["Trajectory"]
+from alfvis_core.trajectory import ALFVisTrajectory

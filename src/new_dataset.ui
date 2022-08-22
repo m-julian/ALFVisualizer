@@ -29,46 +29,10 @@
          <string>Atom Center and Property Settings</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
-         <item row="1" column="1">
-          <widget class="QComboBox" name="properties_cmap_combo_box"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="current_property_textbox">
+         <item row="0" column="4">
+          <widget class="QLabel" name="xy_plane_atom_label">
            <property name="text">
-            <string>Property</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2" alignment="Qt::AlignHCenter">
-          <widget class="QLabel" name="atomic_local_frame_label">
-           <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
-           </property>
-           <property name="autoFillBackground">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Calculated ALF:</string>
-           </property>
-           <property name="scaledContents">
-            <bool>false</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3" alignment="Qt::AlignLeft">
-          <widget class="QLabel" name="atomic_local_frame">
-           <property name="styleSheet">
-            <string notr="true">background-color : white;
-color : blue;
-border-style: solid;
-border-color:black;
-border-width:2px</string>
-           </property>
-           <property name="text">
-            <string>none</string>
+            <string>XY-plane Atom</string>
            </property>
           </widget>
          </item>
@@ -79,6 +43,36 @@ border-width:2px</string>
           <widget class="QLabel" name="central_alf_atom_label">
            <property name="text">
             <string>Central Atom</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="x_axis_atom_label">
+           <property name="text">
+            <string>X-axis Atom</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QComboBox" name="x_axis_atom_combo_box"/>
+         </item>
+         <item row="0" column="5">
+          <widget class="QComboBox" name="xy_plane_atom_combo_box"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="properties_cmap_combo_box"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="current_property_textbox">
+           <property name="text">
+            <string>Property</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="6">
+          <widget class="QPushButton" name="calculate_geometries_button">
+           <property name="text">
+            <string>Plot</string>
            </property>
           </widget>
          </item>
@@ -296,7 +290,7 @@ border-width:2px</string>
               <x>0</x>
               <y>0</y>
               <width>981</width>
-              <height>215</height>
+              <height>213</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_27"/>
@@ -365,7 +359,7 @@ border-width:2px</string>
               <x>0</x>
               <y>0</y>
               <width>981</width>
-              <height>214</height>
+              <height>213</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_28"/>
@@ -383,7 +377,7 @@ border-width:2px</string>
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="color_settings_button_group"/>
   <buttongroup name="point_settings_button_group"/>
+  <buttongroup name="color_settings_button_group"/>
  </buttongroups>
 </ui>
