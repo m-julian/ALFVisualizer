@@ -200,7 +200,11 @@ class DatasetWidget(QWidget):
     def get_alf_and_features_for_central_atom(self) -> tuple:
         current_central_atom_idx = int(self.current_central_atom_name.strip(string.ascii_letters)) - 1
         currrent_x_axis_idx = int(self.current_x_axis_atom_name.strip(string.ascii_letters))  - 1
-        currrent_xy_plane_idx = int(self.current_xy_plane_atom_name.strip(string.ascii_letters)) - 1
+
+        # if molecule has 2 atoms, then there is no xy plane atom
+        currrent_xy_plane_idx = None
+        if self.current_xy_plane_atom_name:
+            currrent_xy_plane_idx = int(self.current_xy_plane_atom_name.strip(string.ascii_letters)) - 1
 
         alf = ALF(current_central_atom_idx, currrent_x_axis_idx, currrent_xy_plane_idx)
         central_atom_features = self.trajectory[self.current_central_atom_name].features(calculate_alf_features, alf)
