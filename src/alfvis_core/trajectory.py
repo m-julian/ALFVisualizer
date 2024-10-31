@@ -1,11 +1,12 @@
-from ichor.core.files import Trajectory
-from ichor.core.atoms import Atom, Atoms
+import ast
 import re
 from typing import List
-import ast
+
+from ichor.core.atoms import Atom, Atoms
+from ichor.core.files import Trajectory
+
 
 class ALFVisTrajectory(Trajectory):
-
     def __init__(self, path, *args, **kwargs):
 
         super().__init__(path, *args, **kwargs)
@@ -23,7 +24,8 @@ class ALFVisTrajectory(Trajectory):
                 if re.match(r"^\s*\d+$", line):
                     natoms = int(line)
 
-                    # this is the comment line of xyz files. It can be empty or contain some useful information that can be stored.
+                    # this is the comment line of xyz files.
+                    # It can be empty or contain some useful information that can be stored.
                     line = next(f)
 
                     # if the comment line properties errors, we can store these
@@ -34,7 +36,9 @@ class ALFVisTrajectory(Trajectory):
                     # the next line after the comment line is where coordinates begin
                     for _ in range(natoms):
                         line = next(f)
-                        if re.match(r"^\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line):
+                        if re.match(
+                            r"^\s*?\w+(\s+[+-]?\d+.\d+([Ee]?[+-]?\d+)?){3}", line
+                        ):
                             atom_type, x, y, z = line.split()
                             atoms.add(Atom(atom_type, float(x), float(y), float(z)))
 

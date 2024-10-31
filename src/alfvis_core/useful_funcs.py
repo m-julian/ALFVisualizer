@@ -230,7 +230,7 @@ def string_to_rgb(string):
     else:
         try:
             return hex_to_rgb(string)
-        except:
+        except:  # noqa: E722
             raise ValueError("Invalid color string or hex string.")
 
     return hex_to_rgb(colorhex)
@@ -550,7 +550,7 @@ def change_actor_color(
         the width with ``line_width``.
 
     smooth_shading : bool, optional
-        Enable smooth shading when ``True`` using either the 
+        Enable smooth shading when ``True`` using either the
         Gouraud or Phong shading algorithm.  When ``False``, use
         flat shading.
         Automatically enabled when ``pbr=True``.

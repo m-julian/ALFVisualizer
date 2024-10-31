@@ -4,13 +4,18 @@
 
 
 def _start_atom_center_and_property_settings(self):
-    """ Sets up the atom center and property combo boxes in the Atom Center and Property Settings GroupBox. These define what data is going to be
-    available for plotting, so they must be initialized before everything else relating to plotting."""
+    """
+    Sets up the atom center and property combo boxes in the Atom Center and Property Settings GroupBox.
+    These define what data is going to be available for plotting, so they must be
+    initialized before everything else relating to plotting.
+    """
     # initializing atom names combo box from list of atom names
     self.atom_names_combo.addItems(self.atom_names)
     self.update_atom_name_combo_boxes()
     self.atom_names_combo.currentIndexChanged.connect(self.update_atom_name_combo_boxes)
-    self.x_axis_atom_combo_box.currentIndexChanged.connect(self.update_xy_plane_atom_name_combo_boxe)
+    self.x_axis_atom_combo_box.currentIndexChanged.connect(
+        self.update_xy_plane_atom_name_combo_boxe
+    )
 
     self.calculate_geometries_button.clicked.connect(self.update_central_atom_and_plot)
 
@@ -27,11 +32,13 @@ def _start_atom_center_and_property_settings(self):
 
 
 def _start_coloring_settings(self):
-    """ Connect the color radio buttons to their corresponding methods. Also, initialize the colors to random
+    """
+    Connect the color radio buttons to their corresponding methods. Also, initialize the colors to random
 
     .. note::
-        `clicked` is used instead of `toggled`. `clicked` only calls the connected slot when there is user input in the gui (so if the button's check state
-        is changed in code, the connected method will not run automatically). However, `clicked` is used because `toggled` causes the connected method
+        `clicked` is used instead of `toggled`. `clicked` only calls the connected slot when there
+        is user input in the gui (so if the button's check state is changed in code, the connected method
+        will not run automatically). However, `clicked` is used because `toggled` causes the connected method
         to be ran even if the button is unchecked (since these are mutually exclusive buttons)
     """
 
@@ -45,12 +52,17 @@ def _start_coloring_settings(self):
 
 
 def _start_points_settings(self):
-    """method that initializes the state of the individual atom checkbox. If the checkbox is enabled, only one point is plotted at a time.
-    If it is disabled, all points are plotted at the same time. This is useful to have when you want to focus on a specific point.
+    """
+    Method that initializes the state of the individual atom checkbox.
+    If the checkbox is enabled, only one point is plotted at a time.
+    If it is disabled, all points are plotted at the same time.
+    This is useful to have when you want to focus on a specific point.
 
     .. note::
-        `clicked` is used instead of `toggled`. `clicked` only calls the connected slot when there is user input in the gui (so if the button's check state
-        is changed in code, the connected method will not run automatically). However, `clicked` is used because `toggled` causes the connected method
+        `clicked` is used instead of `toggled`. `clicked` only calls the connected slot
+        when there is user input in the gui (so if the button's check state
+        is changed in code, the connected method will not run automatically).
+        However, `clicked` is used because `toggled` causes the connected method
         to be ran even if the button is unchecked (since these are mutually exclusive buttons)
     """
 
@@ -58,7 +70,8 @@ def _start_points_settings(self):
     self._current_noncentral_data = self.all_noncentral_data
 
     # use clicked instead of toggled because we only want to do this when the radio button is clicked
-    # otherwise, because these two radio buttons are mutually exclusive, using toggle will also call the method connected to the other button (that is being deselected)
+    # otherwise, because these two radio buttons are mutually exclusive
+    # using toggle will also call the method connected to the other button (that is being deselected)
     self.plot_all_points_radio.clicked.connect(self.plot_all_points)
 
     # set up slider values by which to index the dataset
@@ -68,7 +81,8 @@ def _start_points_settings(self):
     )  # need to index starting at 0, so subtract 1
     # set up the box that shows what index we are currently on
     self.individual_point_box.setText(f"{self.individual_point_slider.value()}")
-    # on editing the value of this box, we can update the slider (which then updates the individual point that is plotted)
+    # on editing the value of this box, we can update the slider
+    # (which then updates the individual point that is plotted)
     self.plot_individual_point_radio.clicked.connect(self.enable_plot_individual_points)
     self.individual_point_box.editingFinished.connect(
         self.update_individual_point_slider_value_with_box
@@ -77,7 +91,8 @@ def _start_points_settings(self):
         self.update_individual_point_slider_status_and_box
     )
 
-    # by default the individual point widget is disabled (as the default radio button is the Plot All Points instead of Individual Point)
+    # by default the individual point widget is disabled
+    # (as the default radio button is the Plot All Points instead of Individual Point)
     self.individual_points_widget.setEnabled(False)
 
     # if property data has not been read in
@@ -90,7 +105,7 @@ def _start_points_settings(self):
 
 
 def _start_show_hide_all_atoms_button(self):
-    """ button that unticks all noncentral atoms"""
+    """button that unticks all noncentral atoms"""
     self.show_all_plotted_atoms_button.clicked.connect(self.show_all_atoms)
     self.hide_all_plotted_atoms_button.clicked.connect(self.hide_all_atoms)
 

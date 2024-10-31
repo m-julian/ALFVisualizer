@@ -1,13 +1,13 @@
-from qtpy.QtGui import QIcon
-from qtpy import QtWidgets
-from qtpy import uic
-from pyvistaqt import QtInteractor
 import os
 import sys
 from pathlib import Path
-from alfvis_new_dataset import DatasetWidget
 from typing import List
+
 import pyvista as pv
+from alfvis_new_dataset import DatasetWidget
+from pyvistaqt import QtInteractor
+from qtpy import QtWidgets, uic
+from qtpy.QtGui import QIcon
 
 # Setting the Qt bindings for QtPy 5, change if using Pyside 2
 # os.environ["QT_API"] = "pyside2"
@@ -56,7 +56,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # initialize tab widget to 0th tab and connect tab clicked to slot
         self.tab_widget.tabBarClicked.connect(self.tab_bar_clicked)
-        # tabs are closable (set in .ui file), but remove close button from the "+" tab by adding two 0-sized widgets on either side
+        # tabs are closable (set in .ui file), but
+        # remove close button from the "+" tab by adding two 0-sized widgets on either side
         self.tab_widget.tabBar().setTabButton(
             0, QtWidgets.QTabBar.RightSide, QtWidgets.QWidget().resize(0, 0)
         )
@@ -76,16 +77,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @property
     def n_tabs(self) -> int:
-        """ Returns the number of opened tabs"""
+        """Returns the number of opened tabs"""
         return self.tab_widget.count()
 
     @property
     def last_tab_index(self) -> int:
-        """ Gives the index of the last widget (which is always the `add new tab` tab). Tab indexing starts at 0."""
+        """Gives the index of the last widget
+        (which is always the `add new tab` tab). Tab indexing starts at 0."""
         return self.n_tabs - 1
 
     def insert_new_datasets(self, datasets: List[Path]):
-        """ Inserts multiple datasets into individual new tabs. 
+        """Inserts multiple datasets into individual new tabs.
 
         :param datasets: A list of Path objects pointing to .xyz files
         """
@@ -93,7 +95,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.insert_new_dataset(dataset, self.last_tab_index)
 
     def insert_new_dataset(self, dataset_path: Path, index: int):
-        """ Inserts a dataset into a new tab.
+        """Inserts a dataset into a new tab.
 
         :param dataset_path: A Path to a dataset (.xyz file)
         :param index: The tab index where to insert the new dataset
@@ -109,9 +111,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tab_widget.currentWidget().setLayout(layout)
 
     def tab_bar_clicked(self, current_tab_index: int):
-        """ Runs when some tab on the tab bar is clicked. This is used to check if the last tab is clicked as the last tab is used
-        to open new datasts. It also checks which tab is clicked and updates the central sphere which is plotted to get the color
-        the same as the color of the central atom for that tab.
+        """Runs when some tab on the tab bar is clicked. This is used to check
+        if the last tab is clicked as the last tab is used to open new datasts.
+        It also checks which tab is clicked and updates the central sphere which
+        is plotted to get the color the same as the color of the central atom for that tab.
 
         :param current_tab_index: tab index that was clicked
         """
@@ -123,7 +126,8 @@ class MainWindow(QtWidgets.QMainWindow):
             if xyz_file_list:
                 self.insert_new_datasets(xyz_file_list)
 
-        # if some other tab was clicked, we need to update the color of the central atom that is being plotted (as they overlap)
+        # if some other tab was clicked, we need to update
+        # the color of the central atom that is being plotted (as they overlap)
         else:
             widget = self.tab_widget.widget(current_tab_index).findChild(DatasetWidget)
             center = pv.PolyData(widget.center)
@@ -139,8 +143,8 @@ class MainWindow(QtWidgets.QMainWindow):
             )
 
     def close_tab(self, index: int):
-        """ Closes a given tab, or if the final tab is being closed, close the application. Make sure to clear the plot of actors that were
-        added by that tab.
+        """Closes a given tab, or if the final tab is being closed, close the application.
+        Make sure to clear the plot of actors that were added by that tab.
 
         :param index: The index of the tab to be closed.
         """
@@ -158,33 +162,33 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.tab_widget.setCurrentIndex(self.last_tab_index - 1)
 
     def grid_status(self):
-        """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
+        """show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
         if self.show_grid_checkbox.isChecked():
             self.show_grid()
         elif not self.show_grid_checkbox.isChecked():
             self.remove_grid()
 
     def axes_status(self):
-        """ show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
+        """show or remove grid on pyvista plot depending on grid checkbox, updates atom data to plot"""
         if self.show_axes_checkbox.isChecked():
             self.show_axes()
         elif not self.show_axes_checkbox.isChecked():
             self.hide_axes()
 
     def remove_grid(self):
-        """ Remove the grid. """
+        """Remove the grid."""
         self.plotter.remove_bounds_axes()
 
     def show_grid(self):
-        """ Add the grid actor and show it."""
+        """Add the grid actor and show it."""
         self.plotter.show_grid()
 
     def show_axes(self):
-        """ Show the orientation axes"""
+        """Show the orientation axes"""
         self.plotter.show_axes_all()
 
     def hide_axes(self):
-        """ Hide the orientation axes"""
+        """Hide the orientation axes"""
         self.plotter.hide_axes_all()
 
 
