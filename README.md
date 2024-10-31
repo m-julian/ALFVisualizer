@@ -93,4 +93,9 @@ Below are examples of plots for a few systems:
 
 ![methanol image](example_images/methanol.png "Methanol, with Central Atom C1, X-axis atom H2, and XY-plane atom H4")
 
+### Glycine:
+
+![glycine image](example_images/glycine.png "Glycine, with Central Atom C1, X-axis atom N2, and XY-plane atom H3")
+
+
 

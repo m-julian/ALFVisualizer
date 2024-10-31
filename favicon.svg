@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="96mm"
+   height="96mm"
+   viewBox="0 0 96 96"
+   version="1.1"
+   id="svg831"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="favicon.svg"
+   inkscape:export-filename="/home/julian/Documents/GitHub/pyvista_alf/src/alf_vis.png"
+   inkscape:export-xdpi="300"
+   inkscape:export-ydpi="300"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview833"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="1.0154442"
+     inkscape:cx="293.46762"
+     inkscape:cy="235.85737"
+     inkscape:window-width="1551"
+     inkscape:window-height="724"
+     inkscape:window-x="162"
+     inkscape:window-y="186"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs828">
+    <rect
+       x="16.106756"
+       y="64.602875"
+       width="89.405174"
+       height="46.293945"
+       id="rect20664" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:54.1062px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:none;fill:#800080;stroke-width:1.01449"
+       x="0.17949916"
+       y="56.574905"
+       id="text3354"><tspan
+         sodipodi:role="line"
+         id="tspan3352"
+         style="font-size:54.1062px;fill:#800080;stroke-width:1.01449"
+         x="0.17949916"
+         y="56.574905">ALF</tspan></text>
+    <text
+       xml:space="preserve"
+       transform="matrix(1.3966428,0,0,1.3966428,-0.29717108,-33.199735)"
+       id="text20662"
+       style="font-size:24px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:none;white-space:pre;shape-inside:url(#rect20664);fill:#0000ff"><tspan
+         x="16.107422"
+         y="85.837891"
+         id="tspan1080">VIZ</tspan></text>
+  </g>
+</svg>
