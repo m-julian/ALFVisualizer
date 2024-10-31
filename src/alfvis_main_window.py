@@ -14,8 +14,8 @@ import pyvista as pv
 # http://qtdocs.pyvista.org/usage.html
 os.environ["QT_API"] = "pyqt5"
 
-APPNAME = "ALF Visualizer V2"
-APPICON = str((Path(__file__).parent / "alf_vis_water.png").absolute())
+APPNAME = "ALF Visualizer"
+APPICON = str((Path(__file__).parent / "alf_vis.png").absolute())
 
 
 def open_file_dialog(
