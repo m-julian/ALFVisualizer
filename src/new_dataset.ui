@@ -32,7 +32,7 @@
          <item row="0" column="4">
           <widget class="QLabel" name="xy_plane_atom_label">
            <property name="text">
-            <string>XY-plane Atom</string>
+            <string>XY-plane</string>
            </property>
           </widget>
          </item>
@@ -42,14 +42,14 @@
          <item row="0" column="0">
           <widget class="QLabel" name="central_alf_atom_label">
            <property name="text">
-            <string>Central Atom</string>
+            <string>Central</string>
            </property>
           </widget>
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="x_axis_atom_label">
            <property name="text">
-            <string>X-axis Atom</string>
+            <string>X-axis</string>
            </property>
           </widget>
          </item>
@@ -290,7 +290,7 @@
               <x>0</x>
               <y>0</y>
               <width>981</width>
-              <height>213</height>
+              <height>162</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_27"/>
@@ -359,7 +359,7 @@
               <x>0</x>
               <y>0</y>
               <width>981</width>
-              <height>213</height>
+              <height>162</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_28"/>
@@ -377,7 +377,7 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="point_settings_button_group"/>
   <buttongroup name="color_settings_button_group"/>
+  <buttongroup name="point_settings_button_group"/>
  </buttongroups>
 </ui>

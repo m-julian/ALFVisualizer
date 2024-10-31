@@ -192,13 +192,11 @@ if __name__ == "__main__":
 
     app = QtWidgets.QApplication(sys.argv)
 
-    xyz_file_list = open_file_dialog()
     # make instance of main window to be shown
     main_window = MainWindow()
+    main_window.show()
+    xyz_file_list = open_file_dialog()
     if xyz_file_list:
         main_window.insert_new_datasets(xyz_file_list)
-        # continue showing the app without blocking python thread
-        main_window.show()
-        app.exec_()
-    else:
-        print("no .xyz files were given.")
+    # continue showing the app without blocking python thread
+    app.exec_()
