@@ -12,7 +12,7 @@ Data can be loaded with the `+` tab which opens up the file explorer from which 
 ## Installation
 Refer to the `requirements.txt` file for dependencies. This is tested to work with Python 3.10.12
 
-## Files 
+## Files
 `alfvis_main_window.py` - contains the main application window code
 `alfvis_new_dataset.py` - contains code that runs every time a new dataset is loaded
 `main_window.ui` - Contains the user interface for the main window
@@ -93,9 +93,6 @@ Below are examples of plots for a few systems:
 
 ![methanol image](example_images/methanol.png "Methanol, with Central Atom C1, X-axis atom H2, and XY-plane atom H4")
 
-### Glycine:
+### Peptide-Capped Glycine:
 
-![glycine image](example_images/glycine.png "Glycine, with Central Atom C1, X-axis atom N2, and XY-plane atom H3")
-
-
-
+![glycine image](example_images/glycine.png "Peptide-Capped Glycine, with Central Atom C1, X-axis atom N2, and XY-plane atom H3")
