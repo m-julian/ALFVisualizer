@@ -1,6 +1,6 @@
 # ALFVisualizer
 
-The ALFvisualizer is used to center a trajectory on an atom by defining a local coordinate frame, containing a central atom, x-axis atom, and xy-plane atom. These three atoms define the ALF (Atomic Local Frame) with which other atoms are mapped to. More information about the ALF can be found here: https://doi.org/10.1021/ct500565g, https://doi.org/10.1002/jcc.27477.
+The ALFVisualizer is used to center a trajectory on an atom by defining a local coordinate frame, containing a central atom, x-axis atom, and xy-plane atom. These three atoms define the ALF (Atomic Local Frame) with which other atoms are mapped to. More information about the ALF can be found here: https://doi.org/10.1021/ct500565g, https://doi.org/10.1002/jcc.27477.
 
 Open application with `python alfvis_main_window.py`. Once the app opens, you can use the `+` sign to load in a `.xyz` trajectory file which to visualize. Energies or other properties relating to the specific configuration can also be read in from the comment line in the xyz file. If they are read in, a cmap checkbox can be ticked which displays a colormap of the properties.
 
