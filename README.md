@@ -6,13 +6,13 @@ Open application with `python alfvis_main_window.py`. Once the app opens, you ca
 
 Note that this is a very rudimentary implementation, with one of the purposes for this code being for me to learn more about developing graphical user interfaces, and the other being to very easily visualize multiple datasets at a time in one place.
 
-# Loading in Data
+## Loading in Data
 Data can be loaded with the `+` tab which opens up the file explorer from which a trajectory `.xyz` file can be selected.
 
-# Installation
+## Installation
 Refer to the `requirements.txt` file for dependencies. This is tested to work with Python 3.10.12
 
-# Files 
+## Files 
 `alfvis_main_window.py` - contains the main application window code
 `alfvis_new_dataset.py` - contains code that runs every time a new dataset is loaded
 `main_window.ui` - Contains the user interface for the main window
@@ -72,7 +72,7 @@ H       2.02373754      -0.60403459       1.55577750
 H       2.75109967      -1.85091601       1.56052776
 ```
 
-# Options
+## Options
 - Random Colors: Plot atoms with random colors
 - Default Colors: Plot atoms with default colors
 - Plot Cmap: If properties are read in from the .xyz file, this makes a cmap of all the plotted points.
@@ -80,3 +80,17 @@ H       2.75109967      -1.85091601       1.56052776
 Note that the color boxes can be used to change the color of the separate atoms, however these will **not** be saved if you choose another color setting.
 - Remove/show some atoms using checkboxes for every atom.
 - Ability to load in multiple datasets at once (which will be shown overlapping on one pyvista plot).
+
+## Examples:
+
+Below are examples of plots for a few systems:
+
+### Water Monomer:
+
+![water monomer image](example_images/water_monomer.png "Water Monomer, with Central Atom O1, X-axis atom H2, and XY-plane atom H3")
+
+### Methanol:
+
+![methanol image](example_images/methanol.png "Methanol, with Central Atom C1, X-axis atom H2, and XY-plane atom H4")
+
+
