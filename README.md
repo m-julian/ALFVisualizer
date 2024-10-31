@@ -1,32 +1,24 @@
 # ALFVisualizer
-Using pyvista to visualize atomic ALF
 
-Open application with `python alfvis_main_window.py`. Select a .xyz file to visualize. Wait until a window pops up with the visualization tool. It might take a while if the .xyz has a lot of timesteps and if the system has a lot of features to calculate.
+The ALFvisualizer is used to center a trajectory on an atom by defining a local coordinate frame, containing a central atom, x-axis atom, and xy-plane atom. These three atoms define the ALF (Atomic Local Frame) with which other atoms are mapped to. More information about the ALF can be found here: https://doi.org/10.1021/ct500565g, https://doi.org/10.1002/jcc.27477.
 
-Energies can also be read in from the comment line in the xyz file. If they are read in, a cmap checkbox can be ticked which displays a colormap of the enrgies.
+Open application with `python alfvis_main_window.py`. Once the app opens, you can use the `+` sign to load in a `.xyz` trajectory file which to visualize. Energies or other properties relating to the specific configuration can also be read in from the comment line in the xyz file. If they are read in, a cmap checkbox can be ticked which displays a colormap of the properties.
+
+Note that this is a very rudimentary implementation, with one of the purposes for this code being for me to learn more about developing graphical user interfaces, and the other being to very easily visualize multiple datasets at a time in one place.
+
+# Loading in Data
+Data can be loaded with the `+` tab which opens up the file explorer from which a trajectory `.xyz` file can be selected.
 
 # Installation
-Using conda, you will need a conda environment with python 3.7. Otherwise it will not work because packages are broken for higher python versions. Run:
-```
- conda install -c conda-forge pyvista 
-```
+Refer to the `requirements.txt` file for dependencies. This is tested to work with Python 3.10.12
 
-after which
+# Files 
+`alfvis_main_window.py` - contains the main application window code
+`alfvis_new_dataset.py` - contains code that runs every time a new dataset is loaded
+`main_window.ui` - Contains the user interface for the main window
+`new_dataset.ui` - Contains the user interface for any new datasets that are loaded
 
-```
- conda install -c conda-forge pyvistaqt
-```
-
-This installs all the needed packages (such as pyqt and Qt5). However, you will then need to update `PyQt5` using `pip` because there are bugs with the 5.12 version that conda provides. So you will need to also run `pip install --upgrade PyQt5`, which will upgrade to a more recent version that has the issues fixed.
-
-You might want to try to do `pip install pyvista` and `pip install pyvistaqt` directly because the `pypi` versions are most likely more up-to-date than the `conda-forge` ones.
-
-The `requirements.txt` file is up to date, however the `pyqt` package has only version 5.12 available on conda which has bugs.
-
-# The main files are alfvis_main_window.py, alfvis_new_dataset.py, main_window.ui, new_dataset.ui
-The python code to calculate features and use pyvista is in the .py files and the actual ui is in the .ui file. The .ui file can be opened with Qt Designer.
-The .ui file can also be converted to a python file if needed for some reason (currently it is loaded as the .ui file directly). This .ui file should ***not** be
-changed manually, it is much easier to do it in Qt Designer.
+The `.ui` files can be opened with Qt Creator.
 
 Make sure the .xyz file you are reading in is in the form like
 
@@ -51,9 +43,7 @@ Make sure the .xyz file you are reading in is in the form like
   H        -2.5634208124        2.9987283195       -0.3349821297
 ```
 
-If you want energies to be read in, add them to the comment line. This enables the cmap checkbox. ICHOR can be used to produce xyz files with
-this, see the `ListOfAtoms.coordinates_to_xyz_with_errors` method. This method writes out a dictionary containing errors for each property (predictions compared
-to validation or test set).
+If you want system properties to be read in, add them to the comment line of the xyz file. This enables the cmap checkbox. Below is an example where properties are added to the comment line:
 
 ```
     6
@@ -82,18 +72,11 @@ H       2.02373754      -0.60403459       1.55577750
 H       2.75109967      -1.85091601       1.56052776
 ```
 
-# Loading in Data
-Data can either be loaded when `alfvis_main_window.py` is launched or once the application is launched, a new tab can be opened with the `+` tab and a new
-dataset can be selected.
-
 # Options
 - Random Colors: Plot atoms with random colors
 - Default Colors: Plot atoms with default colors
-- Plot Cmap: If energies are read in from the .xyz file, this makes a cmap of all the plotted points (so can be used to plot energies/multipoles or model predictions).
-- Plot Individual Point: Only 1 points is displayed at a time. Use the slider or write in box to go to specific point. Starts from 0. This cannot be used with cmap.
+- Plot Cmap: If properties are read in from the .xyz file, this makes a cmap of all the plotted points.
+- Plot Individual Point: Only 1 points is displayed at a time. Use the slider or write in box to go to specific point. Starts from 0. This cannot be used with cmap. Note that this is very slow when there are many geometries because of the current implementation.
 Note that the color boxes can be used to change the color of the separate atoms, however these will **not** be saved if you choose another color setting.
 - Remove/show some atoms using checkboxes for every atom.
 - Ability to load in multiple datasets at once (which will be shown overlapping on one pyvista plot).
-
-# Developer
-Yulian Manchev, yulian.manchev@postgrad.manchester.ac.uk
